@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.26 2012/03/21 10:10:37 matt Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.29 2024/03/22 19:36:56 andvar Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rmtlib.c,v 1.26 2012/03/21 10:10:37 matt Exp $");
+__RCSID("$NetBSD: rmtlib.c,v 1.29 2024/03/22 19:36:56 andvar Exp $");
 
 #define RMTIOCTL	1
 /* #define USE_REXEC	1 */	/* rexec code courtesy of Dan Kegel, srs!dan */
@@ -249,7 +249,7 @@ static int
 _rmt_open(const char *path, int oflag, int mode)
 {
 	int i;
-	char buffer[BUFMAGIC];
+	char buffer[2 * BUFMAGIC];
 	char host[MAXHOSTLEN];
 	char device[BUFMAGIC];
 	char login[BUFMAGIC];
@@ -292,7 +292,7 @@ _rmt_open(const char *path, int oflag, int mode)
 	path++;
 
 	if (*(path - 1) == '@') {
-		(void)strncpy(user, host, sizeof(login) - 1);
+		(void)strlcpy(user, host, sizeof(login));
 				/* saw user part of user@host */
 		sys = host;			/* start over */
 		while (*path != ':') {
@@ -364,7 +364,7 @@ _rmt_open(const char *path, int oflag, int mode)
  *	bad problems if we get here
  */
 
-		err(1, "Cannnot exec %s", rshpath);
+		err(1, "Cannot exec %s", rshpath);
 		/*FALLTHROUGH*/
 	default:
 		break;
@@ -500,7 +500,7 @@ _rmt_ioctl(int fildes, unsigned long op, void *arg)
 	_DIAGASSERT(arg != NULL);
 
 /*
- *	MTIOCOP is the easy one. nothing is transfered in binary
+ *	MTIOCOP is the easy one. nothing is transferred in binary
  */
 
 	if (op == MTIOCTOP) {
