@@ -1,4 +1,4 @@
-/* $NetBSD: lfsv1.c,v 1.14 2015/08/12 18:28:01 dholland Exp $ */
+/* $NetBSD: lfsv1.c,v 1.16 2022/11/17 06:40:39 chs Exp $ */
 
 #define	LIBSA_LFS
 #define	REQUIRED_LFS_VERSION	1

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootcfg.h,v 1.1 2014/06/28 09:16:18 rtr Exp $	*/
+/*	$NetBSD: bootcfg.h,v 1.6 2025/05/06 18:16:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,12 +29,15 @@
 #ifndef _BOOTCFG_H
 #define _BOOTCFG_H
 
-#define BOOTCFG_FILENAME "boot.cfg"
-#define BOOTCFG_MAXMENU	 20
-#define BOOTCFG_MAXBANNER 12
+#define BOOTCFG_FILENAME	"boot.cfg"
+#define BOOTCFG_MAXMENU		20
+#define BOOTCFG_MAXBANNER	12
 
-#define BOOTCFG_CMD_LOAD	  "load"
-#define BOOTCFG_CMD_USERCONF	  "userconf"
+#define BOOTCFG_CMD_DEV		"dev"
+#define BOOTCFG_CMD_FS		"fs"
+#define BOOTCFG_CMD_LOAD	"load"
+#define BOOTCFG_CMD_RNDSEED	"rndseed"
+#define BOOTCFG_CMD_USERCONF	"userconf"
 
 typedef void (*bootcfg_command)(const char *cmd, char *arg);
 
@@ -42,15 +45,18 @@ struct bootcfg_def {
 	char *banner[BOOTCFG_MAXBANNER];	/* Banner text */
 	char *command[BOOTCFG_MAXMENU];		/* Menu commands per entry*/
 	char *consdev;				/* Console device */
+	char *root;				/* Root specification */
 	int def;				/* Default menu option */
 	char *desc[BOOTCFG_MAXMENU];		/* Menu text per entry */
 	int nummenu;				/* Number of menu items */
 	int timeout;		 		/* Timeout in seconds */
 	int menuformat;				/* Letters instead of numbers */
 	int clear;				/* Clear the screen? */
-} extern bootcfg_info;
+};
+extern struct bootcfg_def bootcfg_info;
 
-void perform_bootcfg(const char *, bootcfg_command, const off_t);
+int perform_bootcfg(const char *, bootcfg_command, const off_t);
 void bootcfg_do_noop(const char *, char *);
+void print_bootcfg_banner(const char *, const char *);
 
 #endif /* !_BOOTCFG_H */

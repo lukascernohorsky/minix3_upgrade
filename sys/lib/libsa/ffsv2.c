@@ -1,4 +1,4 @@
-/* $NetBSD: ffsv2.c,v 1.6 2012/05/21 21:34:16 dsl Exp $ */
+/* $NetBSD: ffsv2.c,v 1.10 2022/11/17 06:40:39 chs Exp $ */
 
 #define LIBSA_FFSv2
 
@@ -16,6 +16,8 @@
 #endif
 
 #define ufs_dinode	ufs2_dinode
+#define ufs_dinode_swap	ffs_dinode2_swap
+#define ufs_indp_swap	bswap64
 #define indp_t		int64_t
 
 #include "ufs.c"

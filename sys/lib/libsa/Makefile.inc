@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2015/09/06 15:34:55 uebayasi Exp $
+#	$NetBSD: Makefile.inc,v 1.27 2023/08/30 18:47:56 christos Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -23,7 +23,7 @@ SADOTDIR?= ../../.
 
 CWARNFLAGS.clang+=	-Wno-format-extra-args
 
-SADIR=		${S:S@^.@${SADOTDIR}@:Q}/lib/libsa
+SADIR=		${S:S@^.@${SADOTDIR}@:q}/lib/libsa
 .if (${SA_AS} == "obj")
 SALIB=		${SADST}/libsa.o
 SALIB_PROF=	${SADST}/libsa.po
@@ -35,18 +35,19 @@ ZLIBSRCDIR:=	${.PARSEDIR}/../../../common/dist/zlib
 SAMISCCPPFLAGS+=-I${ZLIBSRCDIR}
 
 SAMAKE= \
-	cd ${SADST} && ${MAKE} -f ${SADIR:Q}/Makefile \
-	    SADIR=${SADIR:Q} \
-	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} CPUFLAGS= \
-	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
-	    LORDER=${LORDER:Q} \
-	    TSORT=${TSORT:Q} \
-	    LD=${LD:Q} STRIP=${STRIP:Q} \
-	    AR=${AR:Q} NM=${NM:Q} \
-	    RANLIB=${RANLIB:Q} SIZE=${SIZE:Q} \
-	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
-	    SACPPFLAGS=${CPPFLAGS:S@^-I.@-I${SADOTDIR}@g:Q} \
-	    SAMISCCPPFLAGS=${SAMISCCPPFLAGS:Q} \
+	cd ${SADST} && ${MAKE} -f ${SADIR:q}/Makefile \
+	    SADIR=${SADIR:q} \
+	    CC=${CC:q} CFLAGS=${CFLAGS:q} CPUFLAGS= \
+	    AS=${AS:q} AFLAGS=${AFLAGS:q} \
+	    LORDER=${LORDER:q} \
+	    TSORT=${TSORT:q} \
+	    LD=${LD:q} STRIP=${STRIP:q} \
+	    AR=${AR:q} NM=${NM:q} \
+	    COPTS=${COPTS:q} \
+	    RANLIB=${RANLIB:q} SIZE=${SIZE:q} \
+	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:q} \
+	    SACPPFLAGS=${CPPFLAGS:S@^-I.@-I${SADOTDIR}@g:q} \
+	    SAMISCCPPFLAGS=${SAMISCCPPFLAGS:q} \
 	    ${SAMISCMAKEFLAGS}
 
 ${SALIB}:		.NOTMAIN .MAKE __always_make_salib
@@ -56,7 +57,6 @@ ${SALIB}:		.NOTMAIN .MAKE __always_make_salib
 .else
 	@${SAMAKE} libsa.o
 .endif
-	@echo done
 
 ${SALIB_PROF}:		.NOTMAIN .MAKE __always_make_salib
 	@echo making sure the profiled sa library is up to date...
@@ -65,25 +65,21 @@ ${SALIB_PROF}:		.NOTMAIN .MAKE __always_make_salib
 .else
 	@${SAMAKE} libsa.po
 .endif
-	@echo done
 
 clean:			.NOTMAIN cleansalib
 cleansalib:		.NOTMAIN
 	@echo cleaning the sa library objects
 	@if [ -d "${SADST}" ]; then ${SAMAKE} clean; fi
-	@echo done
 
 cleandir distclean:	.NOTMAIN cleandirsalib
 cleandirsalib:		.NOTMAIN
 	@echo cleandiring the sa library objects
 	@if [ -d "${SADST}" ]; then ${SAMAKE} cleandir; fi
-	@echo done
 
 dependall depend:	.NOTMAIN dependsalib
 dependsalib:		.NOTMAIN .MAKE __always_make_salib
 	@echo depending the sa library objects
 	@${SAMAKE} depend
-	@echo done
 
 __always_make_salib:	.NOTMAIN
 	@mkdir -p ${SADST}
