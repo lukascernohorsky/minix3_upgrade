@@ -1,6 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.9 2014/10/22 10:33:27 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.12 2024/05/09 19:54:38 riastradh Exp $
 
-COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
+COMPILER_RT_DIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt
+COMPILER_RT_SRCDIR=	${COMPILER_RT_DIR}/dist
 
 .if ${MACHINE_CPU} == "powerpc"
 COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
@@ -10,10 +11,8 @@ COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/${MACHINE_CPU}
 COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/${MACHINE_ARCH}
 .endif
 
-.if !defined(__MINIX)
 .PATH: ${COMPILER_RT_CPU_DIR}
 .PATH: ${COMPILER_RT_ARCH_DIR}
-.endif # !defined(__MINIX)
 .PATH: ${COMPILER_RT_SRCDIR}/lib/builtins
 
 # Needs scaling support
@@ -25,13 +24,12 @@ GENERIC_SRCS+= \
 	divsc3.c \
 	divxc3.c
 
-.if ${MACHINE_CPU} == "powerpc"
+.if ${MACHINE_CPU} == "powerpc" || ${LIBC_MACHINE_ARCH:U} == "sparc64" || ${LIBC_MACHINE_CPU:U} == "aarch64"
 GENERIC_SRCS+= \
 	divtc3.c \
 	multc3.c
 .endif
 
-.if !defined(__MINIX)
 .for src in ${GENERIC_SRCS}
 .  if exists(${COMPILER_RT_CPU_DIR}/${src:R}.S) || \
       exists(${COMPILER_RT_ARCH_DIR}/${src:R}.S)
@@ -41,10 +39,5 @@ SRCS+=	${src}
 COPTS.${src}+=	-Wno-error=missing-prototypes
 .  endif
 .endfor
-.else
-# For MINIX: do not pull in the assembly symbols, as they are not PIC ready
-.for src in ${GENERIC_SRCS}
-SRCS+=	${src}
-COPTS.${src}+=	-Wno-error=missing-prototypes
-.endfor
-.endif # !defined(__MINIX)
+
+.include "${COMPILER_RT_DIR}/abi.mk"
