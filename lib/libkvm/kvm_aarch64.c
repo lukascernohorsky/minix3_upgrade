@@ -1,7 +1,7 @@
-/* $NetBSD: kvm_aarch64.c,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: kvm_aarch64.c,v 1.12 2023/08/23 14:00:11 rin Exp $ */
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/kcore.h>
@@ -40,6 +39,7 @@
 #include <kvm.h>
 
 #include <machine/kcore.h>
+#include <machine/armreg.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
 
@@ -49,7 +49,7 @@
 
 #include "kvm_private.h"
 
-__RCSID("$NetBSD: kvm_aarch64.c,v 1.1 2014/08/10 05:47:37 matt Exp $");
+__RCSID("$NetBSD: kvm_aarch64.c,v 1.12 2023/08/23 14:00:11 rin Exp $");
 
 /*ARGSUSED*/
 void
@@ -68,12 +68,12 @@ _kvm_initvtop(kvm_t *kd)
 int
 _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 {
-        if (ISALIVE(kd)) {
-                _kvm_err(kd, 0, "vatop called in live kernel!");
-                return(0);
-        }
+	if (ISALIVE(kd)) {
+		_kvm_err(kd, 0, "vatop called in live kernel!");
+		return(0);
+	}
 
-	if ((va & AARCH64_KSEG_MASK) != AARCH64_KSEG_START) {
+	if ((va & AARCH64_DIRECTMAP_MASK) != AARCH64_DIRECTMAP_START) {
 		/*
 		 * Bogus address (not in KV space): punt.
 		 */
@@ -84,27 +84,24 @@ lose:
 	}
 
 	const cpu_kcore_hdr_t * const cpu_kh = kd->cpu_data;
-	const u_int tg1 =__SHIFTOUT(cpu_kh->kh_tcr1, TCR_TG1); 
+	const uint64_t tg1 = cpu_kh->kh_tcr1 & TCR_TG1;
 	const u_int t1siz = __SHIFTOUT(cpu_kh->kh_tcr1, TCR_T1SZ);
+	const u_int inputsz = 64 - t1siz;
 
 	/*
 	 * Real kernel virtual address: do the translation.
 	 */
 
-	u_int va_bits;
 	u_int page_shift;
 
 	switch (tg1) {
-	case TCR_TG_4KB:
-		va_bits = t1siz + 36;
+	case TCR_TG1_4KB:
 		page_shift = 12;
 		break;
-	case TCR_TG_16KB:
-		va_bits = 48;
+	case TCR_TG1_16KB:
 		page_shift = 14;
 		break;
-	case TCR_TG_64KB:
-		va_bits = t1siz + 38;
+	case TCR_TG1_64KB:
 		page_shift = 16;
 		break;
 	default:
@@ -112,28 +109,28 @@ lose:
 	}
 
 	const size_t page_size = 1 << page_shift;
-	const uint64_t page_mask = (page_size - 1);
-	const uint64_t page_addr = __BITS(47, 0) & ~page_mask;
-	const uint64_t pte_mask = page_mask >> 3;
+	const uint64_t page_mask = __BITS(page_shift - 1, 0);
+	const uint64_t page_addr = __BITS(47, page_shift);
 	const u_int pte_shift = page_shift - 3;
 
-	/* how many level of page tables do we have? */
-	u_int level = (48 + page_shift - 1) / page_shift;
+	/* how many levels of page tables do we have? */
+	u_int levels = howmany(inputsz - page_shift, pte_shift);
 
 	/* restrict va to the valid VA bits */
-	va &= (1LL << va_bits) - 1;
+	va &= __BITS(inputsz - 1, 0);
 
-	u_int addr_shift = page_shift + (level - 1) * pte_shift;
+	u_int addr_shift = page_shift + (levels - 1) * pte_shift;
 
 	/* clear out the unused low bits of the table address */
-	paddr_t pte_addr = (cpu_kh->kh_ttbr1 & TTBR_BADDR);
-	pte_addr &= ~((8L << (va_bits - addr_shift)) - 1);
+	paddr_t pte_addr = cpu_kh->kh_ttbr1 & TTBR_BADDR;
 
 	for (;;) {
 		pt_entry_t pte;
 
 		/* now index into the pte table */
-		pte_addr += 8 * ((va >> addr_shift) & pte_mask);
+		const uint64_t idx_mask = __BITS(addr_shift + pte_shift - 1,
+						 addr_shift);
+		pte_addr += 8 * __SHIFTOUT(va, idx_mask);
 
 		/* Find and read the PTE. */
 		if (_kvm_pread(kd, kd->pmfd, &pte, sizeof(pte),
@@ -149,15 +146,15 @@ lose:
 		}
 
 		if ((pte & LX_TYPE) == LX_TYPE_BLK) {
-			const paddr_t blk_mask = ((1L << addr_shift) - 1);
+			const size_t blk_size = 1 << addr_shift;
+			const uint64_t blk_mask = __BITS(addr_shift - 1, 0);
 
 			*pa = (pte & page_addr & ~blk_mask) | (va & blk_mask);
-			return 0;
+			return blk_size - (va & blk_mask);
 		}
-
-		if (level == page_shift) {
+		if (--levels == 0) {
 			*pa = (pte & page_addr) | (va & page_mask);
-			return 0;
+			return page_size - (va & page_mask);
 		}
 
 		/*
@@ -200,7 +197,6 @@ int
 _kvm_mdopen(kvm_t *kd)
 {
 
-	kd->usrstack = USRSTACK;
 	kd->min_uva = VM_MIN_ADDRESS;
 	kd->max_uva = VM_MAXUSER_ADDRESS;
 

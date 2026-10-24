@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_private.h,v 1.20 2011/09/12 21:11:32 christos Exp $	*/
+/*	$NetBSD: kvm_private.h,v 1.23 2022/04/19 20:32:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -55,7 +55,6 @@ struct __kvm {
 	size_t  procbase_len;
 	size_t  procbase2_len;
 	size_t  lwpbase_len;
-	u_long	usrstack;		/* address of end of user stack */
 	u_long	min_uva, max_uva;	/* min/max user virtual address */
 	int	nbpg;		/* page size */
 	char	*swapspc;	/* (dynamic) storage for swapped pages */
@@ -72,6 +71,8 @@ struct __kvm {
 	size_t	cpu_dsize;
 	void	*cpu_data;
 	off_t	dump_off;	/* Where the actual dump starts	*/
+	void	*dump_mem;
+	size_t	dump_size;
 
 	/*
 	 * Kernel virtual address translation state.  This only gets filled
@@ -134,4 +135,4 @@ ssize_t	_kvm_pread(kvm_t *, int, void *, size_t, off_t);
 		kd->member ## _len = 0; \
 		return (NULL); \
 	} \
-    } while (/*CONSTCOND*/0)
+    } while (0)

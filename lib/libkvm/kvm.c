@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.101 2014/02/19 20:21:22 dsl Exp $	*/
+/*	$NetBSD: kvm.c,v 1.111 2023/08/23 14:00:11 rin Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.101 2014/02/19 20:21:22 dsl Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.111 2023/08/23 14:00:11 rin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: kvm.c,v 1.101 2014/02/19 20:21:22 dsl Exp $");
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
+#include <sys/mman.h>
 
 #include <sys/core.h>
 #include <sys/exec.h>
@@ -176,10 +177,19 @@ _kvm_pread(kvm_t *kd, int fd, void *buf, size_t size, off_t off)
 	ssize_t rv;
 	off_t doff;
 
+	if (kd->dump_mem != MAP_FAILED) {
+		if (size + off > kd->dump_size) {
+			errno = EINVAL;
+			return -1;
+		}
+		memcpy(buf, (char *)kd->dump_mem + (size_t)off, size);
+		return size;
+	}
+
 	/* If aligned nothing to do. */
- 	if (((off % kd->fdalign) | (size % kd->fdalign)) == 0) {
+	if (((off % kd->fdalign) | (size % kd->fdalign)) == 0) {
 		return pread(fd, buf, size, off);
- 	}
+	}
 
 	/*
 	 * Otherwise must buffer.  We can't tolerate short reads in this
@@ -202,6 +212,19 @@ _kvm_pread(kvm_t *kd, int fd, void *buf, size_t size, off_t off)
 	if (rv < size + moff)
 		return -1;
 	memcpy(buf, kd->iobuf + moff, size);
+	return size;
+}
+
+static ssize_t
+_kvm_pwrite(kvm_t *kd, const void *buf, size_t size, off_t off)
+{
+	char *mem = kd->dump_mem;
+
+	if (size + off > kd->dump_size) {
+		errno = EINVAL;
+		return -1;
+	}
+	memcpy(mem + (size_t)off, buf, size);
 	return size;
 }
 
@@ -255,6 +278,9 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 	kd->fdalign = 1;
 	kd->iobuf = NULL;
 	kd->iobufsz = 0;
+	kd->errbuf[0] = '\0';
+	kd->dump_mem = MAP_FAILED;
+	kd->dump_size = 0;
 
 	if (flag & KVM_NO_FILES) {
 		kd->alive = KVM_ALIVE_SYSCTL;
@@ -263,7 +289,7 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 
 	/*
 	 * Call the MD open hook.  This sets:
-	 *	usrstack, min_uva, max_uva
+	 *	min_uva, max_uva
 	 */
 	if (_kvm_mdopen(kd)) {
 		_kvm_err(kd, kd->program, "md init failed");
@@ -322,15 +348,6 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 		strlcpy(kd->kernelname, uf, sizeof(kd->kernelname));
 	} else {
 		strlcpy(kd->kernelname, _PATH_KSYMS, sizeof(kd->kernelname));
-		/*
-		 * We're here because /dev/ksyms was opened
-		 * successfully.  However, we don't want to keep it
-		 * open, so we close it now.  Later, we will open
-		 * it again, since it will be the only case where
-		 * kd->nlfd is negative.
-		 */
-		close(kd->nlfd);
-		kd->nlfd = -1;
 	}
 
 	if ((kd->pmfd = open(mf, flag | O_CLOEXEC, 0)) < 0) {
@@ -360,7 +377,12 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 			/* swap is not configured?  not fatal */
 		}
 	} else {
-		kd->fdalign = DEV_BSIZE;	/* XXX */
+		if (S_ISCHR(st.st_mode)) {
+			kd->fdalign = DEV_BSIZE;
+		} else {
+			kd->fdalign = 1;
+		}
+
 		/*
 		 * This is a crash dump.
 		 * Initialize the virtual address translation machinery.
@@ -374,6 +396,9 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 			if (_kvm_initvtop(kd) < 0)
 				goto failed;
 		}
+		kd->dump_size = (size_t)st.st_size;
+		kd->dump_mem = mmap(NULL, kd->dump_size, PROT_READ|PROT_WRITE,
+		    MAP_FILE|MAP_PRIVATE, kd->pmfd, 0);
 	}
 	return (kd);
 failed:
@@ -515,9 +540,14 @@ kvm_dump_mkheader(kvm_t *kd, off_t dump_off)
 	 */
 	sz = Pread(kd, kd->pmfd, &cpu_hdr, sizeof(cpu_hdr), dump_off);
 	if (sz != sizeof(cpu_hdr)) {
-		_kvm_err(kd, 0, "read %zx bytes at offset %"PRIx64
-		    " for cpu_hdr instead of requested %zu",
-		    sz, dump_off, sizeof(cpu_hdr));
+		if (sz == -1)
+			_kvm_err(kd, 0, "read %zx bytes at offset %"PRIx64
+			    " for cpu_hdr failed: %s", sizeof(cpu_hdr),
+			    dump_off, strerror(errno));
+		else
+			_kvm_err(kd, 0, "read %zx bytes at offset %"PRIx64
+			    " for cpu_hdr instead of requested %zu",
+			    sz, dump_off, sizeof(cpu_hdr));
 		return (-1);
 	}
 	if ((CORE_GETMAGIC(cpu_hdr) != KCORE_MAGIC)
@@ -605,7 +635,7 @@ clear_gap(kvm_t *kd, bool (*write_buf)(void *, const void *, size_t),
 			return -1;
 		}
 		size -= len;
-	} 
+	}
 
 	return 0;
 }
@@ -756,6 +786,8 @@ kvm_close(kvm_t *kd)
 		free(kd->argv);
 	if (kd->iobuf != 0)
 		free(kd->iobuf);
+	if (kd->dump_mem != MAP_FAILED)
+		munmap(kd->dump_mem, kd->dump_size);
 	free(kd);
 
 	return (error);
@@ -764,32 +796,15 @@ kvm_close(kvm_t *kd)
 int
 kvm_nlist(kvm_t *kd, struct nlist *nl)
 {
-	int rv, nlfd;
-
-	/*
-	 * kd->nlfd might be negative when we get here, and in that
-	 * case that means that we're using /dev/ksyms.
-	 * So open it again, just for the time we retrieve the list.
-	 */
-	if (kd->nlfd < 0) {
-		nlfd = open(_PATH_KSYMS, O_RDONLY | O_CLOEXEC, 0);
-		if (nlfd < 0) {
-			_kvm_err(kd, 0, "failed to open %s", _PATH_KSYMS);
-			return (nlfd);
-		}
-	} else
-		nlfd = kd->nlfd;
+	int rv;
 
 	/*
 	 * Call the nlist(3) routines to retrieve the given namelist.
 	 */
-	rv = __fdnlist(nlfd, nl);
+	rv = __fdnlist(kd->nlfd, nl);
 
 	if (rv == -1)
 		_kvm_err(kd, 0, "bad namelist");
-
-	if (kd->nlfd < 0)
-		close(nlfd);
 
 	return (rv);
 }
@@ -872,8 +887,10 @@ kvm_read(kvm_t *kd, u_long kva, void *buf, size_t len)
 			off_t	foff;
 
 			cc = _kvm_kvatop(kd, (vaddr_t)kva, &pa);
-			if (cc == 0)
+			if (cc == 0) {
+				_kvm_err(kd, kd->program, "_kvm_kvatop(%lx)", kva);
 				return (-1);
+			}
 			if (cc > len)
 				cc = len;
 			foff = _kvm_pa2off(kd, pa);
@@ -904,6 +921,7 @@ ssize_t
 kvm_write(kvm_t *kd, u_long kva, const void *buf, size_t len)
 {
 	int cc;
+	const void *cp;
 
 	if (ISKMEM(kd)) {
 		/*
@@ -922,9 +940,43 @@ kvm_write(kvm_t *kd, u_long kva, const void *buf, size_t len)
 		    "can't use kvm_write");
 		return (-1);
 	} else {
-		_kvm_err(kd, kd->program,
-		    "kvm_write not implemented for dead kernels");
-		return (-1);
+		if (kd->dump_mem == MAP_FAILED) {
+			_kvm_err(kd, kd->program,
+			    "kvm_write not implemented for dead kernels");
+			return (-1);
+		}
+		cp = buf;
+		while (len > 0) {
+			paddr_t	pa;
+			off_t	foff;
+
+			cc = _kvm_kvatop(kd, (vaddr_t)kva, &pa);
+			if (cc == 0) {
+				_kvm_err(kd, kd->program, "_kvm_kvatop(%lx)", kva);
+				return (-1);
+			}
+			if (cc > len)
+				cc = len;
+			foff = _kvm_pa2off(kd, pa);
+			errno = 0;
+			cc = _kvm_pwrite(kd, cp, (size_t)cc, foff);
+			if (cc < 0) {
+				_kvm_syserr(kd, kd->program, "kvm_pwrite");
+				break;
+			}
+			/*
+			 * If kvm_kvatop returns a bogus value or our core
+			 * file is truncated, we might wind up seeking beyond
+			 * the end of the core file in which case the read will
+			 * return 0 (EOF).
+			 */
+			if (cc == 0)
+				break;
+			cp = (const char *)cp + cc;
+			kva += cc;
+			len -= cc;
+		}
+		return ((const char *)cp - (const char *)buf);
 	}
 	/* NOTREACHED */
 }

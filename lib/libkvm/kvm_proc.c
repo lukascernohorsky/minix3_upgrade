@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.90 2014/02/19 20:21:22 dsl Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.100.2.2 2026/04/03 13:40:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.90 2014/02/19 20:21:22 dsl Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.100.2.2 2026/04/03 13:40:16 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,6 +80,7 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.90 2014/02/19 20:21:22 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
+#include <sys/wait.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/stat.h>
@@ -117,36 +118,23 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.90 2014/02/19 20:21:22 dsl Exp $");
 struct miniproc {
 	struct	vmspace *p_vmspace;
 	char	p_stat;
+	vaddr_t p_psstrp;
 	struct	proc *p_paddr;
 	pid_t	p_pid;
 };
 
 /*
- * Convert from struct proc and kinfo_proc{,2} to miniproc.
+ * Convert from struct proc and kinfo_proc to miniproc.
  */
-#define PTOMINI(kp, p) \
-	do { \
-		(p)->p_stat = (kp)->p_stat; \
-		(p)->p_pid = (kp)->p_pid; \
-		(p)->p_paddr = NULL; \
-		(p)->p_vmspace = (kp)->p_vmspace; \
-	} while (/*CONSTCOND*/0);
-
 #define KPTOMINI(kp, p) \
 	do { \
 		(p)->p_stat = (kp)->kp_proc.p_stat; \
 		(p)->p_pid = (kp)->kp_proc.p_pid; \
+		(p)->p_psstrp = (kp)->kp_proc.p_psstrp; \
 		(p)->p_paddr = (kp)->kp_eproc.e_paddr; \
 		(p)->p_vmspace = (kp)->kp_proc.p_vmspace; \
-	} while (/*CONSTCOND*/0);
+	} while (0)
 
-#define KP2TOMINI(kp, p) \
-	do { \
-		(p)->p_stat = (kp)->p_stat; \
-		(p)->p_pid = (kp)->p_pid; \
-		(p)->p_paddr = (void *)(long)(kp)->p_paddr; \
-		(p)->p_vmspace = (void *)(long)(kp)->p_vmspace; \
-	} while (/*CONSTCOND*/0);
 
 /*
  * NetBSD uses kauth(9) to manage credentials, which are stored in kauth_cred_t,
@@ -158,7 +146,9 @@ struct miniproc {
  */
 struct kvm_kauth_cred {
 	u_int cr_refcnt;		/* reference count */
-	uint8_t cr_pad[CACHE_LINE_SIZE - sizeof(u_int)];
+#if COHERENCY_UNIT > 4
+	uint8_t cr_pad[COHERENCY_UNIT - 4];
+#endif
 	uid_t cr_uid;			/* user id */
 	uid_t cr_euid;			/* effective user id */
 	uid_t cr_svuid;			/* saved effective user id */
@@ -169,11 +159,6 @@ struct kvm_kauth_cred {
 	gid_t cr_groups[NGROUPS];	/* group memberships */
 	specificdata_reference cr_sd;	/* specific data */
 };
-
-/* XXX: What uses these two functions? */
-char		*_kvm_uread(kvm_t *, const struct proc *, u_long, u_long *);
-ssize_t		kvm_uread(kvm_t *, const struct proc *, u_long, char *,
-		    size_t);
 
 static char	*_kvm_ureadm(kvm_t *, const struct miniproc *, u_long,
 		    u_long *);
@@ -220,8 +205,7 @@ _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 		if (KREAD(kd, addr, &vme))
 			return (NULL);
 
-		if (va >= vme.start && va < vme.end &&
-		    vme.aref.ar_amap != NULL)
+		if (va >= vme.start && va < vme.end)
 			break;
 
 		addr = (u_long)vme.next;
@@ -245,7 +229,7 @@ _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 	if (slot > amap.am_nslot)
 		return (NULL);
 
-	addr = (u_long)amap.am_anon + (offset / kd->nbpg) * sizeof(anonp);
+	addr = (u_long)amap.am_anon + slot * sizeof(anonp);
 	if (KREAD(kd, addr, &anonp))
 		return (NULL);
 
@@ -259,12 +243,12 @@ _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 			return (NULL);
 
 		if (_kvm_pread(kd, kd->pmfd, kd->swapspc, (size_t)kd->nbpg,
-		    (off_t)pg.phys_addr) != kd->nbpg)
+		    (off_t)pg.phys_addr & ~(kd->nbpg - 1)) != kd->nbpg)
 			return (NULL);
 	} else {
 		if (kd->swfd < 0 ||
 		    _kvm_pread(kd, kd->swfd, kd->swapspc, (size_t)kd->nbpg,
-		    (off_t)(anon.an_swslot * kd->nbpg)) != kd->nbpg)
+		    ((off_t)anon.an_swslot * kd->nbpg)) != kd->nbpg)
 			return (NULL);
 	}
 
@@ -272,15 +256,6 @@ _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 	offset %= kd->nbpg;
 	*cnt = kd->nbpg - offset;
 	return (&kd->swapspc[(size_t)offset]);
-}
-
-char *
-_kvm_uread(kvm_t *kd, const struct proc *p, u_long va, u_long *cnt)
-{
-	struct miniproc mp;
-
-	PTOMINI(p, &mp);
-	return (_kvm_ureadm(kd, &mp, va, cnt));
 }
 
 /*
@@ -638,7 +613,7 @@ again:
 			kp2p->p_usrpri = kl[0].l_priority;
 			kp2p->p_nice = kp->kp_proc.p_nice;
 
-			kp2p->p_xstat = kp->kp_proc.p_xstat;
+			kp2p->p_xstat = P_WAITSTATUS(&kp->kp_proc);
 			kp2p->p_acflag = kp->kp_proc.p_acflag;
 
 			/*CONSTCOND*/
@@ -975,7 +950,7 @@ kvm_argv(kvm_t *kd, const struct miniproc *p, u_long addr, int narg,
 		if (len + cc > kd->argspc_len) {
 			ptrdiff_t off;
 			char **pp;
-			char *op = kd->argspc;
+			uintptr_t op = (uintptr_t)kd->argspc;
 
 			kd->argspc_len *= 2;
 			kd->argspc = _kvm_realloc(kd, kd->argspc,
@@ -986,7 +961,7 @@ kvm_argv(kvm_t *kd, const struct miniproc *p, u_long addr, int narg,
 			 * Adjust argv pointers in case realloc moved
 			 * the string space.
 			 */
-			off = kd->argspc - op;
+			off = (uintptr_t)kd->argspc - op;
 			for (pp = kd->argv; pp < argv; pp++)
 				*pp += off;
 			ap += off;
@@ -1068,7 +1043,7 @@ kvm_doargv(kvm_t *kd, const struct miniproc *p, int nchr,
 	 */
 	if (p->p_stat == SZOMB)
 		return (NULL);
-	cnt = (int)kvm_ureadm(kd, p, kd->usrstack - sizeof(arginfo),
+	cnt = (int)kvm_ureadm(kd, p, p->p_psstrp,
 	    (void *)&arginfo, sizeof(arginfo));
 	if (cnt != sizeof(arginfo))
 		return (NULL);
@@ -1226,13 +1201,4 @@ kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long uva,
 		len -= cc;
 	}
 	return (ssize_t)(cp - buf);
-}
-
-ssize_t
-kvm_uread(kvm_t *kd, const struct proc *p, u_long uva, char *buf, size_t len)
-{
-	struct miniproc mp;
-
-	PTOMINI(p, &mp);
-	return (kvm_ureadm(kd, &mp, uva, buf, len));
 }
