@@ -1,12 +1,66 @@
-/*	$NetBSD: mdreloc.c,v 1.37 2014/08/31 20:06:22 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.48 2025/04/16 17:37:48 riastradh Exp $	*/
+
+/*
+ * Copyright 1996 John D. Polstra.
+ * Copyright 1996 Matt Thomas <matt@3am-software.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by John Polstra.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * i386 ELF relocations.
+ *
+ * References:
+ *
+ *	[ABI386-4] System V Application Binary Interface: Intel386
+ *	Architecture Processor Supplement, Fourth Edition, 1997-03-19,
+ *	The Santa Cruz Operation, Inc.
+ *	https://www.sco.com/developers/devspecs/abi386-4.pdf
+ *	https://web.archive.org/web/20250329184450/https://www.sco.com/developers/devspecs/abi386-4.pdf
+ *
+ * Note: Intel and SuSE have published an update to the i386 ELF
+ * supplement, but it is not entirely compatible (e.g., it requires
+ * 16-byte alignment for the stack pointer, not just 4-byte alignment),
+ * so it is not reliable as a normative reference:
+ *
+ *	[ABI386-2015] System V Application Binary Interface: Intel386
+ *	Architecture Processor Supplement, Version 1.0, 2015-02-03.
+ *	https://uclibc.org/docs/psABI-i386.pdf
+ *	https://web.archive.org/web/20250118211449/https://uclibc.org/docs/psABI-i386.pdf
+ *	https://gitlab.com/x86-psABIs/i386-ABI
+ */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.37 2014/08/31 20:06:22 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.48 2025/04/16 17:37:48 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/ucontext.h>
+#include <machine/lwp_private.h>
 
 #include "debug.h"
 #include "rtld.h"
@@ -14,6 +68,9 @@ __RCSID("$NetBSD: mdreloc.c,v 1.37 2014/08/31 20:06:22 joerg Exp $");
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
+
+#define rdbg_symname(obj, rela) \
+	((obj)->strtab + (obj)->symtab[ELF_R_SYM((rela)->r_info)].st_name)
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
@@ -53,16 +110,39 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 {
 	const Elf_Rel *rel;
 	Elf_Addr target = 0;
+	const Elf_Sym   *def = NULL;
+	const Obj_Entry *defobj = NULL;
+	unsigned long last_symnum = ULONG_MAX;
 
 	for (rel = obj->rel; rel < obj->rellim; rel++) {
 		Elf_Addr        *where;
-		const Elf_Sym   *def;
-		const Obj_Entry *defobj;
 		Elf_Addr         tmp;
 		unsigned long	 symnum;
 
 		where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
-		symnum = ELF_R_SYM(rel->r_info);
+
+		switch (ELF_R_TYPE(rel->r_info)) {
+		case R_TYPE(PC32):
+		case R_TYPE(GOT32):
+		case R_TYPE(32):
+		case R_TYPE(GLOB_DAT):
+		case R_TYPE(TLS_TPOFF):
+		case R_TYPE(TLS_TPOFF32):
+		case R_TYPE(TLS_DTPMOD32):
+		case R_TYPE(TLS_DTPOFF32):
+			symnum = ELF_R_SYM(rel->r_info);
+			if (symnum != last_symnum) {
+				last_symnum = symnum;
+				def = _rtld_find_symdef(symnum, obj, &defobj,
+				    false);
+				if (def == NULL)
+					return -1;
+			}
+			break;
+		default:
+			break;
+		}
+
 
 		switch (ELF_R_TYPE(rel->r_info)) {
 		case R_TYPE(NONE):
@@ -70,14 +150,11 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 #if 1 /* XXX should not occur */
 		case R_TYPE(PC32):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
 			target = (Elf_Addr)(defobj->relocbase + def->st_value);
 
 			*where += target - (Elf_Addr)where;
 			rdbg(("PC32 %s in %s --> %p in %s",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symname(obj, rel),
 			    obj->path, (void *)*where, defobj->path));
 			break;
 
@@ -85,18 +162,24 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 #endif
 		case R_TYPE(32):
 		case R_TYPE(GLOB_DAT):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
 			target = (Elf_Addr)(defobj->relocbase + def->st_value);
 
 			tmp = target + *where;
 			if (*where != tmp)
 				*where = tmp;
 			rdbg(("32/GLOB_DAT %s in %s --> %p in %s",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symname(obj, rel),
 			    obj->path, (void *)*where, defobj->path));
 			break;
+
+
+		case R_TYPE(IRELATIVE):
+			/* IFUNC relocations are handled in _rtld_call_ifunc */
+			if (obj->ifunc_remaining_nonplt == 0) {
+				obj->ifunc_remaining_nonplt =
+				    obj->rellim - rel;
+			}
+			/* FALL-THROUGH */
 
 		case R_TYPE(RELATIVE):
 			*where += (Elf_Addr)obj->relocbase;
@@ -122,57 +205,41 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 #if defined(__minix) && defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 		case R_TYPE(TLS_TPOFF):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
-			if (!defobj->tls_done &&
-			    _rtld_tls_offset_allocate(obj))
+			if (!defobj->tls_static &&
+			    _rtld_tls_offset_allocate(__UNCONST(defobj)))
 				return -1;
 
 			*where += (Elf_Addr)(def->st_value - defobj->tlsoffset);
 
 			rdbg(("TLS_TPOFF %s in %s --> %p",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symname(obj, rel),
 			    obj->path, (void *)*where));
 			break;
 
 		case R_TYPE(TLS_TPOFF32):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
-			if (!defobj->tls_done &&
-			    _rtld_tls_offset_allocate(obj))
+			if (!defobj->tls_static &&
+			    _rtld_tls_offset_allocate(__UNCONST(defobj)))
 				return -1;
 
 			*where += (Elf_Addr)(defobj->tlsoffset - def->st_value);
 			rdbg(("TLS_TPOFF32 %s in %s --> %p",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symname(obj, rel),
 			    obj->path, (void *)*where));
 			break;
 
 		case R_TYPE(TLS_DTPMOD32):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
 			*where = (Elf_Addr)(defobj->tlsindex);
 
 			rdbg(("TLS_DTPMOD32 %s in %s --> %p",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symname(obj, rel),
 			    obj->path, (void *)*where));
 			break;
 
 		case R_TYPE(TLS_DTPOFF32):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
 			*where = (Elf_Addr)(def->st_value);
 
 			rdbg(("TLS_DTPOFF32 %s in %s --> %p",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symname(obj, rel),
 			    obj->path, (void *)*where));
 
 			break;
@@ -181,9 +248,10 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		default:
 			rdbg(("sym = %lu, type = %lu, offset = %p, "
 			    "contents = %p, symbol = %s",
-			    symnum, (u_long)ELF_R_TYPE(rel->r_info),
+			    (u_long)ELF_R_SYM(rel->r_info),
+			    (u_long)ELF_R_TYPE(rel->r_info),
 			    (void *)rel->r_offset, (void *)*where,
-			    obj->strtab + obj->symtab[symnum].st_name));
+			    rdbg_symname(obj, rel)));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations",
 			    obj->path, (u_long) ELF_R_TYPE(rel->r_info));
@@ -194,17 +262,18 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_plt_lazy(const Obj_Entry *obj)
+_rtld_relocate_plt_lazy(Obj_Entry *obj)
 {
 	const Elf_Rel *rel;
 
-	if (!obj->relocbase)
-		return 0;
-
-	for (rel = obj->pltrel; rel < obj->pltrellim; rel++) {
+	for (rel = obj->pltrellim; rel-- > obj->pltrel; ) {
 		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
 
-		assert(ELF_R_TYPE(rel->r_info) == R_TYPE(JMP_SLOT));
+		assert(ELF_R_TYPE(rel->r_info) == R_TYPE(JMP_SLOT) ||
+		       ELF_R_TYPE(rel->r_info) == R_TYPE(IRELATIVE));
+
+		if (ELF_R_TYPE(rel->r_info) == R_TYPE(IRELATIVE))
+			obj->ifunc_remaining = obj->pltrellim - rel;
 
 		/* Just relocate the GOT slots pointing into the PLT */
 		*where += (Elf_Addr)obj->relocbase;
@@ -224,6 +293,9 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rel *rel,
 	const Obj_Entry *defobj;
 	unsigned long info = rel->r_info;
 
+	if (ELF_R_TYPE(info) == R_TYPE(IRELATIVE))
+		return 0;
+
 	assert(ELF_R_TYPE(info) == R_TYPE(JMP_SLOT));
 
 	def = _rtld_find_plt_symdef(ELF_R_SYM(info), obj, &defobj, tp != NULL);
@@ -241,7 +313,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rel *rel,
 	}
 
 	rdbg(("bind now/fixup in %s --> old=%p new=%p",
-	    defobj->strtab + def->st_name, (void *)*where, 
+	    defobj->strtab + def->st_name, (void *)*where,
 	    (void *)target));
 	if (*where != target)
 		*where = target;
@@ -274,7 +346,7 @@ _rtld_relocate_plt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rel *rel;
 	int err = 0;
-	
+
 	for (rel = obj->pltrel; rel < obj->pltrellim; rel++) {
 		err = _rtld_relocate_plt_object(obj, rel, NULL);
 		if (err)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.53 2014/08/25 20:40:52 joerg Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.66 2024/11/30 01:04:05 christos Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -28,9 +28,22 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Power ELF relocations.
+ *
+ * Reference:
+ *
+ *	Power Architecture(R) 32-bit
+ *	Application Binary Interface Supplement 1.0 - Linux(R)
+ *	http://web.archive.org/web/20120608163845/https://www.power.org/resources/downloads/Power-Arch-32-bit-ABI-supp-1.0-Linux.pdf
+ *
+ *	64-bit PowerPC ELF Application Binary Interface Supplement 1.9
+ *	https://refspecs.linuxfoundation.org/ELF/ppc64/PPC-elf64abi-1.9.pdf
+ */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.53 2014/08/25 20:40:52 joerg Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.66 2024/11/30 01:04:05 christos Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -42,6 +55,8 @@ __RCSID("$NetBSD: ppc_reloc.c,v 1.53 2014/08/25 20:40:52 joerg Exp $");
 
 #include "debug.h"
 #include "rtld.h"
+
+#include <machine/lwp_private.h>
 
 void _rtld_powerpc_pltcall(Elf_Word);
 void _rtld_powerpc_pltresolve(Elf_Word, Elf_Word);
@@ -178,16 +193,43 @@ int
 _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
+	const Elf_Sym *def = NULL;
+	const Obj_Entry *defobj = NULL;
+	unsigned long last_symnum = ULONG_MAX;
 
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;
-		const Elf_Sym   *def;
-		const Obj_Entry *defobj;
 		Elf_Addr         tmp;
 		unsigned long	 symnum;
 
 		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 		symnum = ELF_R_SYM(rela->r_info);
+
+		switch (ELF_R_TYPE(rela->r_info)) {
+#ifdef _LP64
+		case R_TYPE(ADDR64):	/* <address> S + A */
+#else
+		case R_TYPE(ADDR32):	/* <address> S + A */
+		case R_TYPE(UADDR32):	/* <address> S + A */
+#endif
+		case R_TYPE(GLOB_DAT):	/* <address> S + A */
+		case R_TYPE(ADDR16_LO):
+		case R_TYPE(ADDR16_HI):
+		case R_TYPE(ADDR16_HA):
+		case R_TYPE(DTPMOD):
+		case R_TYPE(DTPREL):
+		case R_TYPE(TPREL):
+			if (last_symnum != symnum) {
+				last_symnum = symnum;
+				def = _rtld_find_symdef(symnum, obj, &defobj,
+				    false);
+				if (def == NULL)
+					return -1;
+			}
+			break;
+		default:
+			break;
+		}
 
 		switch (ELF_R_TYPE(rela->r_info)) {
 #if 1 /* XXX Should not be necessary. */
@@ -200,12 +242,9 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		case R_TYPE(ADDR64):	/* <address> S + A */
 #else
 		case R_TYPE(ADDR32):	/* <address> S + A */
+		case R_TYPE(UADDR32):	/* <address> S + A */
 #endif
 		case R_TYPE(GLOB_DAT):	/* <address> S + A */
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
 			tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
 			    rela->r_addend);
 			if (*where != tmp)
@@ -214,6 +253,50 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where, defobj->path));
 			break;
+
+		/*
+		 * Recent GNU ld does not resolve ADDR16_{LO,HI,HA} if
+		 * the reloc is in a writable section and the symbol
+		 * is not already referenced from text.
+		 */
+		case R_TYPE(ADDR16_LO): {
+			tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
+			    rela->r_addend);
+
+			uint16_t tmp16 = lo(tmp);
+
+			uint16_t *where16 = (uint16_t *)where;
+			if (*where16 != tmp16)
+				*where16 = tmp16;
+			rdbg(("ADDR16_LO %s in %s --> #lo(%p) = 0x%x in %s",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			      obj->path, (void *)tmp, tmp16, defobj->path));
+			break;
+		}
+
+		case R_TYPE(ADDR16_HI):
+		case R_TYPE(ADDR16_HA): {
+			tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
+			    rela->r_addend);
+
+			uint16_t tmp16 = hi(tmp);
+			if (ELF_R_TYPE(rela->r_info) == R_TYPE(ADDR16_HA)
+			    && (tmp & __ha16))
+				++tmp16; /* adjust to ha(tmp) */
+
+			uint16_t *where16 = (uint16_t *)where;
+			if (*where16 != tmp16)
+				*where16 = tmp16;
+			rdbg(("ADDR16_H%c %s in %s --> #h%c(%p) = 0x%x in %s",
+			      (ELF_R_TYPE(rela->r_info) == R_TYPE(ADDR16_HI)
+			           ? 'I' : 'A'),
+			      obj->strtab + obj->symtab[symnum].st_name,
+			      obj->path,
+			      (ELF_R_TYPE(rela->r_info) == R_TYPE(ADDR16_HI)
+			           ? 'i' : 'a'),
+			      (void *)tmp, tmp16, defobj->path));
+			break;
+		}
 
 		case R_TYPE(RELATIVE):	/* <address> B + A */
 			*where = (Elf_Addr)(obj->relocbase + rela->r_addend);
@@ -238,10 +321,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(DTPMOD):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
 			*where = (Elf_Addr)defobj->tlsindex;
 			rdbg(("DTPMOD32 %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
@@ -249,13 +328,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(DTPREL):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
-			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
-				return -1;
-
 			*where = (Elf_Addr)(def->st_value + rela->r_addend
 			    - TLS_DTV_OFFSET);
 			rdbg(("DTPREL32 %s in %s --> %p in %s",
@@ -264,11 +336,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TPREL):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
-			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
+			if (!defobj->tls_static &&
+			    _rtld_tls_offset_allocate(__UNCONST(defobj)))
 				return -1;
 
 			*where = (Elf_Addr)(def->st_value + rela->r_addend
@@ -278,10 +347,19 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			    obj->path, (void *)*where, defobj->path));
 			break;
 
+		case R_TYPE(IRELATIVE):
+			/* IFUNC relocations are handled in _rtld_call_ifunc */
+			if (obj->ifunc_remaining_nonplt == 0) {
+				obj->ifunc_remaining_nonplt =
+				    obj->relalim - rela;
+			}
+			break;
+
 		default:
 			rdbg(("sym = %lu, type = %lu, offset = %p, "
 			    "addend = %p, contents = %p, symbol = %s",
-			    symnum, (u_long)ELF_R_TYPE(rela->r_info),
+			    (u_long)ELF_R_SYM(rela->r_info),
+			    (u_long)ELF_R_TYPE(rela->r_info),
 			    (void *)rela->r_offset, (void *)rela->r_addend,
 			    (void *)*where,
 			    obj->strtab + obj->symtab[symnum].st_name));
@@ -295,24 +373,30 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_plt_lazy(const Obj_Entry *obj)
+_rtld_relocate_plt_lazy(Obj_Entry *obj)
 {
 #ifdef _LP64
 	/*
 	 * For PowerPC64, the plt stubs handle an empty function descriptor
 	 * so there's nothing to do.
 	 */
+	/* XXX ifunc support */
 #else
 	Elf_Addr * const pltresolve = obj->pltgot + 8;
 	const Elf_Rela *rela;
-	int reloff;
 
-	for (rela = obj->pltrela, reloff = 0;
-	     rela < obj->pltrelalim;
-	     rela++, reloff++) {
+	for (rela = obj->pltrelalim; rela-- > obj->pltrela;) {
+		size_t reloff = rela - obj->pltrela;
 		Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
 
-		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
+		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT) ||
+		       ELF_R_TYPE(rela->r_info) == R_TYPE(IRELATIVE));
+
+		if (ELF_R_TYPE(rela->r_info) == R_TYPE(IRELATIVE)) {
+			/* No ifunc support for old-style insecure PLT. */
+			assert(obj->gotptr != NULL);
+			obj->ifunc_remaining = obj->pltrelalim - rela;
+		}
 
 		if (obj->gotptr != NULL) {
 			/*
@@ -373,7 +457,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 	} else {
 		value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	}
-	rdbg(("bind now/fixup in %s --> new=%p", 
+	rdbg(("bind now/fixup in %s --> new=%p",
 	    defobj->strtab + def->st_name, (void *)value));
 
 #ifdef _LP64
@@ -404,14 +488,14 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 	} else {
 		Elf_Addr *pltcall, *jmptab;
 		int N = obj->pltrelalim - obj->pltrela;
-	
+
 		/* Entries beyond 8192 take twice as much space. */
 		if (N > 8192)
 			N += N-8192;
 
 		pltcall = obj->pltgot;
 		jmptab = pltcall + 18 + N * 2;
-	
+
 		jmptab[reloff] = value;
 
 		if (reloff < 32768) {
@@ -456,7 +540,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 	new_value = 0;	/* XXX gcc */
 
 	_rtld_shared_enter();
-	err = _rtld_relocate_plt_object(obj, rela, reloff, &new_value); 
+	err = _rtld_relocate_plt_object(obj, rela, reloff, &new_value);
 	if (err)
 		_rtld_die();
 	_rtld_shared_exit();
@@ -473,7 +557,7 @@ _rtld_relocate_plt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 	int reloff;
-	
+
 	for (rela = obj->pltrela, reloff = 0; rela < obj->pltrelalim; rela++, reloff++) {
 		if (_rtld_relocate_plt_object(obj, rela, reloff, NULL) < 0)
 			return -1;

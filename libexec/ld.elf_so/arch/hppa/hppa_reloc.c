@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.43 2014/08/25 20:40:52 joerg Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.53 2024/07/29 13:16:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -29,9 +29,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * HP PA-RISC ELF relocations.
+ *
+ * References:
+ *
+ *	[PAELF] Processor-Specific ELF Supplement for PA-RISC, Version
+ *	1.5, 1998-08-20.
+ *	https://parisc.wiki.kernel.org/images-parisc/0/0e/Elf-pa-hp.pdf
+ *	https://web.archive.org/web/20240712004045/https://parisc.wiki.kernel.org/images-parisc/0/0e/Elf-pa-hp.pdf
+ *
+ *	[PATLS] Randolph Chung, Carlos O'Donell, and John David
+ *	Anglin, `Implementing Thread Local Storage for HP PA-RISC
+ *	Linux', 2013-11-11.
+ *	http://www.parisc-linux.org/documentation/tls/hppa-tls-implementation.pdf
+ *	https://web.archive.org/web/20240722131647/http://www.parisc-linux.org/documentation/tls/hppa-tls-implementation.pdf
+ */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.43 2014/08/25 20:40:52 joerg Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.53 2024/07/29 13:16:19 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -52,6 +69,7 @@ __RCSID("$NetBSD: hppa_reloc.c,v 1.43 2014/08/25 20:40:52 joerg Exp $");
 caddr_t _rtld_bind(const Obj_Entry *, const Elf_Addr);
 void _rtld_bind_start(void);
 void __rtld_setup_hppa_pltgot(const Obj_Entry *, Elf_Addr *);
+void _rtld_set_dp(Elf_Addr *);
 
 /*
  * It is possible for the compiler to emit relocations for unaligned data.
@@ -89,10 +107,10 @@ fdc(void *addr)
 }
 
 static __inline void
-fic(void *addr)     
-{                   
+fic(void *addr)
+{
 	__asm volatile("fic %%r0(%%sr0,%0)" : : "r" (addr));
-} 
+}
 
 static __inline void
 sync(void)
@@ -128,7 +146,7 @@ typedef struct _hppa_plabel {
 } hppa_plabel;
 
 /*
- * For now allocated PLABEL structures are tracked on a 
+ * For now allocated PLABEL structures are tracked on a
  * singly linked list.  This maybe should be revisited.
  */
 static SLIST_HEAD(hppa_plabel_head, _hppa_plabel) hppa_plabel_list
@@ -151,13 +169,13 @@ static inline int _rtld_relocate_plt_object(const Obj_Entry *,
  * This bootstraps the dynamic linker by relocating its GOT.
  * On the hppa, unlike on other architectures, static strings
  * are found through the GOT.  Static strings are essential
- * for RTLD_DEBUG, and I suspect they're used early even when 
+ * for RTLD_DEBUG, and I suspect they're used early even when
  * !defined(RTLD_DEBUG), making relocating the GOT essential.
  *
  * It gets worse.  Relocating the GOT doesn't mean just walking
  * it and adding the relocbase to all of the entries.  You must
- * find and use the GOT relocations, since those RELA relocations 
- * have the necessary addends - the GOT comes initialized as 
+ * find and use the GOT relocations, since those RELA relocations
+ * have the necessary addends - the GOT comes initialized as
  * zeroes.
  */
 void
@@ -176,7 +194,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 
 	/*
 	 * Process the DYNAMIC section, looking for the non-PLT relocations.
-	 */ 
+	 */
 	relafirst = NULL;
 	relasz = 0;
 	symtab = NULL;
@@ -213,11 +231,11 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 		switch (ELF_R_TYPE(rela->r_info)) {
 		case R_TYPE(DIR32):
 			if (symnum == 0)
-				store_ptr(where, 
+				store_ptr(where,
 				    relocbase + rela->r_addend);
 			else {
 				sym = symtab + symnum;
-				store_ptr(where, 
+				store_ptr(where,
 				    relocbase + rela->r_addend + sym->st_value);
 			}
 			break;
@@ -235,7 +253,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 			 *     relocations have been done.
 			 */
 			if (symnum == 0)
-				*((Elf_Addr *)where) = 
+				*((Elf_Addr *)where) =
 				    relocbase + rela->r_addend;
 			else
 				plabel_relocs[nplabel_relocs++] = rela;
@@ -251,7 +269,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 		rela = plabel_relocs[i];
 		where = (void *)(relocbase + rela->r_offset);
 		sym = symtab + ELF_R_SYM(rela->r_info);
-		
+
 		plabel = &hppa_plabel_pre[hppa_plabel_pre_next++];
 
 		plabel->hppa_plabel_pc = (Elf_Addr)
@@ -261,7 +279,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 		SLIST_INSERT_HEAD(&hppa_plabel_list, plabel, hppa_plabel_next);
 		*((Elf_Addr *)where) = (Elf_Addr)(RTLD_MAKE_PLABEL(plabel));
 	}
-	
+
 #if defined(RTLD_DEBUG_HPPA)
 	for (rela = relafirst; rela < relalim; rela++) {
 		where = (void *)(relocbase + rela->r_offset);
@@ -304,9 +322,9 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 }
 
 /*
- * This allocates a PLABEL.  If called with a non-NULL def, the 
+ * This allocates a PLABEL.  If called with a non-NULL def, the
  * plabel is for the function associated with that definition
- * in the defining object defobj, plus the given addend.  If 
+ * in the defining object defobj, plus the given addend.  If
  * called with a NULL def, the plabel is for the function at
  * the (unrelocated) address in addend in the object defobj.
  */
@@ -318,7 +336,7 @@ _rtld_function_descriptor_alloc(const Obj_Entry *defobj, const Elf_Sym *def,
 	hppa_plabel	*plabel;
 
 	if (def != NULL) {
-	
+
 		/*
 		 * We assume that symbols of type STT_NOTYPE
 		 * are undefined.  Return NULL for these.
@@ -329,7 +347,7 @@ _rtld_function_descriptor_alloc(const Obj_Entry *defobj, const Elf_Sym *def,
 		/* Otherwise assert that this symbol must be a function. */
 		assert(ELF_ST_TYPE(def->st_info) == STT_FUNC);
 
-		func_pc = (Elf_Addr)(defobj->relocbase + def->st_value + 
+		func_pc = (Elf_Addr)(defobj->relocbase + def->st_value +
 		    addend);
 	} else
 		func_pc = (Elf_Addr)(defobj->relocbase + addend);
@@ -370,7 +388,7 @@ _rtld_function_descriptor_alloc(const Obj_Entry *defobj, const Elf_Sym *def,
 const void *
 _rtld_function_descriptor_function(const void *addr)
 {
-	return (RTLD_IS_PLABEL(addr) ? 
+	return (RTLD_IS_PLABEL(addr) ?
 	    (const void *) RTLD_GET_PLABEL(addr)->hppa_plabel_pc :
 	    addr);
 }
@@ -383,7 +401,7 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 
 	assert(got[-2] == PLT_STUB_MAGIC1);
 	assert(got[-1] == PLT_STUB_MAGIC2);
-	
+
 	__rtld_setup_hppa_pltgot(obj, got);
 
 	fdc(&got[-2]);
@@ -413,46 +431,33 @@ int
 _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
+	const Elf_Sym *def = NULL;
+	const Obj_Entry *defobj = NULL;
+	unsigned long last_symnum = ULONG_MAX;
+
+	/*
+	 * This will be done by the crt0 code, but make sure it's set
+	 * early so that symbols overridden by the non-pic binary
+	 * get the right DP value.
+	 */
+	if (obj->mainprog) {
+		hdbg(("setting DP to %p", obj->pltgot));
+		_rtld_set_dp(obj->pltgot);
+	}
 
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;
-		const Elf_Sym   *def;
-		const Obj_Entry *defobj;
 		Elf_Addr         tmp;
-		unsigned long	 symnum;
 
 		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
-		symnum = ELF_R_SYM(rela->r_info);
 
-		switch (ELF_R_TYPE(rela->r_info)) {
-		case R_TYPE(NONE):
-			break;
-
-		case R_TYPE(DIR32):
-			if (symnum) {
-				/*
-				 * This is either a DIR32 against a symbol
-				 * (def->st_name != 0), or against a local
-				 * section (def->st_name == 0).
-				 */
-				def = obj->symtab + symnum;
-				defobj = obj;
-				if (def->st_name != 0)
-					def = _rtld_find_symdef(symnum, obj,
-					    &defobj, false);
-				if (def == NULL)
-					return -1;
-
-				tmp = (Elf_Addr)(defobj->relocbase +
-				    def->st_value + rela->r_addend);
-
-				if (load_ptr(where) != tmp)
-					store_ptr(where, tmp);
-				rdbg(("DIR32 %s in %s --> %p in %s",
-				    obj->strtab + obj->symtab[symnum].st_name,
-				    obj->path, (void *)load_ptr(where),
-				    defobj->path));
-			} else {
+		unsigned long symnum = ELF_R_SYM(rela->r_info);
+		/* First, handle DIR32 and PLABEL32 without symbol. */
+		if (symnum == 0) {
+			switch (ELF_R_TYPE(rela->r_info)) {
+			default:
+				break;
+			case R_TYPE(DIR32):
 				tmp = (Elf_Addr)(obj->relocbase +
 				    rela->r_addend);
 
@@ -460,27 +465,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 					store_ptr(where, tmp);
 				rdbg(("DIR32 in %s --> %p", obj->path,
 					    (void *)load_ptr(where)));
-			}
-			break;
-
-		case R_TYPE(PLABEL32):
-			if (symnum) {
-				def = _rtld_find_symdef(symnum, obj, &defobj,
-				    false);
-				if (def == NULL)
-					return -1;
-
-				tmp = _rtld_function_descriptor_alloc(defobj,
-				    def, rela->r_addend);
-				if (tmp == (Elf_Addr)-1)
-					return -1;
-
-				if (*where != tmp)
-					*where = tmp;
-				rdbg(("PLABEL32 %s in %s --> %p in %s",
-				    obj->strtab + obj->symtab[symnum].st_name,
-				    obj->path, (void *)*where, defobj->path));
-			} else {
+				continue;
+			case R_TYPE(PLABEL32):
 				/*
 				 * This is a PLABEL for a static function, and
 				 * the dynamic linker has both allocated a PLT
@@ -505,7 +491,66 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 					*where = tmp;
 				rdbg(("PLABEL32 in %s --> %p", obj->path,
 				    (void *)*where));
+				continue;
 			}
+		}
+
+		switch (ELF_R_TYPE(rela->r_info)) {
+		case R_TYPE(DIR32):
+		case R_TYPE(PLABEL32):
+		case R_TYPE(COPY):
+		case R_TYPE(TLS_TPREL32):
+		case R_TYPE(TLS_DTPMOD32):
+		case R_TYPE(TLS_DTPOFF32):
+			if (last_symnum != symnum) {
+				last_symnum = symnum;
+				if (ELF_R_TYPE(rela->r_info) == R_TYPE(DIR32)) {
+					/*
+					 * DIR32 relocation against local
+					 * symbols are special...
+					 */
+					def = obj->symtab + symnum;
+					defobj = obj;
+					if (def->st_name == 0)
+						break;
+				}
+				def = _rtld_find_symdef(symnum, obj, &defobj,
+				    false);
+				if (def == NULL)
+					return -1;
+			}
+			break;
+		default:
+			break;
+		}
+
+		switch (ELF_R_TYPE(rela->r_info)) {
+		case R_TYPE(NONE):
+			break;
+
+		case R_TYPE(DIR32):
+			tmp = (Elf_Addr)(defobj->relocbase +
+			    def->st_value + rela->r_addend);
+
+			if (load_ptr(where) != tmp)
+				store_ptr(where, tmp);
+			rdbg(("DIR32 %s in %s --> %p in %s",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)load_ptr(where),
+			    defobj->path));
+			break;
+
+		case R_TYPE(PLABEL32):
+			tmp = _rtld_function_descriptor_alloc(defobj,
+			    def, rela->r_addend);
+			if (tmp == (Elf_Addr)-1)
+				return -1;
+
+			if (*where != tmp)
+				*where = tmp;
+			rdbg(("PLABEL32 %s in %s --> %p in %s",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, defobj->path));
 			break;
 
 		case R_TYPE(COPY):
@@ -525,11 +570,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TLS_TPREL32):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
-			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
+			if (!defobj->tls_static &&
+			    _rtld_tls_offset_allocate(__UNCONST(defobj)))
 				return -1;
 
 			*where = (Elf_Addr)(defobj->tlsoffset + def->st_value +
@@ -541,10 +583,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TLS_DTPMOD32):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
 			*where = (Elf_Addr)(defobj->tlsindex);
 
 			rdbg(("TLS_DTPMOD32 %s in %s --> %p",
@@ -554,10 +592,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TLS_DTPOFF32):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
 			*where = (Elf_Addr)(def->st_value);
 
 			rdbg(("TLS_DTPOFF32 %s in %s --> %p",
@@ -583,13 +617,17 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_plt_lazy(const Obj_Entry *obj)
+_rtld_relocate_plt_lazy(Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 
 	for (rela = obj->pltrela; rela < obj->pltrelalim; rela++) {
 		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 		Elf_Addr func_pc, func_sl;
+
+		/* skip R_PARISC_NONE entries */
+		if (ELF_R_TYPE(rela->r_info) == R_TYPE(NONE))
+			continue;
 
 		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(IPLT));
 
@@ -621,7 +659,7 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 		rdbg(("lazy bind %s(%p) --> old=(%p,%p) new=(%p,%p)",
 		    obj->path,
 		    (void *)where,
-		    (void *)where[0], (void *)where[1], 
+		    (void *)where[0], (void *)where[1],
 		    (void *)func_pc, (void *)func_sl));
 
 		/*
@@ -672,7 +710,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 
 		rdbg(("bind now/fixup in %s --> old=(%p,%p) new=(%p,%p)",
 		    defobj->strtab + def->st_name,
-		    (void *)where[0], (void *)where[1], 
+		    (void *)where[0], (void *)where[1],
 		    (void *)func_pc, (void *)func_sl));
 	}
 	/*
@@ -697,11 +735,11 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 	int err;
 
 	rela = (const Elf_Rela *)((const char *)obj->pltrela + reloff);
-	
+
 	assert(ELF_R_SYM(rela->r_info) != 0);
 
 	_rtld_shared_enter();
-	err = _rtld_relocate_plt_object(obj, rela, &new_value); 
+	err = _rtld_relocate_plt_object(obj, rela, &new_value);
 	if (err)
 		_rtld_die();
 	_rtld_shared_exit();
@@ -713,25 +751,12 @@ int
 _rtld_relocate_plt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela = obj->pltrela;
-	
+
 	for (; rela < obj->pltrelalim; rela++) {
 		if (_rtld_relocate_plt_object(obj, rela, NULL) < 0)
 			return -1;
 	}
 	return 0;
-}
-
-void
-_rtld_call_function_void(const Obj_Entry *obj, Elf_Addr ptr)
-{
-	volatile hppa_plabel plabel;
-	void (*f)(void);
-
-	plabel.hppa_plabel_pc = (Elf_Addr)ptr;
-	plabel.hppa_plabel_sl = (Elf_Addr)(obj->pltgot);
-	f = (void (*)(void))RTLD_MAKE_PLABEL(&plabel);
-
-	f();
 }
 
 Elf_Addr

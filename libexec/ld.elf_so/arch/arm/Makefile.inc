@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2013/09/10 16:35:10 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2018/12/27 18:58:14 christos Exp $
 
 SRCS+=		rtld_start.S mdreloc.c
 #CPUFLAGS.rtld_start.S+=	-marm
@@ -7,8 +7,8 @@ SRCS+=		rtld_start.S mdreloc.c
 CPPFLAGS+=	-fpic
 
 CPPFLAGS+=	-DELFSIZE=32
+CPPFLAGS+=	-DRTLD_COMMON_CALL_IFUNC_REL
 .if !empty(LDELFSO_MACHINE_ARCH:Mearm*)
-CPPFLAGS+=	-DHAVE_INITFINI_ARRAY
 CPPFLAGS+=	-DELF_NOTE_MARCH_DESC=\"${LDELFSO_MACHINE_ARCH}\"
 SRCS+=		find_exidx.c
 .endif

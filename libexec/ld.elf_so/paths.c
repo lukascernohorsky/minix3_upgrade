@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.41 2013/05/06 08:02:20 skrll Exp $	 */
+/*	$NetBSD: paths.c,v 1.43 2025/05/02 23:04:56 riastradh Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: paths.c,v 1.41 2013/05/06 08:02:20 skrll Exp $");
+__RCSID("$NetBSD: paths.c,v 1.43 2025/05/02 23:04:56 riastradh Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -49,12 +49,13 @@ __RCSID("$NetBSD: paths.c,v 1.41 2013/05/06 08:02:20 skrll Exp $");
 #include <sys/gmon.h>
 #include <sys/socket.h>
 #include <sys/mount.h>
-#include <sys/mbuf.h>
 #include <sys/resource.h>
 #include <machine/cpu.h>
 
 #include "debug.h"
 #include "rtld.h"
+
+#include "../../lib/libc/include/__sysctl.h" /* __sysctl syscall stub */
 
 static Search_Path *_rtld_find_path(Search_Path *, const char *, size_t);
 static Search_Path **_rtld_append_path(Search_Path **, Search_Path **,
@@ -437,7 +438,7 @@ _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
 		query.sysctl_flags = SYSCTL_VERSION;
 
 		n = res_size;
-		if (sysctl(mib, miblen + 1, result, &n, &query,
+		if (__sysctl(mib, miblen + 1, result, &n, &query,
 		    sizeof(query)) == -1) {
 			if (errno != ENOMEM)
 				goto bad;
@@ -447,7 +448,7 @@ _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
 			if (newresult == NULL)
 				goto bad;
 			result = newresult;
-			if (sysctl(mib, miblen + 1, result, &n, &query,
+			if (__sysctl(mib, miblen + 1, result, &n, &query,
 			    sizeof(query)) == -1)
 				goto bad;
 		}
@@ -468,7 +469,7 @@ _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
 	r = SYSCTL_TYPE(result[i].sysctl_flags);
 
 	xfree(result);
-	if (sysctl(mib, miblen, oldp, oldlen, NULL, 0) == -1)
+	if (__sysctl(mib, miblen, oldp, oldlen, NULL, 0) == -1)
 		return (-1);
 	return r;
 

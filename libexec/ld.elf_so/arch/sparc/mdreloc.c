@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.48 2014/08/25 20:40:52 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.60 2024/08/03 21:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -29,10 +29,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * SPARC ELF relocations.
+ *
+ * Reference:
+ *
+ *	SPARC Compliance Definition 2.4.1
+ *	http://sparc.org/wp-content/uploads/2014/01/SCD.2.4.1.pdf.gz
+ */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.48 2014/08/25 20:40:52 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.60 2024/08/03 21:59:58 riastradh Exp $");
 #endif /* not lint */
+
+#include <machine/elf_support.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -107,15 +118,15 @@ static const char *reloc_names[] = {
 	"PLT32",
 	"HIPLT22", "LOPLT10", "LOPLT10", "PCPLT22", "PCPLT32",
 	"10", "11", "64", "OLO10", "HH22",
-	"HM10", "LM22", "PC_HH22", "PC_HM10", "PC_LM22", 
+	"HM10", "LM22", "PC_HH22", "PC_HM10", "PC_LM22",
 	"WDISP16", "WDISP19", "GLOB_JMP", "7", "5", "6",
-	"DISP64", "PLT64", "HIX22", "LOX10", "H44", "M44", 
+	"DISP64", "PLT64", "HIX22", "LOX10", "H44", "M44",
 	"L44", "REGISTER", "UA64", "UA16",
 	"TLS_GD_HI22", "TLS_GD_LO10", "TLS_GD_ADD", "TLS_GD_CALL",
 	"TLS_LDM_HI22", "TLS_LDM_LO10", "TLS_LDM_ADD", "TLS_LDM_CALL",
-	"TLS_LDO_HIX22", "TLS_LDO_LOX10", "TLS_LDO_ADD", "TLS_IE_HI22", 
-	"TLS_IE_LO10", "TLS_IE_LD", "TLS_IE_LDX", "TLS_IE_ADD", "TLS_LE_HIX22", 
-	"TLS_LE_LOX10", "TLS_DTPMOD32", "TLS_DTPMOD64", "TLS_DTPOFF32", 
+	"TLS_LDO_HIX22", "TLS_LDO_LOX10", "TLS_LDO_ADD", "TLS_IE_HI22",
+	"TLS_IE_LO10", "TLS_IE_LD", "TLS_IE_LDX", "TLS_IE_ADD", "TLS_LE_HIX22",
+	"TLS_LE_LOX10", "TLS_DTPMOD32", "TLS_DTPMOD64", "TLS_DTPOFF32",
 	"TLS_DTPOFF64", "TLS_TPOFF32", "TLS_TPOFF64",
 };
 #endif
@@ -138,7 +149,7 @@ static const int reloc_target_bitmask[] = {
 	_BM(22), _BM(22),		/* HI22, _22 */
 	_BM(13), _BM(10),		/* RELOC_13, _LO10 */
 	_BM(10), _BM(13), _BM(22),	/* GOT10, GOT13, GOT22 */
-	_BM(10), _BM(22),		/* _PC10, _PC22 */  
+	_BM(10), _BM(22),		/* _PC10, _PC22 */
 	_BM(30), 0,			/* _WPLT30, _COPY */
 	-1, -1, -1,			/* _GLOB_DAT, JMP_SLOT, _RELATIVE */
 	_BM(32)				/* _UA32 */
@@ -201,16 +212,16 @@ int
 _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
+	const Elf_Sym *def = NULL;
+	const Obj_Entry *defobj = NULL;
+	unsigned long last_symnum = ULONG_MAX;
 
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr *where;
 		Elf_Word type, value, mask;
-		const Elf_Sym *def = NULL;
-		const Obj_Entry *defobj = NULL;
 		unsigned long	 symnum;
 
 		where = (Elf_Addr *) (obj->relocbase + rela->r_offset);
-		symnum = ELF_R_SYM(rela->r_info);
 
 		type = ELF_R_TYPE(rela->r_info);
 		if (type == R_TYPE(NONE))
@@ -219,6 +230,15 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		/* We do JMP_SLOTs in _rtld_bind() below */
 		if (type == R_TYPE(JMP_SLOT))
 			continue;
+
+		/* IFUNC relocations are handled in _rtld_call_ifunc */
+		if (type == R_TYPE(IRELATIVE)) {
+			if (obj->ifunc_remaining_nonplt == 0) {
+				obj->ifunc_remaining_nonplt =
+				    obj->relalim - rela;
+			}
+			continue;
+		}
 
 		/* COPY relocs are also handled elsewhere */
 		if (type == R_TYPE(COPY))
@@ -233,69 +253,64 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 		value = rela->r_addend;
 
+		if (RELOC_RESOLVE_SYMBOL(type) || RELOC_TLS(type)) {
+			symnum = ELF_R_SYM(rela->r_info);
+			if (last_symnum != symnum) {
+				last_symnum = symnum;
+				def = _rtld_find_symdef(symnum, obj, &defobj,
+				    false);
+				if (def == NULL)
+					return -1;
+			}
+		}
+
 		/*
 		 * Handle TLS relocations here, they are different.
 		 */
 		if (RELOC_TLS(type)) {
 			switch (type) {
-				case R_TYPE(TLS_DTPMOD32):
-					def = _rtld_find_symdef(symnum, obj,
-					    &defobj, false);
-					if (def == NULL)
-						return -1;
+			case R_TYPE(TLS_DTPMOD32):
+				*where = (Elf_Addr)defobj->tlsindex;
 
-					*where = (Elf_Addr)defobj->tlsindex;
+				rdbg(("TLS_DTPMOD32 %s in %s --> %p",
+				    obj->strtab +
+				    obj->symtab[symnum].st_name,
+				    obj->path, (void *)*where));
 
-					rdbg(("TLS_DTPMOD32 %s in %s --> %p",
-					    obj->strtab +
-					    obj->symtab[symnum].st_name,
-					    obj->path, (void *)*where));
+				break;
 
-					break;
+			case R_TYPE(TLS_DTPOFF32):
+				*where = (Elf_Addr)(def->st_value
+				    + rela->r_addend);
 
-				case R_TYPE(TLS_DTPOFF32):
-					def = _rtld_find_symdef(symnum, obj,
-					    &defobj, false);
-					if (def == NULL)
-						return -1;
+				rdbg(("TLS_DTPOFF32 %s in %s --> %p",
+				    obj->strtab +
+				        obj->symtab[symnum].st_name,
+				    obj->path, (void *)*where));
 
-					*where = (Elf_Addr)(def->st_value
-					    + rela->r_addend);
+				break;
 
-					rdbg(("TLS_DTPOFF32 %s in %s --> %p",
-					    obj->strtab +
-					        obj->symtab[symnum].st_name,
-					    obj->path, (void *)*where));
+			case R_TYPE(TLS_TPOFF32):
+				if (!defobj->tls_static &&
+				    _rtld_tls_offset_allocate(__UNCONST(defobj)))
+					return -1;
 
-					break;
+				*where = (Elf_Addr)(def->st_value -
+				    defobj->tlsoffset + rela->r_addend);
 
-				case R_TYPE(TLS_TPOFF32):
-					def = _rtld_find_symdef(symnum, obj,
-					    &defobj, false);
-					if (def == NULL)
-						return -1;
+				rdbg(("TLS_TPOFF32 %s in %s --> %p",
+				    obj->strtab +
+				    obj->symtab[symnum].st_name,
+				    obj->path, (void *)*where));
 
-					if (!defobj->tls_done &&
-						_rtld_tls_offset_allocate(obj))
-						     return -1;
-
-					*where = (Elf_Addr)(def->st_value -
-			                            defobj->tlsoffset +
-						    rela->r_addend);
-
-		                        rdbg(("TLS_TPOFF32 %s in %s --> %p",
-		                            obj->strtab +
-					    obj->symtab[symnum].st_name,
-		                            obj->path, (void *)*where));
-
-	                		break;
+				break;
 			}
 			continue;
 		}
 
 		/*
 		 * If it is no TLS relocation (handled above), we can not
-		 * deal with it if it is beyound R_SPARC_6.
+		 * deal with it if it is beyond R_SPARC_6.
 		 */
 		if (type > R_TYPE(6))
 			return (-1);
@@ -311,12 +326,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		}
 
 		if (RELOC_RESOLVE_SYMBOL(type)) {
-
-			/* Find the symbol */
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return (-1);
-
 			/* Add in the symbol's absolute address */
 			value += (Elf_Word)(defobj->relocbase + def->st_value);
 		}
@@ -384,7 +393,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 #ifdef RTLD_DEBUG_RELOC
 		if (RELOC_RESOLVE_SYMBOL(type)) {
 			rdbg(("%s %s in %s --> %p in %s", reloc_names[type],
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->strtab + obj->symtab[ELF_R_SYM(rela->r_info)].st_name,
 			    obj->path, (void *)value, defobj->path));
 		} else {
 			rdbg(("%s in %s --> %p", reloc_names[type],
@@ -396,9 +405,16 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_plt_lazy(const Obj_Entry *obj)
+_rtld_relocate_plt_lazy(Obj_Entry *obj)
 {
-	return (0);
+	const Elf_Rela *rela;
+
+	for (rela = obj->pltrelalim; rela-- > obj->pltrela; ) {
+		if (ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_IREL))
+			obj->ifunc_remaining = obj->pltrelalim - rela + 1;
+	}
+
+	return 0;
 }
 
 caddr_t
@@ -440,6 +456,9 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 	Elf_Addr value;
 	unsigned long info = rela->r_info;
 
+	if (ELF_R_TYPE(info) == R_TYPE(JMP_IREL))
+		return 0;
+
 	assert(ELF_R_TYPE(info) == R_TYPE(JMP_SLOT));
 
 	def = _rtld_find_plt_symdef(ELF_R_SYM(info), obj, &defobj, tp != NULL);
@@ -455,30 +474,10 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 	} else {
 		value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	}
-	rdbg(("bind now/fixup in %s --> new=%p", 
+	rdbg(("bind now/fixup in %s --> new=%p",
 	    defobj->strtab + def->st_name, (void *)value));
 
-	/*
-	 * At the PLT entry pointed at by `where', we now construct
-	 * a direct transfer to the now fully resolved function
-	 * address.  The resulting code in the jump slot is:
-	 *
-	 *	sethi	%hi(roffset), %g1
-	 *	sethi	%hi(addr), %g1
-	 *	jmp	%g1+%lo(addr)
-	 *
-	 * We write the third instruction first, since that leaves the
-	 * previous `b,a' at the second word in place. Hence the whole
-	 * PLT slot can be atomically change to the new sequence by
-	 * writing the `sethi' instruction at word 2.
-	 */
-#define SETHI	0x03000000
-#define JMP	0x81c06000
-#define NOP	0x01000000
-	where[2] = JMP   | (value & 0x000003ff);
-	where[1] = SETHI | ((value >> 10) & 0x003fffff);
-	__asm volatile("iflush %0+8" : : "r" (where));
-	__asm volatile("iflush %0+4" : : "r" (where));
+	sparc_write_branch(where + 1, (void *)value);
 
 	if (tp)
 		*tp = value;
