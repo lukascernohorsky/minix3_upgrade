@@ -1,4 +1,4 @@
-/*	$NetBSD: getstr.c,v 1.23 2013/10/01 11:41:14 blymn Exp $	*/
+/*	$NetBSD: getstr.c,v 1.30 2024/12/23 02:58:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)getstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getstr.c,v 1.23 2013/10/01 11:41:14 blymn Exp $");
+__RCSID("$NetBSD: getstr.c,v 1.30 2024/12/23 02:58:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -142,10 +142,10 @@ int
 wgetnstr(WINDOW *win, char *str, int n)
 {
 	if (n < 1)
-		return (ERR);
+		return ERR;
 	if (n == 1) {
 		str[0] = '\0';
-		return (ERR);
+		return ERR;
 	}
 	return __wgetnstr(win, str, n);
 }
@@ -164,6 +164,9 @@ __wgetnstr(WINDOW *win, char *str, int n)
 	char *ostr, ec, kc;
 	int c, xpos, oldx, remain;
 
+	if (__predict_false(win == NULL))
+		return ERR;
+
 	ostr = str;
 	ec = erasechar();
 	kc = killchar();
@@ -172,11 +175,9 @@ __wgetnstr(WINDOW *win, char *str, int n)
 	remain = n - 1;
 
 	while ((c = wgetch(win)) != ERR && c != '\n' && c != '\r') {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_INPUT,
 		    "__wgetnstr: win %p, char 0x%x, remain %d\n",
 		    win, c, remain);
-#endif
 		*str = c;
 		__touchline(win, win->cury, 0, (int) win->maxx - 1);
 		if (c == ec || c == KEY_BACKSPACE || c == KEY_LEFT) {
@@ -254,8 +255,8 @@ __wgetnstr(WINDOW *win, char *str, int n)
 
 	if (c == ERR) {
 		*str = '\0';
-		return (ERR);
+		return ERR;
 	}
 	*str = '\0';
-	return (OK);
+	return OK;
 }

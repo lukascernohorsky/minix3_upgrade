@@ -1,4 +1,4 @@
-/*	$NetBSD: underscore.c,v 1.11 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: underscore.c,v 1.14 2024/12/23 02:58:04 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: underscore.c,v 1.11 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: underscore.c,v 1.14 2024/12/23 02:58:04 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: underscore.c,v 1.11 2010/02/03 15:34:40 roy Exp $");
 int
 underscore(void)
 {
+
 	return wunderscore(stdscr);
 }
 
@@ -57,6 +58,7 @@ underscore(void)
 int
 underend(void)
 {
+
 	return wunderend(stdscr);
 }
 
@@ -69,16 +71,17 @@ underend(void)
 int
 wunderscore(WINDOW *win)
 {
+	if (__predict_false(win == NULL))
+		return ERR;
+
 	/* If can underscore, set the screen underscore bit. */
 	if ((enter_underline_mode != NULL && exit_underline_mode != NULL) ||
 	    underline_char != NULL)
 	{
-#ifdef DEBUG
 		__CTRACE(__CTRACE_ATTR, "wunderscore\n");
-#endif
 		win->wattr |= __UNDERSCORE;
 	}
-	return (1);
+	return 1;
 }
 
 /*
@@ -88,10 +91,12 @@ wunderscore(WINDOW *win)
 int
 wunderend(WINDOW *win)
 {
+
+	if (__predict_false(win == NULL))
+		return ERR;
+
 	if (exit_underline_mode != NULL) {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_ATTR, "wunderend\n");
-#endif
 		win->wattr &= ~__UNDERSCORE;
 	}
         return 1;

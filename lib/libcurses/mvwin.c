@@ -1,4 +1,4 @@
-/*	$NetBSD: mvwin.c,v 1.19 2014/02/20 09:42:42 blymn Exp $	*/
+/*	$NetBSD: mvwin.c,v 1.25 2024/12/23 02:58:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mvwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: mvwin.c,v 1.19 2014/02/20 09:42:42 blymn Exp $");
+__RCSID("$NetBSD: mvwin.c,v 1.25 2024/12/23 02:58:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -55,7 +55,7 @@ mvderwin(WINDOW *win, int dy, int dx)
 	int x, i;
 	__LINE *plp;
 
-	if (win == NULL)
+	if (__predict_false(win == NULL))
 		return ERR;
 
 	parent = win->orig;
@@ -84,9 +84,9 @@ mvderwin(WINDOW *win, int dy, int dx)
 			*plp->firstchp = x;
 		if (*plp->lastchp < x + win->maxx)
 			*plp->lastchp = x + win->maxx;
-#ifdef DEBUG
-		__CTRACE(__CTRACE_REFRESH, "mvderwin: firstchp = %d, lastchp = %d\n", *plp->firstchp, *plp->lastchp);
-#endif
+		__CTRACE(__CTRACE_REFRESH,
+		    "mvderwin: firstchp = %d, lastchp = %d\n",
+		    *plp->firstchp, *plp->lastchp);
 	}
 
 	return OK;
@@ -102,8 +102,12 @@ mvwin(WINDOW *win, int by, int bx)
 	WINDOW *orig;
 	int     dy, dx;
 
-	if (by < 0 || by + win->maxy > LINES || bx < 0 || bx + win->maxx > COLS)
-		return (ERR);
+	if (__predict_false(win == NULL))
+		return ERR;
+
+	if (by < 0 || by + win->maxy > win->screen->LINES ||
+	    bx < 0 || bx + win->maxx > win->screen->COLS)
+		return ERR;
 	dy = by - win->begy;
 	dx = bx - win->begx;
 	orig = win->orig;
@@ -117,14 +121,14 @@ mvwin(WINDOW *win, int by, int bx)
 		} while (win != orig);
 	} else {
 		if (by < orig->begy || win->maxy + dy > orig->maxy)
-			return (ERR);
+			return ERR;
 		if (bx < orig->begx || win->maxx + dx > orig->maxx)
-			return (ERR);
+			return ERR;
 		win->begy = by;
 		win->begx = bx;
 		__swflags(win);
 		__set_subwin(orig, win);
 	}
-	__touchwin(win);
-	return (OK);
+	__touchwin(win, 0);
+	return OK;
 }

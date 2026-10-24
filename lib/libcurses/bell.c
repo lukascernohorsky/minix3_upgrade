@@ -1,4 +1,4 @@
-/*	$NetBSD: bell.c,v 1.8 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: bell.c,v 1.10 2021/09/06 07:03:49 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bell.c,v 1.8 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: bell.c,v 1.10 2021/09/06 07:03:49 rin Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -45,17 +45,13 @@ int
 beep(void)
 {
 	if (bell != NULL) {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_MISC, "beep: bl\n");
-#endif
 		tputs(bell, 0, __cputchar);
 	} else if (flash_screen != NULL) {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_MISC, "beep: vb\n");
-#endif
 		tputs(flash_screen, 0, __cputchar);
 	}
-	return (1);
+	return OK;
 }
 
 /*
@@ -66,15 +62,11 @@ int
 flash(void)
 {
 	if (flash_screen != NULL) {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_MISC, "flash: vb\n");
-#endif
 		tputs(flash_screen, 0, __cputchar);
 	} else if (bell != NULL) {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_MISC, "flash: bl\n");
-#endif
 		tputs(bell, 0, __cputchar);
 	}
-	return (1);
+	return OK;
 }

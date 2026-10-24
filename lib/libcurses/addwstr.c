@@ -1,4 +1,4 @@
-/*   $NetBSD: addwstr.c,v 1.2 2007/05/28 15:01:54 blymn Exp $ */
+/*   $NetBSD: addwstr.c,v 1.9 2024/12/23 02:58:03 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addwstr.c,v 1.2 2007/05/28 15:01:54 blymn Exp $");
+__RCSID("$NetBSD: addwstr.c,v 1.9 2024/12/23 02:58:03 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -51,11 +51,7 @@ __RCSID("$NetBSD: addwstr.c,v 1.2 2007/05/28 15:01:54 blymn Exp $");
 int
 addwstr(const wchar_t *s)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return waddnwstr(stdscr, s, -1);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -65,11 +61,7 @@ addwstr(const wchar_t *s)
 int
 waddwstr(WINDOW *win, const wchar_t *s)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return waddnwstr(win, s, -1);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -80,11 +72,7 @@ waddwstr(WINDOW *win, const wchar_t *s)
 int
 addnwstr(const wchar_t *str, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return waddnwstr(stdscr, str, n);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -94,11 +82,7 @@ addnwstr(const wchar_t *str, int n)
 int
 mvaddwstr(int y, int x, const wchar_t *str)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwaddnwstr(stdscr, y, x, str, -1);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -108,11 +92,7 @@ mvaddwstr(int y, int x, const wchar_t *str)
 int
 mvwaddwstr(WINDOW *win, int y, int x, const wchar_t *str)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwaddnwstr(win, y, x, str, -1);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -123,11 +103,7 @@ mvwaddwstr(WINDOW *win, int y, int x, const wchar_t *str)
 int
 mvaddnwstr(int y, int x, const wchar_t *str, int count)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwaddnwstr(stdscr, y, x, str, count);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -138,14 +114,10 @@ mvaddnwstr(int y, int x, const wchar_t *str, int count)
 int
 mvwaddnwstr(WINDOW *win, int y, int x, const wchar_t *str, int count)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return waddnwstr(win, str, count);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -157,13 +129,13 @@ mvwaddnwstr(WINDOW *win, int y, int x, const wchar_t *str, int count)
 int
 waddnwstr(WINDOW *win, const wchar_t *s, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	size_t  len;
 	const wchar_t *p;
 	cchar_t cc;
-	wchar_t wc[ 2 ];
+	wchar_t wc[2];
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	/*
 	 * BSD curses: if (n > 0) then "at most n", else "len = strlen(s)"
@@ -171,31 +143,26 @@ waddnwstr(WINDOW *win, const wchar_t *s, int n)
 	 * XCURSES: if (n != -1) then "at most n", else "len = strlen(s)"
 	 */
 	/* compute the length and column width of string */
-	if ( n < -1 ) 
+	if (n < -1)
 		return ERR;
 	if (n >= 0)
-		for (p = s, len = 0; n-- && *p++; ++len );
+		for (p = s, len = 0; n-- && *p++; ++len);
 	else
 		len = wcslen(s);
-#ifdef DEBUG
-	__CTRACE(__CTRACE_INPUT, "waddnwstr: string len=%ld\n", (long) len);
-#endif /* DEBUG */
+	__CTRACE(__CTRACE_INPUT, "waddnwstr: string len=%zu\n", len);
 
 	p = s;
-	while ( len ) {
-		wc[ 0 ] = *p;
-		wc[ 1 ] = L'\0';
-		if ( setcchar( &cc, wc, win->wattr, 0, NULL ) == ERR )
+	while (len) {
+		wc[0] = *p;
+		wc[1] = L'\0';
+		if (setcchar( &cc, wc, win->wattr, 0, NULL ) == ERR)
 			return ERR;
-		if ( wadd_wch( win, &cc ) == ERR )
+		if (wadd_wch( win, &cc ) == ERR)
 			return ERR;
-#ifdef DEBUG
-		__CTRACE(__CTRACE_INPUT, "waddnwstr: (%x,%x,%d) added\n", 
-				cc.vals[ 0 ], cc.attributes, cc.elements );
-#endif /* DEBUG */
+		__CTRACE(__CTRACE_INPUT, "waddnwstr: (%x,%x,%d) added\n",
+		    cc.vals[0], cc.attributes, cc.elements);
 		p++, len--;
 	}
 
 	return OK;
-#endif /* HAVE_WCHAR */
 }

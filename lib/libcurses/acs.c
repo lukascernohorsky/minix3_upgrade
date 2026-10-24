@@ -1,4 +1,4 @@
-/*	$NetBSD: acs.c,v 1.20 2012/04/21 12:27:27 roy Exp $	*/
+/*	$NetBSD: acs.c,v 1.22 2021/09/06 07:03:49 rin Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: acs.c,v 1.20 2012/04/21 12:27:27 roy Exp $");
+__RCSID("$NetBSD: acs.c,v 1.22 2021/09/06 07:03:49 rin Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -112,9 +112,7 @@ __init_acs(SCREEN *screen)
 		if (acs < NUM_ACS)
 			_acs_char[acs] = term | __ALTCHARSET;
 		aofac++;
-#ifdef DEBUG
 		__CTRACE(__CTRACE_INIT, "__init_acs: %c = %c\n", acs, term);
-#endif
 	}
 
 	if (t_ena_acs(screen->term) != NULL)
@@ -162,9 +160,7 @@ __init_wacs(SCREEN *screen)
 	lstr = nl_langinfo(CODESET);
 	_DIAGASSERT(lstr);
 	if (strcasecmp(lstr, "UTF-8")) {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_INIT, "__init_wacs: setting defaults\n" );
-#endif /* DEBUG */
 		WACS_RARROW->vals[0]  = ( wchar_t )btowc( '>' );
 		WACS_LARROW->vals[0]  = ( wchar_t )btowc( '<' );
 		WACS_UARROW->vals[0]  = ( wchar_t )btowc( '^' );
@@ -189,10 +185,8 @@ __init_wacs(SCREEN *screen)
 		WACS_STERLING->vals[0]= ( wchar_t )btowc( '}' );
 	} else {
 		/* Unicode defaults */
-#ifdef DEBUG
 		__CTRACE(__CTRACE_INIT,
 		    "__init_wacs: setting Unicode defaults\n" );
-#endif /* DEBUG */
 		WACS_RARROW->vals[0]  = 0x2192;
 		ACS_RARROW = '+' | __ACS_IS_WACS;
 		WACS_LARROW->vals[0]  = 0x2190;
@@ -203,7 +197,7 @@ __init_wacs(SCREEN *screen)
 		ACS_DARROW = '.' | __ACS_IS_WACS;
 		WACS_BLOCK->vals[0]   = 0x25ae;
 		ACS_BLOCK = '0' | __ACS_IS_WACS;
-  		WACS_DIAMOND->vals[0] = 0x25c6;
+		WACS_DIAMOND->vals[0] = 0x25c6;
 		ACS_DIAMOND = '`' | __ACS_IS_WACS;
 		WACS_CKBOARD->vals[0] = 0x2592;
 		ACS_CKBOARD = 'a' | __ACS_IS_WACS;
@@ -215,15 +209,15 @@ __init_wacs(SCREEN *screen)
 		ACS_BOARD = 'h' | __ACS_IS_WACS;
 		WACS_LANTERN->vals[0] = 0x2603;
 		ACS_LANTERN = 'i' | __ACS_IS_WACS;
-  		WACS_LRCORNER->vals[0]= 0x2518;
+		WACS_LRCORNER->vals[0]= 0x2518;
 		ACS_LRCORNER = 'j' | __ACS_IS_WACS;
-  		WACS_URCORNER->vals[0]= 0x2510;
+		WACS_URCORNER->vals[0]= 0x2510;
 		ACS_URCORNER = 'k' | __ACS_IS_WACS;
-  		WACS_ULCORNER->vals[0]= 0x250c;
+		WACS_ULCORNER->vals[0]= 0x250c;
 		ACS_ULCORNER = 'l' | __ACS_IS_WACS;
-  		WACS_LLCORNER->vals[0]= 0x2514;
+		WACS_LLCORNER->vals[0]= 0x2514;
 		ACS_LLCORNER = 'm' | __ACS_IS_WACS;
-  		WACS_PLUS->vals[0]    = 0x253c;
+		WACS_PLUS->vals[0]    = 0x253c;
 		ACS_PLUS = 'n' | __ACS_IS_WACS;
 		WACS_HLINE->vals[0]   = 0x2500;
 		ACS_HLINE = 'q' | __ACS_IS_WACS;
@@ -231,13 +225,13 @@ __init_wacs(SCREEN *screen)
 		ACS_S1 = 'o' | __ACS_IS_WACS;
 		WACS_S9->vals[0]      = 0x23bd;
 		ACS_S9 = 's' | __ACS_IS_WACS;
-  		WACS_LTEE->vals[0]    = 0x251c;
+		WACS_LTEE->vals[0]    = 0x251c;
 		ACS_LTEE = 't' | __ACS_IS_WACS;
-  		WACS_RTEE->vals[0]    = 0x2524;
+		WACS_RTEE->vals[0]    = 0x2524;
 		ACS_RTEE = 'u' | __ACS_IS_WACS;
-  		WACS_BTEE->vals[0]    = 0x2534;
+		WACS_BTEE->vals[0]    = 0x2534;
 		ACS_BTEE = 'v' | __ACS_IS_WACS;
-  		WACS_TTEE->vals[0]    = 0x252c;
+		WACS_TTEE->vals[0]    = 0x252c;
 		ACS_TTEE = 'w' | __ACS_IS_WACS;
 		WACS_VLINE->vals[0]   = 0x2502;
 		ACS_VLINE = 'x' | __ACS_IS_WACS;
@@ -260,10 +254,8 @@ __init_wacs(SCREEN *screen)
 	}
 
 	if (t_acs_chars(screen->term) == NULL) {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_INIT,
 		    "__init_wacs: no alternative characters\n" );
-#endif /* DEBUG */
 		goto out;
 	}
 
@@ -274,15 +266,13 @@ __init_wacs(SCREEN *screen)
 			return;
 		if ((term = *++aofac) == '\0')
 			return;
-	 	/* Only add characters 1 to 127 */
+		/* Only add characters 1 to 127 */
 		if (acs < NUM_ACS) {
 			_wacs_char[acs].vals[ 0 ] = term;
 			_wacs_char[acs].attributes |= WA_ALTCHARSET;
 		}
 		aofac++;
-#ifdef DEBUG
 		__CTRACE(__CTRACE_INIT, "__init_wacs: %c = %c\n", acs, term);
-#endif
 	}
 
 	if (t_ena_acs(screen->term) != NULL)

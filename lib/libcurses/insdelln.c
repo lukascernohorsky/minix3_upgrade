@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.16 2009/07/22 16:57:15 roy Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.24.2.1 2026/04/03 13:32:58 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insdelln.c,v 1.16 2009/07/22 16:57:15 roy Exp $");
+__RCSID("$NetBSD: insdelln.c,v 1.24.2.1 2026/04/03 13:32:58 martin Exp $");
 #endif				/* not lint */
 
 /*
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: insdelln.c,v 1.16 2009/07/22 16:57:15 roy Exp $");
 int
 insdelln(int nlines)
 {
+
 	return winsdelln(stdscr, nlines);
 }
 
@@ -74,13 +75,15 @@ winsdelln(WINDOW *win, int nlines)
 #endif /* HAVE_WCHAR */
 	attr_t	attr;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_LINE,
-	    "winsdelln: (%p) cury=%d lines=%d\n", win, win->cury, nlines);
-#endif
+	    "winsdelln: (%p) cury=%d lines=%d\n", win,
+	    (win != NULL) ? win->cury : 0, nlines);
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	if (!nlines)
-		return(OK);
+		return OK;
 
 	if (__using_color && win != curscr)
 		attr = win->battr & __COLOR;
@@ -108,28 +111,28 @@ winsdelln(WINDOW *win, int nlines)
 				win->alines[y + nlines] = win->alines[y];
 				win->alines[y] = temp;
 			} else {
-				(void) memcpy(win->alines[y + nlines]->line,
+				(void)memcpy(win->alines[y + nlines]->line,
 				    win->alines[y]->line,
-				    (size_t) win->maxx * __LDATASIZE);
+				    (size_t)win->maxx * __LDATASIZE);
 			}
 		}
 		for (y = win->cury - 1 + nlines; y >= win->cury; --y)
 			for (i = 0; i < win->maxx; i++) {
 				win->alines[y]->line[i].ch = win->bch;
 				win->alines[y]->line[i].attr = attr;
-#ifndef HAVE_WCHAR
-				win->alines[y]->line[i].ch = win->bch;
-#else
-				win->alines[y]->line[i].ch
-					= ( wchar_t )btowc(( int ) win->bch );
+				win->alines[y]->line[i].cflags |= 
+				    CA_BACKGROUND;
+				win->alines[y]->line[i].cflags &= 
+				    ~CA_CONTINUATION;
+#ifdef HAVE_WCHAR
 				lp = &win->alines[y]->line[i];
 				if (_cursesi_copy_nsp(win->bnsp, lp) == ERR)
 					return ERR;
-				SET_WCOL( *lp, 1 );
+				lp->wcols = 1;
 #endif /* HAVE_WCHAR */
 			}
 		for (y = last; y >= win->cury; --y)
-			__touchline(win, y, 0, (int) win->maxx - 1);
+			__touchline(win, y, 0, (int)win->maxx - 1);
 	} else {
 		/* Delete nlines */
 		nlines = 0 - nlines;
@@ -152,30 +155,31 @@ winsdelln(WINDOW *win, int nlines)
 				win->alines[y] = win->alines[y + nlines];
 				win->alines[y + nlines] = temp;
 			} else {
-				(void) memcpy(win->alines[y]->line,
+				(void)memcpy(win->alines[y]->line,
 				    win->alines[y + nlines]->line,
-				    (size_t) win->maxx * __LDATASIZE);
+				    (size_t)win->maxx * __LDATASIZE);
 			}
 		}
 		for (y = last - nlines; y < last; y++)
 			for (i = 0; i < win->maxx; i++) {
 				win->alines[y]->line[i].ch = win->bch;
 				win->alines[y]->line[i].attr = attr;
-#ifndef HAVE_WCHAR
-				win->alines[y]->line[i].ch = win->bch;
-#else
-				win->alines[y]->line[i].ch
-					= (wchar_t)btowc((int) win->bch);
+				win->alines[y]->line[i].cflags |= 
+				    CA_BACKGROUND;
+				win->alines[y]->line[i].cflags &= 
+				    ~CA_CONTINUATION;
+#ifdef HAVE_WCHAR
 				lp = &win->alines[y]->line[i];
-				SET_WCOL( *lp, 1 );
+				lp->wcols = 1;
 				if (_cursesi_copy_nsp(win->bnsp, lp) == ERR)
 					return ERR;
 #endif /* HAVE_WCHAR */
 			}
 		for (y = win->cury; y < last; y++)
-			__touchline(win, y, 0, (int) win->maxx - 1);
+			__touchline(win, y, 0, (int)win->maxx - 1);
 	}
 	if (win->orig != NULL)
 		__id_subwins(win->orig);
-	return (OK);
+	__sync(win);
+	return OK;
 }

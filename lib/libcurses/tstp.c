@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.40 2013/10/15 13:00:52 christos Exp $	*/
+/*	$NetBSD: tstp.c,v 1.45 2021/09/06 07:03:50 rin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.40 2013/10/15 13:00:52 christos Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.45 2021/09/06 07:03:50 rin Exp $");
 #endif
 #endif				/* not lint */
 
 #include <sys/ioctl.h>
+#include <sys/param.h>
 
 #include <errno.h>
 #include <signal.h>
@@ -48,11 +49,10 @@ __RCSID("$NetBSD: tstp.c,v 1.40 2013/10/15 13:00:52 christos Exp $");
 #include "curses.h"
 #include "curses_private.h"
 
-static int tstp_set = 0;
-static int winch_set = 0;
+static int tstp_set;
+static int winch_set;
 
-static void (*otstpfn)
-__P((int)) = SIG_DFL;
+static void (*otstpfn)(int) = SIG_DFL;
 
 static struct sigaction	owsa;
 #ifndef TCSASOFT
@@ -72,10 +72,10 @@ __stop_signal_handler(/*ARGSUSED*/int signo)
 	 * Block window change and timer signals.  The latter is because
 	 * applications use timers to decide when to repaint the screen.
 	 */
-	(void) sigemptyset(&set);
-	(void) sigaddset(&set, SIGALRM);
-	(void) sigaddset(&set, SIGWINCH);
-	(void) sigprocmask(SIG_BLOCK, &set, &oset);
+	(void)sigemptyset(&set);
+	(void)sigaddset(&set, SIGALRM);
+	(void)sigaddset(&set, SIGWINCH);
+	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 
 	/*
 	 * End the window, which also resets the terminal state to the
@@ -84,12 +84,12 @@ __stop_signal_handler(/*ARGSUSED*/int signo)
 	__stopwin();
 
 	/* Unblock SIGTSTP. */
-	(void) sigemptyset(&set);
-	(void) sigaddset(&set, SIGTSTP);
-	(void) sigprocmask(SIG_UNBLOCK, &set, NULL);
+	(void)sigemptyset(&set);
+	(void)sigaddset(&set, SIGTSTP);
+	(void)sigprocmask(SIG_UNBLOCK, &set, NULL);
 
 	/* Stop ourselves. */
-	(void) kill(0, SIGTSTP);
+	(void)kill(0, SIGTSTP);
 
 	/* Time passes ... */
 
@@ -97,7 +97,7 @@ __stop_signal_handler(/*ARGSUSED*/int signo)
 	__restartwin();
 
 	/* Reset the signals. */
-	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
+	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 }
 
 /*
@@ -106,9 +106,8 @@ __stop_signal_handler(/*ARGSUSED*/int signo)
 void
 __set_stophandler(void)
 {
-#ifdef DEBUG
+
 	__CTRACE(__CTRACE_MISC, "__set_stophandler: %d\n", tstp_set);
-#endif
 	if (!tstp_set) {
 		otstpfn = signal(SIGTSTP, __stop_signal_handler);
 		tstp_set = 1;
@@ -121,11 +120,10 @@ __set_stophandler(void)
 void
 __restore_stophandler(void)
 {
-#ifdef DEBUG
+
 	__CTRACE(__CTRACE_MISC, "__restore_stophandler: %d\n", tstp_set);
-#endif
 	if (tstp_set) {
-		(void) signal(SIGTSTP, otstpfn);
+		(void)signal(SIGTSTP, otstpfn);
 		tstp_set = 0;
 	}
 }
@@ -140,7 +138,8 @@ __winch_signal_handler(/*ARGSUSED*/int signo)
 	struct winsize win;
 
 	if (ioctl(fileno(_cursesi_screen->outfd), TIOCGWINSZ, &win) != -1 &&
-	    win.ws_row != 0 && win.ws_col != 0) {
+	    win.ws_row != 0 && win.ws_col != 0)
+	{
 		LINES = win.ws_row;
 		COLS = win.ws_col;
 	}
@@ -148,7 +147,10 @@ __winch_signal_handler(/*ARGSUSED*/int signo)
 	 * If there was a previous handler, call that,
 	 * otherwise tell getch() to send KEY_RESIZE.
 	 */
-	if (owsa.sa_handler !=  NULL)
+	if (owsa.sa_handler != SIG_DFL &&
+	    owsa.sa_handler != SIG_IGN &&
+	    owsa.sa_handler != SIG_ERR &&
+	    owsa.sa_handler != SIG_HOLD)
 		owsa.sa_handler(signo);
 	else
 		_cursesi_screen->resized = 1;
@@ -160,9 +162,8 @@ __winch_signal_handler(/*ARGSUSED*/int signo)
 void
 __set_winchhandler(void)
 {
-#ifdef DEBUG
+
 	__CTRACE(__CTRACE_MISC, "__set_winchhandler: %d\n", winch_set);
-#endif
 	if (!winch_set) {
 		struct sigaction sa;
 
@@ -171,11 +172,9 @@ __set_winchhandler(void)
 		sigemptyset(&sa.sa_mask);
 		sigaction(SIGWINCH, &sa, &owsa);
 		winch_set = 1;
-#ifdef DEBUG
 		__CTRACE(__CTRACE_MISC,
 		    "__set_winchhandler: owsa.sa_handler=%p\n",
 		    owsa.sa_handler);
-#endif
 	}
 }
 
@@ -185,9 +184,8 @@ __set_winchhandler(void)
 void
 __restore_winchhandler(void)
 {
-#ifdef DEBUG
+
 	__CTRACE(__CTRACE_MISC, "__restore_winchhandler: %d\n", winch_set);
-#endif
 	if (winch_set > 0) {
 		struct sigaction cwsa;
 
@@ -201,10 +199,8 @@ __restore_winchhandler(void)
 			 * so don't restore the previous one.
 			 */
 			winch_set = -1;
-#ifdef DEBUG
 			__CTRACE(__CTRACE_MISC, "cwsa.sa_handler = %p\n",
 			    cwsa.sa_handler);
-#endif
 		}
 	}
 }
@@ -215,34 +211,37 @@ __restore_winchhandler(void)
 int
 __stopwin(void)
 {
-#ifdef DEBUG
+
 	__CTRACE(__CTRACE_MISC, "__stopwin\n");
-#endif
+	if (_cursesi_screen == NULL)
+		return ERR;
 	if (_cursesi_screen->endwin)
 		return OK;
 
 	/* Get the current terminal state (which the user may have changed). */
-	(void) tcgetattr(fileno(_cursesi_screen->infd),
-			 &_cursesi_screen->save_termios);
+	(void)tcgetattr(fileno(_cursesi_screen->infd),
+			&_cursesi_screen->save_termios);
 
 	__restore_stophandler();
 	__restore_winchhandler();
 
 	if (curscr != NULL) {
 		__unsetattr(0);
-		__mvcur((int) curscr->cury, (int) curscr->curx,
-		    (int) curscr->maxy - 1, 0, 0);
+		__mvcur((int)curscr->cury, (int)curscr->curx,
+		    (int)curscr->maxy - 1, 0, 0);
 	}
 
 	if (meta_on != NULL)
-		(void) tputs(meta_on, 0, __cputchar);
+		(void)tputs(meta_on, 0, __cputchar);
 
 	if ((curscr != NULL) && (curscr->flags & __KEYPAD))
-		(void) tputs(keypad_local, 0, __cputchar);
-	(void) tputs(cursor_normal, 0, __cputchar);
-	(void) tputs(exit_ca_mode, 0, __cputchar);
-	(void) fflush(_cursesi_screen->outfd);
-	(void) setvbuf(_cursesi_screen->outfd, NULL, _IOLBF, (size_t) 0);
+		(void)tputs(keypad_local, 0, __cputchar);
+	(void)tputs(cursor_normal, 0, __cputchar);
+	(void)tputs(exit_ca_mode, 0, __cputchar);
+	(void)fflush(_cursesi_screen->outfd);
+#ifdef BSD
+	(void)setvbuf(_cursesi_screen->outfd, NULL, _IOLBF, 0);
+#endif
 
 	_cursesi_screen->endwin = 1;
 
@@ -250,16 +249,13 @@ __stopwin(void)
 	    &_cursesi_screen->orig_termios) ? ERR : OK;
 }
 
-
 void
 __restartwin(void)
 {
 	struct winsize win;
 	int nlines, ncols;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "__restartwin\n");
-#endif
 	if (!_cursesi_screen->endwin)
 		return;
 
@@ -275,7 +271,8 @@ __restartwin(void)
 	 * to match the new size.
 	 */
 	if (ioctl(fileno(_cursesi_screen->outfd), TIOCGWINSZ, &win) != -1 &&
-	    win.ws_row != 0 && win.ws_col != 0) {
+	    win.ws_row != 0 && win.ws_col != 0)
+	{
 		if (win.ws_row != LINES) {
 			LINES = win.ws_row;
 			_cursesi_screen->resized = 1;
@@ -297,12 +294,12 @@ __restartwin(void)
 		wresize(stdscr, nlines, ncols);
 
 	/* save the new "default" terminal state */
-	(void) tcgetattr(fileno(_cursesi_screen->infd),
-			 &_cursesi_screen->orig_termios);
+	(void)tcgetattr(fileno(_cursesi_screen->infd),
+			&_cursesi_screen->orig_termios);
 
 	/* Reset the terminal state to the mode just before we stopped. */
-	(void) tcsetattr(fileno(_cursesi_screen->infd), TCSASOFT | TCSADRAIN,
-	    &_cursesi_screen->save_termios);
+	(void)tcsetattr(fileno(_cursesi_screen->infd), TCSASOFT | TCSADRAIN,
+			&_cursesi_screen->save_termios);
 
 	/* Restore colours */
 	__restore_colors();
@@ -323,11 +320,12 @@ __restartwin(void)
 int
 def_prog_mode(void)
 {
+
 	if (_cursesi_screen->endwin)
 		return ERR;
 
 	return tcgetattr(fileno(_cursesi_screen->infd),
-	    &_cursesi_screen->save_termios) ? ERR : OK;
+			 &_cursesi_screen->save_termios) ? ERR : OK;
 }
 
 int
@@ -335,18 +333,20 @@ reset_prog_mode(void)
 {
 
 	return tcsetattr(fileno(_cursesi_screen->infd), TCSASOFT | TCSADRAIN,
-	    &_cursesi_screen->save_termios) ? ERR : OK;
+			 &_cursesi_screen->save_termios) ? ERR : OK;
 }
 
 int
 def_shell_mode(void)
 {
+
 	return tcgetattr(fileno(_cursesi_screen->infd),
-	    &_cursesi_screen->orig_termios) ? ERR : OK;
+			 &_cursesi_screen->orig_termios) ? ERR : OK;
 }
 
 int
 reset_shell_mode(void)
 {
+
 	return __stopwin();
 }

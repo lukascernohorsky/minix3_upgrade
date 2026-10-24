@@ -1,4 +1,4 @@
-/*	$NetBSD: putchar.c,v 1.21 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: putchar.c,v 1.24 2021/09/06 07:03:50 rin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)putchar.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: putchar.c,v 1.21 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: putchar.c,v 1.24 2021/09/06 07:03:50 rin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -45,10 +45,8 @@ int
 __cputchar(int ch)
 {
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_OUTPUT, "__cputchar: %s\n", unctrl(ch));
-#endif
-	return (putc(ch, _cursesi_screen->outfd));
+	return __cputchar_args(ch, _cursesi_screen->outfd);
 }
 
 /*
@@ -59,23 +57,22 @@ __cputchar(int ch)
 int
 __cputchar_args(int ch, void *args)
 {
-	FILE *outfd = (FILE *) args;
+	FILE *outfd = (FILE *)args;
+	int status;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_OUTPUT, "__cputchar_args: %s on fd %d\n",
 	    unctrl(ch), outfd->_file);
-#endif
-	return putc(ch, outfd);
+	status = putc(ch, outfd);
+	fflush(outfd);
+	return status;
 }
 
 #ifdef HAVE_WCHAR
 int
 __cputwchar(wchar_t wch)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_OUTPUT, "__cputwchar: 0x%x\n", wch);
-#endif
-	return (putwc(wch, _cursesi_screen->outfd));
+	return __cputwchar_args(wch, _cursesi_screen->outfd);
 }
 
 /*
@@ -86,12 +83,13 @@ __cputwchar(wchar_t wch)
 int
 __cputwchar_args(wchar_t wch, void *args)
 {
-	FILE *outfd = (FILE *) args;
+	FILE *outfd = (FILE *)args;
+	int status;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_OUTPUT, "__cputwchar_args: 0x%x on fd %d\n",
 	    wch, outfd->_file);
-#endif
-	return putwc(wch, outfd);
+	status = putwc(wch, outfd);
+	fflush(outfd);
+	return status;
 }
 #endif /* HAVE_WCHAR */

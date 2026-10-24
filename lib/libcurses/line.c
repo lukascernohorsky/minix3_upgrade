@@ -1,8 +1,8 @@
-/*	$NetBSD: line.c,v 1.6 2010/02/23 19:48:26 drochner Exp $	*/
+/*	$NetBSD: line.c,v 1.19 2024/12/23 02:58:03 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
- *						 (blymn@baea.com.au, brett_lymn@yahoo.com.au)
+ *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
  * All rights reserved.
  *
  * This code has been donated to The NetBSD Foundation by the Author.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: line.c,v 1.6 2010/02/23 19:48:26 drochner Exp $");
+__RCSID("$NetBSD: line.c,v 1.19 2024/12/23 02:58:03 blymn Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: line.c,v 1.6 2010/02/23 19:48:26 drochner Exp $");
 int
 hline(chtype ch, int count)
 {
+
 	return whline(stdscr, ch, count);
 }
 
@@ -57,6 +58,7 @@ hline(chtype ch, int count)
 int
 mvhline(int y, int x, chtype ch, int count)
 {
+
 	return mvwhline(stdscr, y, x, ch, count);
 }
 
@@ -68,6 +70,7 @@ mvhline(int y, int x, chtype ch, int count)
 int
 mvwhline(WINDOW *win, int y, int x, chtype ch, int count)
 {
+
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
@@ -84,28 +87,27 @@ int
 whline(WINDOW *win, chtype ch, int count)
 {
 #ifndef HAVE_WCHAR
-	int ocurx, n, i;
+	if (__predict_false(win == NULL))
+		return ERR;
+
+	int ocury, ocurx, n, i;
 
 	n = min(count, win->maxx - win->curx);
+	ocury = win->cury;
 	ocurx = win->curx;
 
 	if (!(ch & __CHARTEXT))
 		ch |= ACS_HLINE;
 	for (i = 0; i < n; i++)
-		mvwaddch(win, win->cury, ocurx + i, ch);
-		
-	wmove(win, win->cury, ocurx);
+		mvwaddch(win, ocury, ocurx + i, ch);
+
+	wmove(win, ocury, ocurx);
 	return OK;
 #else
-	cchar_t cch, *cchp;
+	cchar_t cch;
 
-	if (ch & __CHARTEXT) {
-		__cursesi_chtype_to_cchar(ch, &cch);
-		cchp = & cch;
-	} else
-		cchp = WACS_HLINE;
-
-	return whline_set(win, cchp, count);
+	__cursesi_chtype_to_cchar(ch, &cch);
+	return whline_set(win, &cch, count);
 #endif
 }
 
@@ -116,16 +118,18 @@ whline(WINDOW *win, chtype ch, int count)
 int
 vline(chtype ch, int count)
 {
+
 	return wvline(stdscr, ch, count);
 }
 
 /*
  * mvvline --
- *	Move to the given location an draw a vertical line of character ch.
+ *	Move to the given location and draw a vertical line of character ch.
  */
 int
 mvvline(int y, int x, chtype ch, int count)
 {
+
 	return mvwvline(stdscr, y, x, ch, count);
 }
 
@@ -137,6 +141,7 @@ mvvline(int y, int x, chtype ch, int count)
 int
 mvwvline(WINDOW *win, int y, int x, chtype ch, int count)
 {
+
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
@@ -155,6 +160,9 @@ wvline(WINDOW *win, chtype ch, int count)
 #ifndef HAVE_WCHAR
 	int ocury, ocurx, n, i;
 
+	if (__predict_false(win == NULL))
+		return ERR;
+
 	n = min(count, win->maxy - win->cury);
 	ocury = win->cury;
 	ocurx = win->curx;
@@ -167,15 +175,10 @@ wvline(WINDOW *win, chtype ch, int count)
 	wmove(win, ocury, ocurx);
 	return OK;
 #else
-	cchar_t cch, *cchp;
+	cchar_t cch;
 
-	if (ch & __CHARTEXT) {
-		__cursesi_chtype_to_cchar(ch, &cch);
-		cchp = & cch;
-	} else
-		cchp = WACS_VLINE;
-
-	return wvline_set(win, cchp, count);
+	__cursesi_chtype_to_cchar(ch, &cch);
+	return wvline_set(win, &cch, count);
 #endif
 }
 
@@ -214,32 +217,36 @@ int whline_set(WINDOW *win, const cchar_t *wch, int n)
 #ifndef HAVE_WCHAR
 	return ERR;
 #else
-	int ocurx, wcn, i, cw;
+	int ocury, ocurx, wcn, i, cw;
 	cchar_t cc;
 
-	cw = wcwidth( wch->vals[ 0 ]);
-	if (cw < 0)
+	if (__predict_false(win == NULL))
+		return ERR;
+
+	cc = *wch;
+	if (!cc.vals[0]) {
+		cc.vals[0] = WACS_HLINE->vals[0];
+		cc.attributes |= WACS_HLINE->attributes;
+	}
+
+	cw = wcwidth(cc.vals[0]);
+	if (cw <= 0)
 		cw = 1;
 	if ( ( win->maxx - win->curx ) < cw )
 		return ERR;
 	wcn = min( n, ( win->maxx - win->curx ) / cw );
-#ifdef DEBUG
 	__CTRACE(__CTRACE_LINE, "whline_set: line of %d\n", wcn);
-#endif /* DEBUG */
+	ocury = win->cury;
 	ocurx = win->curx;
 
-	memcpy( &cc, wch, sizeof( cchar_t ));
-	if (!(wch->vals[ 0 ]))
-		cc.vals[ 0 ] |= WACS_HLINE->vals[0];
 	for (i = 0; i < wcn; i++ ) {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_LINE, "whline_set: (%d,%d)\n",
-		   win->cury, ocurx + i * cw);
-#endif /* DEBUG */
-		mvwadd_wch(win, win->cury, ocurx + i * cw, &cc);
+		   ocury, ocurx + i * cw);
+		mvwadd_wch(win, ocury, ocurx + i * cw, &cc);
 	}
-		
-	wmove(win, win->cury, ocurx);
+
+	wmove(win, ocury, ocurx);
+	__sync(win);
 	return OK;
 #endif /* HAVE_WCHAR */
 }
@@ -249,7 +256,7 @@ int vline_set(const cchar_t *wch, int n)
 #ifndef HAVE_WCHAR
 	return ERR;
 #else
-	return wvline_set( stdscr, wch, n );
+	return wvline_set(stdscr, wch, n);
 #endif /* HAVE_WCHAR */
 }
 
@@ -258,7 +265,7 @@ int mvvline_set(int y, int x, const cchar_t *wch, int n)
 #ifndef HAVE_WCHAR
 	return ERR;
 #else
-	return mvwvline_set( stdscr, y, x, wch, n );
+	return mvwvline_set(stdscr, y, x, wch, n);
 #endif /* HAVE_WCHAR */
 }
 
@@ -267,10 +274,10 @@ int mvwvline_set(WINDOW *win, int y, int x, const cchar_t *wch, int n)
 #ifndef HAVE_WCHAR
 	return ERR;
 #else
-	if ( wmove( win, y, x ) == ERR )
+	if (wmove(win, y, x) == ERR)
 		return ERR;
 
-	return wvline_set( win, wch, n );
+	return wvline_set(win, wch, n);
 #endif /* HAVE_WCHAR */
 }
 
@@ -282,24 +289,27 @@ int wvline_set(WINDOW *win, const cchar_t *wch, int n)
 	int ocury, ocurx, wcn, i;
 	cchar_t cc;
 
-	wcn = min( n, win->maxy - win->cury);
-#ifdef DEBUG
+	if (__predict_false(win == NULL))
+		return ERR;
+
+	wcn = min(n, win->maxy - win->cury);
 	__CTRACE(__CTRACE_LINE, "wvline_set: line of %d\n", wcn);
-#endif /* DEBUG */
 	ocury = win->cury;
 	ocurx = win->curx;
 
-	memcpy( &cc, wch, sizeof( cchar_t ));
-	if (!(wch->vals[ 0 ]))
-		cc.vals[ 0 ] |= WACS_VLINE->vals[0];
+	cc = *wch;
+	if (!cc.vals[0]) {
+		cc.vals[0] = WACS_VLINE->vals[0];
+		cc.attributes |= WACS_VLINE->attributes;
+	}
 	for (i = 0; i < wcn; i++) {
 		mvwadd_wch(win, ocury + i, ocurx, &cc);
-#ifdef DEBUG
 		__CTRACE(__CTRACE_LINE, "wvline_set: (%d,%d)\n",
 		    ocury + i, ocurx);
-#endif /* DEBUG */
 	}
+
 	wmove(win, ocury, ocurx);
+	__sync(win);
 	return OK;
 #endif /* HAVE_WCHAR */
 }

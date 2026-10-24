@@ -1,4 +1,4 @@
-/*	$NetBSD: printw.c,v 1.22 2011/07/17 20:54:34 joerg Exp $	*/
+/*	$NetBSD: printw.c,v 1.31 2024/12/23 02:58:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)printw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: printw.c,v 1.22 2011/07/17 20:54:34 joerg Exp $");
+__RCSID("$NetBSD: printw.c,v 1.31 2024/12/23 02:58:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -46,8 +46,6 @@ __RCSID("$NetBSD: printw.c,v 1.22 2011/07/17 20:54:34 joerg Exp $");
 /*
  * printw and friends.
  */
-
-static int __winwrite __P((void *, const char *, int));
 
 /*
  * printw --
@@ -62,7 +60,7 @@ printw(const char *fmt,...)
 	va_start(ap, fmt);
 	ret = vw_printw(stdscr, fmt, ap);
 	va_end(ap);
-	return (ret);
+	return ret;
 }
 /*
  * wprintw --
@@ -74,10 +72,13 @@ wprintw(WINDOW *win, const char *fmt,...)
 	va_list ap;
 	int     ret;
 
+	if (__predict_false(win == NULL))
+		return ERR;
+
 	va_start(ap, fmt);
 	ret = vw_printw(win, fmt, ap);
 	va_end(ap);
-	return (ret);
+	return ret;
 }
 /*
  * mvprintw, mvwprintw --
@@ -91,11 +92,11 @@ mvprintw(int y, int x, const char *fmt,...)
 	int     ret;
 
 	if (move(y, x) != OK)
-		return (ERR);
+		return ERR;
 	va_start(ap, fmt);
 	ret = vw_printw(stdscr, fmt, ap);
 	va_end(ap);
-	return (ret);
+	return ret;
 }
 
 int
@@ -105,35 +106,14 @@ mvwprintw(WINDOW * win, int y, int x, const char *fmt,...)
 	int     ret;
 
 	if (wmove(win, y, x) != OK)
-		return (ERR);
+		return ERR;
 
 	va_start(ap, fmt);
 	ret = vw_printw(win, fmt, ap);
 	va_end(ap);
-	return (ret);
+	return ret;
 }
-/*
- * Internal write-buffer-to-window function.
- */
-static int
-__winwrite(cookie, buf, n)
-	void   *cookie;
-	const char *buf;
-	int     n;
-{
-	WINDOW *win;
-	int     c;
 
-	for (c = n, win = cookie; --c >= 0;)
-	{
-#ifdef DEBUG
-		__CTRACE(__CTRACE_MISC, "__winwrite: %c\n", *buf);
-#endif
-		if (waddch(win, (chtype) (*buf++ & __CHARTEXT)) == ERR)
-			return (-1);
-	}
-	return (n);
-}
 /*
  * vw_printw --
  *	This routine actually executes the printf and adds it to the window.
@@ -141,12 +121,28 @@ __winwrite(cookie, buf, n)
 int
 vw_printw(WINDOW *win, const char *fmt, va_list ap)
 {
-	FILE   *f;
+	int n;
 
-	if ((f = funopen(win, NULL, __winwrite, NULL, NULL)) == NULL)
-		return (ERR);
-	(void) vfprintf(f, fmt, ap);
-	return (fclose(f) ? ERR : OK);
+	__CTRACE(__CTRACE_INPUT, "vw_printw: win %p\n", win);
+
+        if (__predict_false(win == NULL))
+                return ERR;
+
+	if (win->fp == NULL) {
+		win->fp = open_memstream(&win->buf, &win->buflen);
+		if (__predict_false(win->fp == NULL))
+			return ERR;
+	} else
+		rewind(win->fp);
+
+	n = vfprintf(win->fp, fmt, ap);
+	if (__predict_false(n == 0))
+		return OK;
+	if (__predict_false(n == -1))
+		return ERR;
+	if (__predict_false(fflush(win->fp) != 0))
+		return ERR;
+	return waddnstr(win, win->buf, n);
 }
 
 __strong_alias(vwprintw, vw_printw)

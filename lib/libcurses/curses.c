@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.25 2013/10/16 19:59:29 roy Exp $	*/
+/*	$NetBSD: curses.c,v 1.31 2022/10/19 06:09:27 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.25 2013/10/16 19:59:29 roy Exp $");
+__RCSID("$NetBSD: curses.c,v 1.31 2022/10/19 06:09:27 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -64,8 +64,10 @@ WINDOW	*curscr;			/* Current screen. */
 WINDOW	*stdscr;			/* Standard screen. */
 WINDOW	*__virtscr;			/* Virtual screen (for doupdate()). */
 SCREEN  *_cursesi_screen;               /* the current screen we are using */
+volatile bool	 _reentrant;		/* If true, some global vars are ro. */
 int	 COLS;				/* Columns on the screen. */
 int	 LINES;				/* Lines on the screen. */
+int	 ESCDELAY;			/* ms delay between keys for esc seq */
 int	 TABSIZE;			/* Size of a tab. */
 int	 COLORS;			/* Maximum colors on the screen */
 int	 COLOR_PAIRS = 0;		/* Maximum color pairs on the screen */
@@ -75,7 +77,58 @@ char	 __GT;				/* Gtty indicates tabs. */
 char	 __NONL;			/* Term can't hack LF doing a CR. */
 char	 __UPPERCASE;			/* Terminal is uppercase only. */
 
+/* compare two cells on screen, must have the same foreground/background,
+ * and for wide characters the same sequence of non-spacing characters
+ */
+int
+_cursesi_celleq(__LDATA *x, __LDATA *y)
+{
 #ifdef HAVE_WCHAR
+	nschar_t *xnp = x->nsp, *ynp = y->nsp;
+#endif /* HAVE_WCHAR */
+	int ret = ( x->ch == y->ch ) && ( x->attr == y->attr );
+
+#ifdef HAVE_WCHAR
+	if (!ret)
+		return 0;
+
+	if ((x->cflags & CA_CONTINUATION) != (y->cflags & CA_CONTINUATION))
+		return 0;
+
+	if (!xnp && !ynp)
+		return 1;
+
+	if ((xnp && !ynp) || (!xnp && ynp))
+		return 0;
+
+	while (xnp && ynp) {
+		if (xnp->ch != ynp->ch)
+			return 0;
+		xnp = xnp->next;
+		ynp = ynp->next;
+	}
+
+	return !xnp && !ynp;
+#else
+	return ret;
+#endif /* HAVE_WCHAR */
+}
+
+#ifdef HAVE_WCHAR
+/*
+ * Copy a complex character from source to destination.
+ *
+ */
+void
+_cursesi_copy_wchar(__LDATA *src, __LDATA *dest)
+{
+	dest->ch = src->ch;
+	dest->attr = src->attr;
+	dest->cflags = src->cflags;
+	dest->wcols = src->wcols;
+	_cursesi_copy_nsp(src->nsp, dest);
+}
+
 /*
  * Copy the non-spacing character list (src_nsp) to the given character,
  * allocate or free storage as required.
@@ -95,7 +148,7 @@ _cursesi_copy_nsp(nschar_t *src_nsp, struct __ldata *ch)
 				pnp = tnp;
 				tnp = tnp->next;
 			} else {
-				tnp = (nschar_t *)malloc(sizeof(nschar_t));
+				tnp = malloc(sizeof(nschar_t));
 				if (!tnp)
 					return ERR;
 				tnp->ch = np->ch;

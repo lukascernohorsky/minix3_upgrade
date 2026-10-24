@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.107 2015/06/08 12:38:57 joerg Exp $	*/
+/*	$NetBSD: curses.h,v 1.133 2024/12/05 04:08:12 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -59,21 +59,21 @@ typedef wchar_t	attr_t;
 #endif
 
 #ifdef HAVE_WCHAR
-/* 
+/*
  * The complex character structure required by the X/Open reference and used
- * in * functions such as in_wchstr(). It includes a string of up to 8 wide
+ * in functions such as in_wchstr(). It includes a string of up to 8 wide
  * characters and its length, an attribute, and a color-pair.
  */
 #define CURSES_CCHAR_MAX 8
 #define CCHARW_MAX       5
 typedef struct {
 	attr_t		attributes;		/* character attributes */
-	unsigned	elements;		/* number of wide char in
+	unsigned	elements;		/* number of wide chars in
 						   vals[] */
 	wchar_t		vals[CURSES_CCHAR_MAX]; /* wide chars including
 						   non-spacing */
 } cchar_t;
-#else 
+#else
 typedef chtype cchar_t;
 #endif /* HAVE_WCHAR */
 
@@ -86,12 +86,12 @@ typedef chtype cchar_t;
 
 #ifndef _CURSES_PRIVATE
 
-#define _puts(s)        tputs(s, 0, __cputchar)
-#define _putchar(c)     __cputchar(c)
+#define _puts(s)	tputs(s, 0, __cputchar)
+#define _putchar(c)	__cputchar(c)
 
 /* Old-style terminal modes access. */
-#define crmode()        cbreak()
-#define nocrmode()      nocbreak()
+#define crmode()	cbreak()
+#define nocrmode()	nocbreak()
 #endif /* _CURSES_PRIVATE */
 
 
@@ -107,7 +107,7 @@ typedef chtype cchar_t;
 
 /* First function key (block of 64 follow) */
 #define    KEY_F0         0x108
-/* Function defining other function key values*/
+/* Function defining other function key values */
 #define    KEY_F(n)       (KEY_F0+(n))
 
 #define    KEY_DL         0x148    /* Delete Line */
@@ -132,7 +132,7 @@ typedef chtype cchar_t;
 #define    KEY_LL         0x15B    /* Home Down */
 
 /*
- * "Keypad" keys arranged like this:
+ * "Keypad" keys are arranged like this:
  *
  *  A1   up  A3
  * left  B2 right
@@ -170,7 +170,7 @@ typedef chtype cchar_t;
 #define    KEY_RESTART    0x177    /* Restart key */
 #define    KEY_RESUME     0x178    /* Resume key */
 #define    KEY_SAVE       0x179    /* Save key */
-#define    KEY_SBEG       0x17A    /* Shift begin key */
+#define    KEY_SBEG       0x17A    /* Shift Begin key */
 #define    KEY_SCANCEL    0x17B    /* Shift Cancel key */
 #define    KEY_SCOMMAND   0x17C    /* Shift Command key */
 #define    KEY_SCOPY      0x17D    /* Shift Copy key */
@@ -204,12 +204,12 @@ typedef chtype cchar_t;
 #define    KEY_MOUSE      0x199    /* Mouse event has occurred */
 #define    KEY_RESIZE     0x200    /* Resize event has occurred */
 #define    KEY_MAX        0x240    /* maximum extended key value */
-#define    KEY_CODE_YES   0x241    /* A function key pressed */
+#define    KEY_CODE_YES   0x241    /* A function key was pressed */
 
 #include <unctrl.h>
 
 /*
- * A window an array of __LINE structures pointed to by the 'lines' pointer.
+ * A window is an array of __LINE structures pointed to by the 'lines' pointer.
  * A line is an array of __LDATA structures pointed to by the 'line' pointer.
  */
 
@@ -283,7 +283,9 @@ typedef struct __screen SCREEN;
 
 #define	NUM_ACS	128
 
+__BEGIN_DECLS
 extern chtype _acs_char[NUM_ACS];
+__END_DECLS
 #ifdef __cplusplus
 #define __UC_CAST(a)	static_cast<unsigned char>(a)
 #else
@@ -327,7 +329,9 @@ extern chtype _acs_char[NUM_ACS];
 #define	ACS_STERLING	_acs_char[__UC_CAST('}')]
 
 #ifdef HAVE_WCHAR
+__BEGIN_DECLS
 extern cchar_t _wacs_char[NUM_ACS];
+__END_DECLS
 
 #define	WACS_RARROW     (&_wacs_char[(unsigned char)'+'])
 #define	WACS_LARROW     (&_wacs_char[(unsigned char)','])
@@ -391,14 +395,15 @@ extern cchar_t _wacs_char[NUM_ACS];
 #define	COLOR_WHITE	0x07
 
 #ifdef __cplusplus
-#define __UINT32_CAST(a)	static_cast<u_int32_t>(a)
+#define __UINT32_CAST(a)	static_cast<uint32_t>(a)
 #else
-#define __UINT32_CAST(a)	(u_int32_t)(a)
+#define __UINT32_CAST(a)	(uint32_t)(a)
 #endif
 #define	COLOR_PAIR(n)	(((__UINT32_CAST(n)) << 17) & A_COLOR)
 #define	PAIR_NUMBER(n)	(((__UINT32_CAST(n)) & A_COLOR) >> 17)
 
 /* Curses external declarations. */
+__BEGIN_DECLS
 extern WINDOW	*curscr;		/* Current screen. */
 extern WINDOW	*stdscr;		/* Standard screen. */
 
@@ -411,6 +416,7 @@ extern int	 COLOR_PAIRS;		/* Max color pairs on the screen. */
 
 extern int	 ESCDELAY;		/* Delay between keys in esc seq's. */
 extern int	 TABSIZE;		/* Size of a tab. */
+__END_DECLS
 
 #ifndef OK
 #define	ERR	(-1)			/* Error return. */
@@ -425,7 +431,7 @@ extern int	 TABSIZE;		/* Size of a tab. */
 /* Standard screen pseudo functions. */
 #define	addbytes(s, n)			__waddbytes(stdscr, s, n, 0)
 #define	addch(ch)			waddch(stdscr, ch)
-#define	addchnstr(s)			waddchnstr(stdscr, s, n)
+#define	addchnstr(s, n)			waddchnstr(stdscr, s, n)
 #define	addchstr(s)			waddchnstr(stdscr, s, -1)
 #define	addnstr(s, n)			waddnstr(stdscr, s, n)
 #define	addstr(s)			waddnstr(stdscr, s, -1)
@@ -555,6 +561,7 @@ int	 echochar(const chtype);
 int	 erase(void);
 int	 getch(void);
 int	 getnstr(char *, int);
+int	 getscrreg(int *, int *);
 int	 getstr(char *);
 chtype	 inch(void);
 int	 inchnstr(chtype *, int);
@@ -614,7 +621,25 @@ __END_DECLS
 #define	getmaxyx(w, y, x)	(y) = getmaxy(w), (x) = getmaxx(w)
 #define	getparyx(w, y, x)	(y) = getpary(w), (x) = getparx(w)
 
-/* Public function prototypes. */
+#define	getsyx(y, x)						\
+	do {							\
+		if (is_leaveok(curscr))				\
+			(y) = (x) = -1;				\
+		else						\
+			getyx(curscr,(y), (x));			\
+	} while(0 /* CONSTCOND */)
+#define	setsyx(y, x)						\
+	do {							\
+		if ((y) == -1 && (x) == -1)			\
+			leaveok(curscr, TRUE);			\
+		else {						\
+			leaveok(curscr, FALSE);			\
+			wmove(curscr, (y), (x));		\
+		}						\
+	} while(0 /* CONSTCOND */)
+
+
+/* Public functions. */
 __BEGIN_DECLS
 int	 assume_default_colors(short, short);
 int	 baudrate(void);
@@ -628,7 +653,7 @@ int	 copywin(const WINDOW *, WINDOW *, int, int, int, int, int, int, int);
 int	 curs_set(int);
 int	 def_prog_mode(void);
 int	 def_shell_mode(void);
-int      define_key(char *, int);
+int      define_key(const char *, int);
 int	 delay_output(int);
 void     delscreen(SCREEN *);
 int	 delwin(WINDOW *);
@@ -638,6 +663,7 @@ int	 doupdate(void);
 int	 echo(void);
 int	 endwin(void);
 char     erasechar(void);
+void	 filter(void);
 int	 flash(void);
 int	 flushinp(void);
 int	 flushok(WINDOW *, bool);
@@ -658,9 +684,11 @@ int	 halfdelay(int);
 bool	 has_colors(void);
 bool	 has_ic(void);
 bool	 has_il(void);
+int	 has_key(int);
 int	 hline(chtype, int);
 int	 idcok(WINDOW *, bool);
 int	 idlok(WINDOW *, bool);
+int	 immedok(WINDOW *, bool);
 int	 init_color(short, short, short, short);
 int	 init_pair(short, short, short);
 WINDOW	*initscr(void);
@@ -668,6 +696,7 @@ int	 intrflush(WINDOW *, bool);
 bool	 isendwin(void);
 bool	 is_linetouched(WINDOW *, int);
 bool	 is_wintouched(WINDOW *);
+bool	 is_term_resized(int, int);
 int      keyok(int, bool);
 int	 keypad(WINDOW *, bool);
 char	*keyname(int);
@@ -691,7 +720,7 @@ int	 mvwprintw(WINDOW *, int, int, const char *, ...) __printflike(4, 5);
 int	 mvwscanw(WINDOW *, int, int, const char *, ...) __scanflike(4, 5);
 int	 napms(int);
 WINDOW	*newpad(int, int);
-SCREEN  *newterm(char *, FILE *, FILE *);
+SCREEN  *newterm(const char *, FILE *, FILE *);
 WINDOW	*newwin(int, int, int, int);
 int	 nl(void);
 attr_t	 no_color_attributes(void);
@@ -717,23 +746,30 @@ int	 reset_prog_mode(void);
 int	 reset_shell_mode(void);
 int	 resetty(void);
 int      resizeterm(int, int);
+int	 resize_term(int, int);
+int	 ripoffline(int, int (*)(WINDOW *, int));
 int	 savetty(void);
 int	 scanw(const char *, ...) __scanflike(1, 2);
 int	 scroll(WINDOW *);
 int	 scrollok(WINDOW *, bool);
-int	 setterm(char *);
+int	 setterm(const char *);
+int	 set_escdelay(int);
+int	 set_tabsize(int);
 SCREEN  *set_term(SCREEN *);
 int	 start_color(void);
 WINDOW	*subpad(WINDOW *, int, int, int, int);
 WINDOW	*subwin(WINDOW *, int, int, int, int);
+int	 syncok(WINDOW *, bool);
 chtype	 termattrs(void);
 attr_t	 term_attrs(void);
 int	 touchline(WINDOW *, int, int);
 int	 touchoverlap(WINDOW *, WINDOW *);
 int	 touchwin(WINDOW *);
+int	 typeahead(int);
 int	 ungetch(int);
 int	 untouchwin(WINDOW *);
 int	 use_default_colors(void);
+void	 use_env(bool);
 int	 vline(chtype, int);
 int	 vw_printw(WINDOW *, const char *, __va_list) __printflike(2, 0);
 int	 vw_scanw(WINDOW *, const char *, __va_list) __scanflike(2, 0);
@@ -765,6 +801,7 @@ int	 wechochar(WINDOW *, const chtype);
 int	 werase(WINDOW *);
 int	 wgetch(WINDOW *);
 int	 wgetnstr(WINDOW *, char *, int);
+int	 wgetscrreg(WINDOW *, int *, int *);
 int	 wgetstr(WINDOW *, char *);
 int	 whline(WINDOW *, chtype, int);
 chtype	 winch(WINDOW *);
@@ -807,6 +844,24 @@ int chgat(int, attr_t, short, const void *);
 int wchgat(WINDOW *, int, attr_t, short, const void *);
 int mvchgat(int, int, int, attr_t, short, const void *);
 int mvwchgat(WINDOW *, int, int, int, attr_t, short, const void *);
+
+/* Soft Label Keys. */
+int	 slk_attroff(const chtype);
+int	 slk_attr_off(const attr_t, void *);
+int	 slk_attron(const chtype);
+int	 slk_attr_on(const attr_t, void *);
+int	 slk_attrset(const chtype);
+int	 slk_attr_set(const attr_t, short, void *);
+int	 slk_clear(void);
+int	 slk_color(short);
+int	 slk_init(int);
+char	*slk_label(int);
+int	 slk_noutrefresh(void);
+int	 slk_refresh(void);
+int	 slk_restore(void);
+int	 slk_set(int, const char *, int);
+int	 slk_touch(void);
+int	 slk_wset(int, const wchar_t *, int);
 
 /* wide-character support routines */
 /* return ERR when HAVE_WCHAR is not defined */
@@ -892,7 +947,7 @@ int mvwinwstr(WINDOW *, int, int, wchar_t *);
 int winnwstr(WINDOW *, wchar_t *, int);
 int winwstr(WINDOW *, wchar_t *);
 
-/* cchar handlgin */
+/* cchar handling */
 int setcchar(cchar_t *, const wchar_t *, const attr_t, short, const void *);
 int getcchar(const cchar_t *, wchar_t *, attr_t *, short *, void *);
 
@@ -902,7 +957,7 @@ int border_set(const cchar_t *, const cchar_t *, const cchar_t *,
                const cchar_t *, const cchar_t *, const cchar_t *,
                const cchar_t *, const cchar_t *);
 int wborder_set(WINDOW *, const cchar_t *, const cchar_t *,
-                const cchar_t *, const cchar_t *, const cchar_t *, 
+                const cchar_t *, const cchar_t *, const cchar_t *,
                 const cchar_t *, const cchar_t *, const cchar_t *);
 int box_set(WINDOW *, const cchar_t *, const cchar_t *);
 int erasewchar(wchar_t *);
@@ -922,11 +977,87 @@ int wbkgrnd(WINDOW *, const cchar_t *);
 void wbkgrndset(WINDOW *, const cchar_t *);
 int wgetbkgrnd(WINDOW *, cchar_t *);
 
+/* ncurses window tests */
+bool is_keypad(const WINDOW *);
+bool is_leaveok(const WINDOW *);
+bool is_pad(const WINDOW *);
+
+/* ncurses mouse support */
+#define	NB_MOUSE_MASK(b, m)	((m) << (((b) - 1) * 5))
+#define	NB_BUTTON_RELEASED	001L
+#define	NB_BUTTON_PRESSED	002L
+#define	NB_BUTTON_CLICKED	004L
+#define	NB_DOUBLE_CLICKED	010L
+#define	NB_TRIPLE_CLICKED	020L
+#define	NB_RESERVED_EVENT	040L
+
+#define	BUTTON1_RELEASED	NB_MOUSE_MASK(1, NB_BUTTON_RELEASED)
+#define	BUTTON1_PRESSED		NB_MOUSE_MASK(1, NB_BUTTON_PRESSED)
+#define	BUTTON1_CLICKED		NB_MOUSE_MASK(1, NB_BUTTON_CLICKED)
+#define	BUTTON1_DOUBLE_CLICKED	NB_MOUSE_MASK(1, NB_DOUBLE_CLICKED)
+#define	BUTTON1_TRIPLE_CLICKED	NB_MOUSE_MASK(1, NB_TRIPLE_CLICKED)
+
+#define	BUTTON2_RELEASED	NB_MOUSE_MASK(2, NB_BUTTON_RELEASED)
+#define	BUTTON2_PRESSED		NB_MOUSE_MASK(2, NB_BUTTON_PRESSED)
+#define	BUTTON2_CLICKED		NB_MOUSE_MASK(2, NB_BUTTON_CLICKED)
+#define	BUTTON2_DOUBLE_CLICKED	NB_MOUSE_MASK(2, NB_DOUBLE_CLICKED)
+#define	BUTTON2_TRIPLE_CLICKED	NB_MOUSE_MASK(2, NB_TRIPLE_CLICKED)
+
+#define	BUTTON3_RELEASED	NB_MOUSE_MASK(3, NB_BUTTON_RELEASED)
+#define	BUTTON3_PRESSED		NB_MOUSE_MASK(3, NB_BUTTON_PRESSED)
+#define	BUTTON3_CLICKED		NB_MOUSE_MASK(3, NB_BUTTON_CLICKED)
+#define	BUTTON3_DOUBLE_CLICKED	NB_MOUSE_MASK(3, NB_DOUBLE_CLICKED)
+#define	BUTTON3_TRIPLE_CLICKED	NB_MOUSE_MASK(3, NB_TRIPLE_CLICKED)
+
+#define	BUTTON4_RELEASED	NB_MOUSE_MASK(4, NB_BUTTON_RELEASED)
+#define	BUTTON4_PRESSED		NB_MOUSE_MASK(4, NB_BUTTON_PRESSED)
+#define	BUTTON4_CLICKED		NB_MOUSE_MASK(4, NB_BUTTON_CLICKED)
+#define	BUTTON4_DOUBLE_CLICKED	NB_MOUSE_MASK(4, NB_DOUBLE_CLICKED)
+#define	BUTTON4_TRIPLE_CLICKED	NB_MOUSE_MASK(4, NB_TRIPLE_CLICKED)
+
+#define	BUTTON5_RELEASED	NB_MOUSE_MASK(5, NB_BUTTON_RELEASED)
+#define	BUTTON5_PRESSED		NB_MOUSE_MASK(5, NB_BUTTON_PRESSED)
+#define	BUTTON5_CLICKED		NB_MOUSE_MASK(5, NB_BUTTON_CLICKED)
+#define	BUTTON5_DOUBLE_CLICKED	NB_MOUSE_MASK(5, NB_DOUBLE_CLICKED)
+#define	BUTTON5_TRIPLE_CLICKED	NB_MOUSE_MASK(5, NB_TRIPLE_CLICKED)
+
+#define	BUTTON_CTRL		NB_MOUSE_MASK(6, 0001L)
+#define	BUTTON_SHIFT		NB_MOUSE_MASK(6, 0002L)
+#define	BUTTON_ALT		NB_MOUSE_MASK(6, 0004L)
+#define	REPORT_MOUSE_POSITION	NB_MOUSE_MASK(6, 0010L)
+#define	ALL_MOUSE_EVENTS	(REPORT_MOUSE_POSITION - 1)
+
+#define	BUTTON_RELEASE(e, x)		((e) & NB_MOUSE_MASK(x, 001))
+#define	BUTTON_PRESS(e, x)		((e) & NB_MOUSE_MASK(x, 002))
+#define	BUTTON_CLICK(e, x)		((e) & NB_MOUSE_MASK(x, 004))
+#define	BUTTON_DOUBLE_CLICK(e, x)	((e) & NB_MOUSE_MASK(x, 010))
+#define	BUTTON_TRIPLE_CLICK(e, x)	((e) & NB_MOUSE_MASK(x, 020))
+#define	BUTTON_RESERVED_EVENT(e, x)	((e) & NB_MOUSE_MASK(x, 040))
+
+typedef unsigned long mmask_t;
+typedef struct {
+	short id;		/* ID to distinguish multiple devices */
+	int x, y, z;		/* event coordinates */
+	mmask_t bstate;		/* button state bits */
+} MEVENT;
+
+bool has_mouse(void);
+int getmouse(MEVENT *);
+int ungetmouse(MEVENT *);
+mmask_t mousemask(mmask_t, mmask_t *);
+bool wenclose(const WINDOW *, int, int);
+bool mouse_trafo(int *, int *, bool);
+bool wmouse_trafo(const WINDOW *, int *, int *, bool);
+int mouseinterval(int);
+
+/* ncurses version for compat */
+const char *curses_version(void);
+
 /* Private functions that are needed for user programs prototypes. */
-int	 __cputchar(int);
-int	 __waddbytes(WINDOW *, const char *, int, attr_t);
+int	__cputchar(int);
+int	__waddbytes(WINDOW *, const char *, int, attr_t);
 #ifdef HAVE_WCHAR
-int __cputwchar( wchar_t );
+int	__cputwchar(wchar_t);
 #endif /* HAVE_WCHAR */
 __END_DECLS
 

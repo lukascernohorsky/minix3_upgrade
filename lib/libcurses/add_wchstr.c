@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wchstr.c,v 1.4 2010/02/23 19:48:26 drochner Exp $ */
+/*   $NetBSD: add_wchstr.c,v 1.15 2024/12/23 02:58:03 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wchstr.c,v 1.4 2010/02/23 19:48:26 drochner Exp $");
+__RCSID("$NetBSD: add_wchstr.c,v 1.15 2024/12/23 02:58:03 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -51,11 +51,7 @@ __RCSID("$NetBSD: add_wchstr.c,v 1.4 2010/02/23 19:48:26 drochner Exp $");
 int
 add_wchstr(const cchar_t *wchstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return wadd_wchnstr(stdscr, wchstr, -1);
-#endif
 }
 
 
@@ -66,11 +62,7 @@ add_wchstr(const cchar_t *wchstr)
 int
 wadd_wchstr(WINDOW *win, const cchar_t *wchstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return wadd_wchnstr(win, wchstr, -1);
-#endif
 }
 
 
@@ -82,11 +74,7 @@ wadd_wchstr(WINDOW *win, const cchar_t *wchstr)
 int
 add_wchnstr(const cchar_t *wchstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return wadd_wchnstr(stdscr, wchstr, n);
-#endif
 }
 
 
@@ -97,11 +85,7 @@ add_wchnstr(const cchar_t *wchstr, int n)
 int
 mvadd_wchstr(int y, int x, const cchar_t *wchstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwadd_wchnstr(stdscr, y, x, wchstr, -1);
-#endif
 }
 
 
@@ -112,11 +96,7 @@ mvadd_wchstr(int y, int x, const cchar_t *wchstr)
 int
 mvwadd_wchstr(WINDOW *win, int y, int x, const cchar_t *wchstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwadd_wchnstr(win, y, x, wchstr, -1);
-#endif
 }
 
 
@@ -128,11 +108,7 @@ mvwadd_wchstr(WINDOW *win, int y, int x, const cchar_t *wchstr)
 int
 mvadd_wchnstr(int y, int x, const cchar_t *wchstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwadd_wchnstr(stdscr, y, x, wchstr, n);
-#endif
 }
 
 
@@ -144,14 +120,10 @@ mvadd_wchnstr(int y, int x, const cchar_t *wchstr, int n)
 int
 mvwadd_wchnstr(WINDOW *win, int y, int x, const cchar_t *wchstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return wadd_wchnstr(win, wchstr, n);
-#endif
 }
 
 
@@ -163,9 +135,6 @@ mvwadd_wchnstr(WINDOW *win, int y, int x, const cchar_t *wchstr, int n)
 int
 wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	const cchar_t *chp;
 	wchar_t wc;
 	int cw, x, y, sx, ex, newx, i, cnt;
@@ -173,10 +142,11 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 	nschar_t *np, *tnp;
 	__LINE *lnp;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT,
 	    "wadd_wchnstr: win = %p, wchstr = %p, n = %d\n", win, wchstr, n);
-#endif
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	if (!wchstr)
 		return OK;
@@ -189,27 +159,26 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 			n--, chp++, ++cnt);
 	else
 		for (chp = wchstr, cnt = 0; chp->vals[0]; chp++, ++cnt);
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wadd_wchnstr: len=%d\n", cnt);
-#endif /* DEBUG */
 	chp = wchstr;
 	x = win->curx;
 	y = win->cury;
 	lp = &win->alines[y]->line[x];
 	lnp = win->alines[y];
 
-	cw = WCOL(*lp);
+	cw = (*lp).wcols;
 	if (cw >= 0) {
 		sx = x;
 	} else {
 		if (wcwidth(chp->vals[0])) {
 			/* clear the partial character before cursor */
 			for (tp = lp + cw; tp < lp; tp++) {
-				tp->ch = (wchar_t) btowc((int) win->bch);
+				tp->ch = win->bch;
 				if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
 					return ERR;
 				tp->attr = win->battr;
-				SET_WCOL(*tp, 1);
+				tp->wcols = 1;
+				tp->cflags = CA_BACKGROUND;
 				np = tp->nsp;
 			}
 		} else {
@@ -221,7 +190,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 	}
 	lnp->flags |= __ISDIRTY;
 	newx = sx + win->ch_off;
-	if (newx < *lnp->firstchp)
+	if (newx < *lnp->firstchp) 
 		*lnp->firstchp = newx;
 
 	/* add characters in the string */
@@ -229,28 +198,24 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 	while (cnt) {
 		x = ex;
 		wc = chp->vals[0];
-#ifdef DEBUG
 		__CTRACE(__CTRACE_INPUT, "wadd_wchnstr: adding %x", wc);
-#endif /* DEBUG */
 		cw = wcwidth(wc);
 		if (cw < 0)
 			cw = 1;
 		if (cw) {
 			/* spacing character */
-#ifdef DEBUG
 			__CTRACE(__CTRACE_INPUT,
 			    " as a spacing char(width=%d)\n", cw);
-#endif /* DEBUG */
 			if (cw > win->maxx - ex) {
 				/* clear to EOL */
 				while (ex < win->maxx) {
-					lp->ch = (wchar_t)
-						btowc((int) win->bch);
+					lp->ch = win->bch;
 					if (_cursesi_copy_nsp(win->bnsp, lp)
 					    == ERR)
 						return ERR;
 					lp->attr = win->battr;
-					SET_WCOL(*lp, 1);
+					lp->cflags = CA_BACKGROUND;
+					(*lp).wcols = 1;
 					lp++, ex++;
 				}
 				ex = win->maxx - 1;
@@ -269,7 +234,8 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 			}
 			lp->ch = chp->vals[0];
 			lp->attr = chp->attributes & WA_ATTRIBUTES;
-			SET_WCOL(*lp, cw);
+			lp->cflags &= ~CA_BACKGROUND;
+			(*lp).wcols = cw;
 			if (chp->elements > 1) {
 				for (i = 1; i < chp->elements; i++) {
 					np = (nschar_t *)
@@ -282,11 +248,9 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 				}
 			}
 			lp++, ex++;
-#ifdef DEBUG
 			__CTRACE(__CTRACE_INPUT,
-				"wadd_wchnstr: ex = %d, x = %d, cw = %d\n",
-				 ex, x, cw);
-#endif /* DEBUG */
+			    "wadd_wchnstr: ex = %d, x = %d, cw = %d\n",
+			    ex, x, cw);
 			while (ex - x <= cw - 1) {
 				np = lp->nsp;
 				if (np) {
@@ -299,17 +263,17 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 				}
 				lp->ch = chp->vals[0];
 				lp->attr = chp->attributes & WA_ATTRIBUTES;
-				SET_WCOL(*lp, x - ex);
+				lp->cflags &= ~CA_BACKGROUND;
+				lp->cflags |= CA_CONTINUATION;
+				(*lp).wcols = x - ex;
 				lp++, ex++;
 			}
 		} else {
 			/* non-spacing character */
-#ifdef DEBUG
 			__CTRACE(__CTRACE_INPUT,
-				"wadd_wchnstr: as non-spacing char");
-#endif /* DEBUG */
+			    "wadd_wchnstr: as non-spacing char");
 			for (i = 0; i < chp->elements; i++) {
-				np = (nschar_t *)malloc(sizeof(nschar_t));
+				np = malloc(sizeof(nschar_t));
 				if (!np)
 					return ERR;
 				np->ch = chp->vals[i];
@@ -334,5 +298,4 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 	__touchline(win, y, sx, ex);
 
 	return OK;
-#endif /* HAVE_WCHAR */
 }

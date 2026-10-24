@@ -1,4 +1,4 @@
-/*	$NetBSD: fileio.c,v 1.4 2009/07/22 16:57:14 roy Exp $	*/
+/*	$NetBSD: fileio.c,v 1.10 2024/12/23 02:58:03 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,9 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef LIBHACK
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fileio.c,v 1.4 2009/07/22 16:57:14 roy Exp $");
+__RCSID("$NetBSD: fileio.c,v 1.10 2024/12/23 02:58:03 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -83,11 +84,9 @@ putwin(WINDOW *win, FILE *fp)
 	int y, x;
 	__LDATA *sp;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_FILEIO, "putwin: win %p\n", win);
-#endif
 
-	if (win == NULL)
+	if (__predict_false(win == NULL))
 		return ERR;
 
 	/* win can't be a subwin */
@@ -143,7 +142,7 @@ __getnsp(nschar_t *nsp, FILE *fp)
 		return ERR;
 	onsp = nsp;
 	while (n != 0) {
-		tnsp = (nschar_t *)malloc(sizeof(nschar_t));
+		tnsp = malloc(sizeof(nschar_t));
 		if (tnsp == NULL) {
 			__cursesi_free_nsp(nsp);
 			return OK;
@@ -176,9 +175,7 @@ getwin(FILE *fp)
 	int y, x;
 	__LDATA *sp;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_FILEIO, "getwin\n");
-#endif
 
 	/* Check library version */
 	if (fread(&major, sizeof(int), 1, fp) != 1)
@@ -189,13 +186,13 @@ getwin(FILE *fp)
 		return NULL;
 
 	/* Window parameters */
-	wtmp = (WINDOW *)malloc(sizeof(WINDOW));
+	wtmp = malloc(sizeof(WINDOW));
 	if (wtmp == NULL)
 		return NULL;
 	if (fread(wtmp, sizeof(WINDOW), 1, fp) != 1)
 		goto error0;
 	win = __newwin(_cursesi_screen, wtmp->maxy, wtmp->maxx,
-	    wtmp->begy, wtmp->begx, FALSE);
+	    wtmp->begy, wtmp->begx, FALSE, FALSE);
 	if (win == NULL)
 		goto error0;
 	win->cury = wtmp->cury;
@@ -235,9 +232,7 @@ getwin(FILE *fp)
 		}
 		__touchline(win, y, 0, (int) win->maxx - 1);
 	}
-#ifdef DEBUG
-	__CTRACE(__CTRACE_FILEIO, "getwin: win = 0x%p\n", win);
-#endif
+	__CTRACE(__CTRACE_FILEIO, "getwin: win = %p\n", win);
 	return win;
 
 error1:
@@ -247,3 +242,4 @@ error0:
 		free(wtmp);
 	return NULL;
 }
+#endif /* !LIBHACK */

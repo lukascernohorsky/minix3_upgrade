@@ -1,4 +1,4 @@
-/*	$NetBSD: tscroll.c,v 1.13 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: tscroll.c,v 1.15 2021/09/06 07:03:50 rin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)tscroll.c	8.4 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: tscroll.c,v 1.13 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: tscroll.c,v 1.15 2021/09/06 07:03:50 rin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -49,7 +49,8 @@ __RCSID("$NetBSD: tscroll.c,v 1.13 2007/01/21 13:25:36 jdc Exp $");
 char   *
 __tscroll(const char *cap, int n1, int n2)
 {
-	return (__parse_cap(cap, n1, n2));
+
+	return __parse_cap(cap, n1, n2);
 }
 
 /*
@@ -94,7 +95,7 @@ __parse_cap (char const *cap, ...)
 #ifdef DEBUG
 	{
 		int	i;
-		
+
 		__CTRACE(__CTRACE_MISC, "__parse_cap: cap = ");
 		for (i = 0; i < strlen(cap); i++)
 			__CTRACE(__CTRACE_MISC, "%s", unctrl(cap[i]));
@@ -110,23 +111,19 @@ __parse_cap (char const *cap, ...)
 		switch (c = *cap++) {
 		case 'n':
 			if (!have_input) {
-				n = va_arg (ap, int);
+				n = va_arg(ap, int);
 				have_input = 1;
-#ifdef DEBUG
 				__CTRACE(__CTRACE_MISC,
 				    "__parse_cap: %%n, val = %d\n", n);
-#endif
 			}
 			n ^= 0140;
 			continue;
 		case 'd':
 			if (!have_input) {
-				n = va_arg (ap, int);
+				n = va_arg(ap, int);
 				have_input = 1;
-#ifdef DEBUG
 				__CTRACE(__CTRACE_MISC,
 				    "__parse_cap: %%d, val = %d\n", n);
-#endif
 			}
 			if (n < 10)
 				goto one;
@@ -135,24 +132,20 @@ __parse_cap (char const *cap, ...)
 			/* FALLTHROUGH */
 		case '3':
 			if (!have_input) {
-				n = va_arg (ap, int);
+				n = va_arg(ap, int);
 				have_input = 1;
-#ifdef DEBUG
 				__CTRACE(__CTRACE_MISC,
 				    "__parse_cap: %%3, val = %d\n", n);
-#endif
 			}
 			*dp++ = (n / 100) | '0';
 			n %= 100;
 			/* FALLTHROUGH */
 		case '2':
 			if (!have_input) {
-				n = va_arg (ap, int);
+				n = va_arg(ap, int);
 				have_input = 1;
-#ifdef DEBUG
 				__CTRACE(__CTRACE_MISC,
 				    "__parse_cap: %%2, val = %d\n", n);
-#endif
 			}
 	two:		*dp++ = n / 10 | '0';
 	one:		*dp++ = n % 10 | '0';
@@ -160,12 +153,10 @@ __parse_cap (char const *cap, ...)
 			continue;
 		case '>':
 			if (!have_input) {
-				n = va_arg (ap, int);
+				n = va_arg(ap, int);
 				have_input = 1;
-#ifdef DEBUG
 				__CTRACE(__CTRACE_MISC,
 				    "__parse_cap: %%>, val = %d\n", n);
-#endif
 			}
 			if (n > *cap++)
 				n += *cap++;
@@ -174,35 +165,29 @@ __parse_cap (char const *cap, ...)
 			continue;
 		case '+':
 			if (!have_input) {
-				n = va_arg (ap, int);
+				n = va_arg(ap, int);
 				have_input = 1;
-#ifdef DEBUG
 				__CTRACE(__CTRACE_MISC,
 				    "__parse_cap: %%+, val = %d\n", n);
-#endif
 			}
 			n += *cap++;
 			/* FALLTHROUGH */
 		case '.':
 			if (!have_input) {
-				n = va_arg (ap, int);
+				n = va_arg(ap, int);
 				have_input = 1;
-#ifdef DEBUG
 				__CTRACE(__CTRACE_MISC,
 				    "__parse_cap: %%., val = %d\n", n);
-#endif
 			}
 			*dp++ = n;
 			have_input = 0;
 			continue;
 		case 'i':
 			if (!have_input) {
-				n = va_arg (ap, int);
+				n = va_arg(ap, int);
 				have_input = 1;
-#ifdef DEBUG
 				__CTRACE(__CTRACE_MISC,
 				    "__parse_cap: %%i, val = %d\n", n);
-#endif
 			}
 			n++;
 			continue;
@@ -211,23 +196,19 @@ __parse_cap (char const *cap, ...)
 			continue;
 		case 'B':
 			if (!have_input) {
-				n = va_arg (ap, int);
+				n = va_arg(ap, int);
 				have_input = 1;
-#ifdef DEBUG
 				__CTRACE(__CTRACE_MISC,
 				    "__parse_cap: %%B, val = %d\n", n);
-#endif
 			}
 			n = (n / 10 << 4) + n % 10;
 			continue;
 		case 'D':
 			if (!have_input) {
-				n = va_arg (ap, int);
+				n = va_arg(ap, int);
 				have_input = 1;
-#ifdef DEBUG
 				__CTRACE(__CTRACE_MISC,
 				    "__parse_cap: %%D, val = %d\n", n);
-#endif
 			}
 			n = n - 2 * (n % 16);
 			continue;
@@ -245,9 +226,9 @@ __parse_cap (char const *cap, ...)
 		}
 	}
 	*dp = '\0';
-	va_end (ap);
-	return (result);
+	va_end(ap);
+	return result;
 
-err:	va_end (ap);
-	return ((char *) "\0");
+err:	va_end(ap);
+	return (char *)"\0";
 }

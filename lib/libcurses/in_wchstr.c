@@ -1,4 +1,4 @@
-/*   $NetBSD: in_wchstr.c,v 1.3 2009/07/22 16:57:14 roy Exp $ */
+/*   $NetBSD: in_wchstr.c,v 1.11 2024/12/23 02:58:03 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: in_wchstr.c,v 1.3 2009/07/22 16:57:14 roy Exp $");
+__RCSID("$NetBSD: in_wchstr.c,v 1.11 2024/12/23 02:58:03 blymn Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -51,21 +51,13 @@ __warn_references(in_wchstr,
 int
 in_wchstr(cchar_t *wchstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return win_wchstr(stdscr, wchstr);
-#endif /* HAVE_WCHAR */
 }
 
 int
 in_wchnstr(cchar_t *wchstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return win_wchnstr(stdscr, wchstr, n);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -77,21 +69,13 @@ __warn_references(mvin_wchstr,
 int
 mvin_wchstr(int y, int x, cchar_t *wchstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwin_wchstr(stdscr, y, x, wchstr);
-#endif /* HAVE_WCHAR */
 }
 
 int
 mvin_wchnstr(int y, int x, cchar_t *wchstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwin_wchnstr(stdscr, y, x, wchstr, n);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -103,27 +87,19 @@ __warn_references(mvwin_wchstr,
 int
 mvwin_wchstr(WINDOW *win, int y, int x, cchar_t *wchstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return win_wchstr(win, wchstr);
-#endif /* HAVE_WCHAR */
 }
 
 int
 mvwin_wchnstr(WINDOW *win, int y, int x, cchar_t *wchstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return win_wchnstr(win, wchstr, n);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -135,12 +111,8 @@ __warn_references(win_wchstr,
 int
 win_wchstr(WINDOW *win, cchar_t *wchstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 
 	return win_wchnstr(win, wchstr, -1);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -150,20 +122,20 @@ win_wchstr(WINDOW *win, cchar_t *wchstr)
 int
 win_wchnstr(WINDOW *win, cchar_t *wchstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	__LDATA	*start;
 	int x = 0, cw = 0, cnt = 0;
 	cchar_t *wcp;
 	nschar_t *np;
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	if (wchstr == NULL)
 		return ERR;
 
 	start = &win->alines[win->cury]->line[win->curx];
 	x = win->curx;
-	cw = WCOL(*start);
+	cw = start->wcols;
 	if (cw < 0) {
 		start += cw;
 		x += cw;
@@ -171,27 +143,26 @@ win_wchnstr(WINDOW *win, cchar_t *wchstr, int n)
 	wcp = wchstr;
 	/* (n - 1) to leave room for the trailing 0 element */
 	while ((x < win->maxx) && ((n < 0) || ((n > 1) && (cnt < n - 1)))) {
-		cw = WCOL( *start );
-		wcp->vals[ 0 ] = start->ch;
+		cw = start->wcols;
+		wcp->vals[0] = start->ch;
 		wcp->attributes = start->attr;
 		wcp->elements = 1;
 		np = start->nsp;
 		if (np) {
 			do {
-				wcp->vals[ wcp->elements++ ] = np->ch;
+				wcp->vals[wcp->elements++] = np->ch;
 				np = np->next;
-			} while ( np );
+			} while (np);
 		}
 		wcp++;
 		cnt++;
 		x += cw;
-		if ( x < win->maxx ) 
+		if (x < win->maxx)
 			start += cw;
 	}
-	wcp->vals[ 0 ] = L'\0';
+	wcp->vals[0] = L'\0';
 	wcp->elements = 1;
 	wcp->attributes = win->wattr;
 
 	return OK;
-#endif /* HAVE_WCHAR */
 }

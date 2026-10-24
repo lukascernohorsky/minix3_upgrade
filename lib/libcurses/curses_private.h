@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.50 2014/02/20 09:42:42 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.82.2.1 2026/07/07 14:34:01 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -70,24 +70,14 @@ typedef struct nschar_t {
 struct __ldata {
 	wchar_t	ch;			/* Character */
 	attr_t	attr;			/* Attributes */
+#define CA_CONTINUATION		0x0001	/* a continuation cell */
+#define CA_BACKGROUND		0x0002	/* background char */
+	int16_t		cflags;		/* internal attributes for wide char */
 #ifdef HAVE_WCHAR
 	nschar_t	*nsp;	/* Foreground non-spacing character pointer */
+	int16_t		wcols;		/* display width of a wide char */
 #endif /* HAVE_WCHAR */
 };
-
-#ifdef HAVE_WCHAR
-/* macros to extract the width of a wide character */
-#define __WCWIDTH 0xfc000000
-#define WCW_SHIFT 26
-#define WCOL(wc) ((((unsigned) (wc).attr) >> WCW_SHIFT ) > MB_LEN_MAX ? ((int)(((unsigned) (wc).attr ) >> WCW_SHIFT )) - 64 : ((int)(((unsigned) (wc).attr ) >> WCW_SHIFT)))
-#define SET_WCOL(c, w) do { 						\
-	((c).attr) = ((((c).attr) & WA_ATTRIBUTES ) | ((w) << WCW_SHIFT )); \
-} while(/*CONSTCOND*/0)
-#define BGWCOL(wc) ((((wc).battr) >> WCW_SHIFT ) > MB_LEN_MAX ? (((wc).battr ) >> WCW_SHIFT ) - 64 : (((wc).battr ) >> WCW_SHIFT ))
-#define SET_BGWCOL(c, w) do { 						\
-	((c).battr) = ((((c).battr) & WA_ATTRIBUTES ) | ((w) << WCW_SHIFT )); \
-} while(/*CONSTCOND*/0)
-#endif /* HAVE_WCHAR */
 
 #define __LDATASIZE	(sizeof(__LDATA))
 
@@ -101,7 +91,7 @@ struct __line {
 #define __ISPASTEOL	0x02		/* Cursor is past end of line */
 #define __ISFORCED	0x04		/* Force update, no optimisation */
 	unsigned int flags;
-	unsigned int hash;		/* Hash value for the line. */
+	uint32_t hash;			/* Hash value for the line. */
 	int *firstchp, *lastchp;	/* First and last chngd columns ptrs */
 	int firstch, lastch;		/* First and last changed columns. */
 	__LDATA *line;			/* Pointer to the line text. */
@@ -131,11 +121,15 @@ struct __window {		/* Window structure. */
 #define __IDCHAR	0x00040000	/* insert/delete char sequences */
 #define __ISPAD		0x00080000	/* "window" is a pad */
 #define __ISDERWIN	0x00100000	/* "window" is derived from parent */
+#define __IMMEDOK	0x00200000	/* refreshed when changed */
+#define __SYNCOK	0x00400000	/* sync when changed */
+#define __HALFDELAY	0x00800000	/* In half delay mode */
 	unsigned int flags;
 	int	delay;			/* delay for getch() */
 	attr_t	wattr;			/* Character attributes */
 	wchar_t	bch;			/* Background character */
 	attr_t	battr;			/* Background attributes */
+	uint32_t wcols;			/* Background column width */
 	int	scr_t, scr_b;		/* Scrolling region top, bottom */
 	SCREEN	*screen;		/* Screen for this window */
 	int	pbegy, pbegx,
@@ -147,6 +141,9 @@ struct __window {		/* Window structure. */
 #ifdef HAVE_WCHAR
 	nschar_t *bnsp;			/* Background non-spacing char list */
 #endif /* HAVE_WCHAR */
+	FILE	*fp;			/* for window formatted printf */
+	char	*buf;			/* buffer for window formatted printf */
+	size_t	 buflen;		/* length of above buffer */
 };
 
 /* Set of attributes unset by 'me' - 'mb', 'md', 'mh', 'mk', 'mp' and 'mr'. */
@@ -180,11 +177,34 @@ struct __pair {
 };
 
 /* Maximum colours */
-#define	MAX_COLORS	64
+#define	MAX_COLORS	256
 /* Maximum colour pairs - determined by number of colour bits in attr_t */
 #define	MAX_PAIRS	PAIR_NUMBER(__COLOR)
 
 typedef struct keymap keymap_t;
+
+/* POSIX allows up to 8 columns in a label. */
+#define	MAX_SLK_COLS	8
+#ifdef HAVE_WCHAR
+#define	MAX_SLK_LABEL	sizeof(wchar_t) * MAX_SLK_COLS
+#else
+#define	MAX_SLK_LABEL	MAX_SLK_COLS
+#endif
+struct __slk_label {
+	char	*text;
+	int	 justify;
+#define	SLK_JUSTIFY_LEFT	0
+#define	SLK_JUSTIFY_CENTER	1
+#define	SLK_JUSTIFY_RIGHT	2
+	char	 label[MAX_SLK_LABEL + 1];
+	int	 x;
+};
+
+#define	MAX_RIPS	5
+struct __ripoff {
+	int	nlines;
+	WINDOW	*win;
+};
 
 /* this is the encapsulation of the terminal definition, one for
  * each terminal that curses talks to.
@@ -198,9 +218,15 @@ struct __screen {
 	int      lx, ly;        /* loop parameters for refresh */
 	int	 COLS;		/* Columns on the screen. */
 	int	 LINES;		/* Lines on the screen. */
+	int	 nripped;	/* Number of ripofflines. */
+	struct __ripoff ripped[MAX_RIPS];	/* ripofflines. */
+	int	 ESCDELAY;	/* Delay between keys in esc seq's. */
+#define	ESCDELAY_DEFAULT	300 /* milliseconds. */
 	int	 TABSIZE;	/* Size of a tab. */
+#define	TABSIZE_DEFAULT		8   /* spaces. */
 	int	 COLORS;	/* Maximum colors on the screen */
 	int	 COLOR_PAIRS;	/* Maximum color pairs on the screen */
+	short	 curpair;	/* current colour pair set on the terminal */
 	int	 My_term;	/* Use Def_term regardless. */
 	char	 GT;		/* Gtty indicates tabs. */
 	char	 NONL;		/* Term can't hack LF doing a CR. */
@@ -247,13 +273,26 @@ struct __screen {
 	char padchar;
 	int endwin;
 	int notty;
-	int half_delay;
 	int resized;
 	wchar_t *unget_list;
 	int unget_len, unget_pos;
+	int filtered;
+	int checkfd;
+
+	/* soft label key */
+	bool		 is_term_slk;
+	WINDOW		*slk_window;
+	int		 slk_format;
+#define	SLK_FMT_INVAL	-1
+#define	SLK_FMT_3_2_3	0
+#define	SLK_FMT_4_4	1
+	int		 slk_nlabels;
+	int		 slk_label_len;
+	bool		 slk_hidden;
+	struct __slk_label *slk_labels;
+
+#define MAX_CBUF_SIZE 8
 #ifdef HAVE_WCHAR
-#define MB_LEN_MAX 8
-#define MAX_CBUF_SIZE MB_LEN_MAX
 	int		cbuf_head;		/* header to cbuf */
 	int		cbuf_tail;		/* tail to cbuf */
 	int		cbuf_cur;		/* the current char in cbuf */
@@ -286,8 +325,22 @@ extern SCREEN   *_cursesi_screen;       /* The current screen in use */
 #define __CTRACE_ERASE		0x00000800
 #define __CTRACE_FILEIO		0x00001000
 #define __CTRACE_ALL		0x7fffffff
-void	 __CTRACE_init(void);
 void	 __CTRACE(int, const char *, ...) __attribute__((__format__(__printf__, 2, 3)));
+#else
+#define	__CTRACE(area, fmt, ...)	__nothing
+#endif
+
+/* Common erase logic */
+#ifdef HAVE_WCHAR
+#define __NEED_ERASE(_sp, _bch, _battr)				\
+	((_sp)->ch != (_bch) ||					\
+	(((_sp)->cflags & CA_BACKGROUND) != CA_BACKGROUND) ||	\
+	    ((_sp)->attr & WA_ATTRIBUTES) != (_battr) ||	\
+	    (_sp)->nsp != NULL ||				\
+	    (_sp)->wcols < 0)
+#else
+#define __NEED_ERASE(_sp, _bch, _battr)				\
+	((_sp)->ch != (_bch) || (_sp)->attr != (_battr))
 #endif
 
 /* Private functions. */
@@ -303,26 +356,30 @@ int	_cursesi_waddbytes(WINDOW *, const char *, int, attr_t, int);
 void     _cursesi_reset_wacs(SCREEN *);
 #endif /* HAVE_WCHAR */
 void     _cursesi_resetterm(SCREEN *);
-int      _cursesi_setterm(char *, SCREEN *);
+int      _cursesi_setterm(const char *, SCREEN *);
 int	 __delay(void);
-u_int	 __hash_more(const void *, size_t, u_int);
+uint32_t	 __hash_more(const void *, size_t, unsigned int);
+uint32_t	 __hash_line(const __LDATA *, int);
 #define	__hash(s, len)	__hash_more((s), (len), 0u)
 void	 __id_subwins(WINDOW *);
 void	 __init_getch(SCREEN *);
 void	 __init_acs(SCREEN *);
+int	 _cursesi_celleq(__LDATA *, __LDATA *);
 #ifdef HAVE_WCHAR
 void	 __init_get_wch(SCREEN *);
 void	 __init_wacs(SCREEN *);
 int	__cputwchar_args( wchar_t, void * );
+void	_cursesi_copy_wchar(__LDATA *, __LDATA *);
 int     _cursesi_copy_nsp(nschar_t *, struct __ldata *);
 void	__cursesi_free_nsp(nschar_t *);
 void	__cursesi_win_free_nsp(WINDOW *);
 void	__cursesi_putnsp(nschar_t *, const int, const int);
 void	__cursesi_chtype_to_cchar(chtype, cchar_t *);
 #endif /* HAVE_WCHAR */
+int	 __fgetc_resize(FILE *);
 int	 __unget(wint_t);
 int	 __mvcur(int, int, int, int, int);
-WINDOW  *__newwin(SCREEN *, int, int, int, int, int);
+WINDOW  *__newwin(SCREEN *, int, int, int, int, int, int);
 int	 __nodelay(void);
 int	 __notimeout(void);
 void	 __restartwin(void);
@@ -332,18 +389,28 @@ void     __restore_meta_state(void);
 void	 __restore_termios(void);
 void	 __restore_stophandler(void);
 void	 __restore_winchhandler(void);
+int	 __ripoffscreen(SCREEN *);
+int	 __ripoffresize(SCREEN *);
+void	 __ripofftouch(SCREEN *);
+int	 __rippedlines(const SCREEN *, int);
 void	 __save_termios(void);
 void	 __set_color(WINDOW *win, attr_t attr);
 void	 __set_stophandler(void);
 void	 __set_winchhandler(void);
 void	 __set_subwin(WINDOW *, WINDOW *);
+int	 __slk_init(SCREEN *);
+void	 __slk_free(SCREEN *);
+int	 __slk_resize(SCREEN *, int cols);
+int	 __slk_noutrefresh(SCREEN *);
 void	 __startwin(SCREEN *);
 void	 __stop_signal_handler(int);
 int	 __stopwin(void);
 void	 __swflags(WINDOW *);
+void	 __sync(WINDOW *);
 int	 __timeout(int);
 int	 __touchline(WINDOW *, int, int, int);
-int	 __touchwin(WINDOW *);
+int	 __touchwin(WINDOW *, int);
+int	 __unripoffline(int (*)(WINDOW *, int));
 void	 __unsetattr(int);
 void	 __unset_color(WINDOW *win);
 int	 __waddch(WINDOW *, __LDATA *);
@@ -363,4 +430,5 @@ extern int		 __noqch;
 extern attr_t		 __mask_op, __mask_me, __mask_ue, __mask_se;
 extern WINDOW		*__virtscr;
 extern int		 __using_color;
+extern int		 __do_color_init;
 extern attr_t		 __default_color;

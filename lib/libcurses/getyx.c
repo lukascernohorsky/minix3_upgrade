@@ -1,4 +1,4 @@
-/*	$NetBSD: getyx.c,v 1.5 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: getyx.c,v 1.8 2024/12/23 02:58:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getyx.c,v 1.5 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: getyx.c,v 1.8 2024/12/23 02:58:03 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -41,36 +41,38 @@ __RCSID("$NetBSD: getyx.c,v 1.5 2008/04/28 20:23:01 martin Exp $");
 
 /*
  * getpary --
- *      Get the y postion of the window relative to the parent window
+ *      Get the y position of the window relative to the parent window
  * return -1 if not a subwindow.
  */
 int
 getpary(WINDOW *win)
 {
+
 	if (win == NULL)
 		return -1;
 
 	if (win->orig == NULL)
 		return -1;
 
-	return (win->begy - win->orig->begy);
+	return win->begy - win->orig->begy;
 }
 
 /*
  * getparx --
- *      Get the x postion of the window relative to the parent window
+ *      Get the x position of the window relative to the parent window
  * return -1 if not a subwindow.
  */
 int
 getparx(WINDOW *win)
 {
+
 	if (win == NULL)
 		return -1;
 
 	if (win->orig == NULL)
 		return -1;
 
-	return (win->begx - win->orig->begx);
+	return win->begx - win->orig->begx;
 }
 
 /*
@@ -80,7 +82,11 @@ getparx(WINDOW *win)
 int
 getcury(WINDOW *win)
 {
-	return(win->cury);
+
+	if (__predict_false(win == NULL))
+		return ERR;
+
+	return win->cury;
 }
 
 /*
@@ -90,7 +96,11 @@ getcury(WINDOW *win)
 int
 getcurx(WINDOW *win)
 {
-	return(win->curx);
+
+	if (__predict_false(win == NULL))
+		return ERR;
+
+	return win->curx;
 }
 
 /*
@@ -100,7 +110,11 @@ getcurx(WINDOW *win)
 int
 getbegy(WINDOW *win)
 {
-	return(win->begy);
+
+	if (__predict_false(win == NULL))
+		return ERR;
+
+	return win->begy;
 }
 
 /*
@@ -110,7 +124,11 @@ getbegy(WINDOW *win)
 int
 getbegx(WINDOW *win)
 {
-	return(win->begx);
+
+	if (__predict_false(win == NULL))
+		return ERR;
+
+	return win->begx;
 }
 
 /*
@@ -120,7 +138,11 @@ getbegx(WINDOW *win)
 int
 getmaxy(WINDOW *win)
 {
-	return(win->maxy);
+
+	if (__predict_false(win == NULL))
+		return ERR;
+
+	return win->maxy;
 }
 
 /*
@@ -130,5 +152,9 @@ getmaxy(WINDOW *win)
 int
 getmaxx(WINDOW *win)
 {
-	return(win->maxx);
+
+	if (__predict_false(win == NULL))
+		return ERR;
+
+	return win->maxx;
 }

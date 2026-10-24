@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.52 2013/10/16 19:59:29 roy Exp $	*/
+/*	$NetBSD: setterm.c,v 1.72 2024/05/17 23:32:50 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,11 +34,9 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.52 2013/10/16 19:59:29 roy Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.72 2024/05/17 23:32:50 uwe Exp $");
 #endif
 #endif /* not lint */
-
-#include <sys/ioctl.h>		/* TIOCGWINSZ on old systems. */
 
 #include <stdlib.h>
 #include <string.h>
@@ -54,21 +52,23 @@ static int does_ctrl_o(const char *exit_cap, const char *acs_cap);
 attr_t	 __mask_op, __mask_me, __mask_ue, __mask_se;
 
 int
-setterm(char *type)
+setterm(const char *type)
 {
+
 	return _cursesi_setterm(type, _cursesi_screen);
 }
 
 int
-_cursesi_setterm(char *type, SCREEN *screen)
+_cursesi_setterm(const char *type, SCREEN *screen)
 {
 	int unknown, r;
-	struct winsize win;
 	char *p;
 
 	if (type[0] == '\0')
 		type = "xx";
 	unknown = 0;
+	if (screen->term)
+		del_curterm(screen->term);
 	(void)ti_setupterm(&screen->term, type, fileno(screen->outfd), &r);
 	if (screen->term == NULL) {
 		unknown++;
@@ -78,64 +78,65 @@ _cursesi_setterm(char *type, SCREEN *screen)
 		if (screen->term == NULL)
 			return ERR;
 	}
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INIT, "setterm: tty = %s\n", type);
-#endif
 
-	/* Try TIOCGWINSZ, and, if it fails, the terminfo entry. */
-	if (ioctl(fileno(screen->outfd), TIOCGWINSZ, &win) != -1 &&
-	    win.ws_row != 0 && win.ws_col != 0) {
-		screen->LINES = win.ws_row;
-		screen->COLS = win.ws_col;
-	}  else {
-		if (unknown) {
-			screen->LINES = -1;
-			screen->COLS = -1;
-		} else {
-			screen->LINES = t_lines(screen->term);
-			screen->COLS = t_columns(screen->term);
-		}
+	/* lines and cols will have been setup correctly by ti_setupterm(3). */
+	screen->LINES = t_lines(screen->term);
+	screen->COLS = t_columns(screen->term);
+
+	if (screen->filtered) {
+		/* Disable use of clear, cud, cud1, cup, cuu1 and vpa. */
+		screen->term->strs[TICODE_clear] = NULL;
+		screen->term->strs[TICODE_cud] = NULL;
+		screen->term->strs[TICODE_cud1] = NULL;
+		screen->term->strs[TICODE_cup] = NULL;
+		screen->term->strs[TICODE_cuu] = NULL;
+		screen->term->strs[TICODE_cuu1] = NULL;
+		screen->term->strs[TICODE_vpa] = NULL;
+		/* Set the value of the home string to the value of
+		 * the cr string. */
+		screen->term->strs[TICODE_home] = screen->term->strs[TICODE_cr];
+		/* Set lines equal to 1. */
+		screen->LINES = 1;
+		t_lines(screen->term) = 1;
 	}
+	__CTRACE(__CTRACE_INIT, "setterm: filtered %d\n", screen->filtered);
 
-	/* POSIX 1003.2 requires that the environment override. */
-	if ((p = getenv("LINES")) != NULL)
-		screen->LINES = (int) strtol(p, NULL, 0);
-	if ((p = getenv("COLUMNS")) != NULL)
-		screen->COLS = (int) strtol(p, NULL, 0);
 	if ((p = getenv("ESCDELAY")) != NULL)
-		ESCDELAY = (int) strtol(p, NULL, 0);
-	if ((p = getenv("TABSIZE")) != NULL)
-		screen->TABSIZE = (int) strtol(p, NULL, 0);
-	else if (t_init_tabs(screen->term) >= 0)
-		screen->TABSIZE = (int) t_init_tabs(screen->term);
+		screen->ESCDELAY = (int)strtol(p, NULL, 0);
 	else
-		screen->TABSIZE = 8;
+		screen->ESCDELAY = ESCDELAY_DEFAULT;
+	if ((p = getenv("TABSIZE")) != NULL)
+		screen->TABSIZE = (int)strtol(p, NULL, 0);
+	else if (t_init_tabs(screen->term) >= 0)
+		screen->TABSIZE = (int)t_init_tabs(screen->term);
+	else
+		screen->TABSIZE = TABSIZE_DEFAULT;
 	/*
 	 * Want cols > 4, otherwise things will fail.
 	 */
 	if (screen->COLS <= 4)
-		return (ERR);
+		return ERR;
 
 	LINES = screen->LINES;
 	COLS = screen->COLS;
+	ESCDELAY = screen->ESCDELAY;
 	TABSIZE = screen->TABSIZE;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INIT,
-	    "setterm: LINES = %d, COLS = %d\n, TABSIZE = %d\n",
+	    "setterm: LINES = %d, COLS = %d, TABSIZE = %d\n",
 	    LINES, COLS, TABSIZE);
-#endif
 
 	/*
 	 * set the pad char, only take the first char of the pc capability
 	 * as this is all we can use.
 	 */
 	screen->padchar = t_pad_char(screen->term) ?
-	    t_pad_char(screen->term)[0] : 0; 
+	    t_pad_char(screen->term)[0] : 0;
 
 	/* If no scrolling commands, no quick change. */
 	screen->noqch =
-  	    (t_change_scroll_region(screen->term) == NULL ||
+	    (t_change_scroll_region(screen->term) == NULL ||
 		t_cursor_home(screen->term) == NULL ||
 		(t_parm_index(screen->term) == NULL &&
 		    t_scroll_forward(screen->term) == NULL) ||
@@ -154,22 +155,24 @@ _cursesi_setterm(char *type, SCREEN *screen)
 #else
 	screen->mask_op = WA_ATTRIBUTES & ~__COLOR;
 #endif /* HAVE_WCHAR */
-	if (t_orig_pair(screen->term) != NULL) {
-		if (does_esc_m(t_orig_pair(screen->term)))
+
+	const char *t_op = t_orig_pair(screen->term);
+	const char *t_esm = t_exit_standout_mode(screen->term);
+	const char *t_eum = t_exit_underline_mode(screen->term);
+	const char *t_eam = t_exit_attribute_mode(screen->term);
+
+	if (t_op != NULL) {
+		if (does_esc_m(t_op))
 			screen->mask_op &=
 			    ~(__STANDOUT | __UNDERSCORE | __TERMATTR);
 		else {
-			if (t_exit_standout_mode(screen->term) != NULL &&
-			    !strcmp(t_orig_pair(screen->term),
-				t_exit_standout_mode(screen->term)))
+			if (t_esm != NULL && !strcmp(t_op, t_esm))
 				screen->mask_op &= ~__STANDOUT;
-			if (t_exit_underline_mode(screen->term) != NULL &&
-			    !strcmp(t_orig_pair(screen->term),
-				t_exit_underline_mode(screen->term)))
+
+			if (t_eum != NULL && !strcmp(t_op, t_eum))
 				screen->mask_op &= ~__UNDERSCORE;
-			if (t_exit_attribute_mode(screen->term) != NULL &&
-			    !strcmp(t_orig_pair(screen->term),
-				t_exit_attribute_mode(screen->term)))
+
+			if (t_eam != NULL && !strcmp(t_op, t_eam))
 				screen->mask_op &= ~__TERMATTR;
 		}
 	}
@@ -191,22 +194,18 @@ _cursesi_setterm(char *type, SCREEN *screen)
 #else
 	screen->mask_ue = WA_ATTRIBUTES & ~__UNDERSCORE;
 #endif /* HAVE_WCHAR */
-	if (t_exit_underline_mode(screen->term) != NULL) {
-		if (does_esc_m(t_exit_underline_mode(screen->term)))
+	if (t_eum != NULL) {
+		if (does_esc_m(t_eum))
 			screen->mask_ue &=
 			    ~(__STANDOUT | __TERMATTR | __COLOR);
 		else {
-			if (t_exit_standout_mode(screen->term) != NULL &&
-			    !strcmp(t_exit_underline_mode(screen->term),
-				t_exit_standout_mode(screen->term)))
+			if (t_esm && !strcmp(t_eum, t_esm))
 				screen->mask_ue &= ~__STANDOUT;
-			if (t_exit_attribute_mode(screen->term) != NULL &&
-			    !strcmp(t_exit_underline_mode(screen->term),
-				t_exit_attribute_mode(screen->term)))
+
+			if (t_eam != NULL && !strcmp(t_eum, t_eam))
 				screen->mask_ue &= ~__TERMATTR;
-			if (t_orig_pair(screen->term) != NULL &&
-			    !strcmp(t_exit_underline_mode(screen->term),
-				t_orig_pair(screen->term)))
+
+			if (t_op != NULL && !strcmp(t_eum, t_op))
 				screen->mask_ue &= ~__COLOR;
 		}
 	}
@@ -215,27 +214,23 @@ _cursesi_setterm(char *type, SCREEN *screen)
 #else
 	screen->mask_se = WA_ATTRIBUTES & ~__STANDOUT;
 #endif /* HAVE_WCHAR */
-	if (t_exit_standout_mode(screen->term) != NULL) {
-		if (does_esc_m(t_exit_standout_mode(screen->term)))
+	if (t_esm != NULL) {
+		if (does_esc_m(t_esm))
 			screen->mask_se &=
 			    ~(__UNDERSCORE | __TERMATTR | __COLOR);
 		else {
-			if (t_exit_underline_mode(screen->term) != NULL &&
-			    !strcmp(t_exit_standout_mode(screen->term),
-				t_exit_underline_mode(screen->term)))
+			if (t_eum != NULL && !strcmp(t_esm, t_eum))
 				screen->mask_se &= ~__UNDERSCORE;
-			if (t_exit_attribute_mode(screen->term) != NULL &&
-			    !strcmp(t_exit_standout_mode(screen->term),
-				t_exit_attribute_mode(screen->term)))
+
+			if (t_eam != NULL && !strcmp(t_esm, t_eam))
 				screen->mask_se &= ~__TERMATTR;
-			if (t_orig_pair(screen->term) != NULL &&
-			    !strcmp(t_exit_standout_mode(screen->term),
-				t_orig_pair(screen->term)))
+
+			if (t_op != NULL && !strcmp(t_esm, t_op))
 				screen->mask_se &= ~__COLOR;
 		}
 	}
 
-	return (unknown ? ERR : OK);
+	return unknown ? ERR : OK;
 }
 
 /*
@@ -249,6 +244,7 @@ _cursesi_resetterm(SCREEN *screen)
 
 	LINES = screen->LINES;
 	COLS = screen->COLS;
+	ESCDELAY = screen->ESCDELAY;
 	TABSIZE = screen->TABSIZE;
 	__GT = screen->GT;
 
@@ -278,9 +274,7 @@ does_esc_m(const char *cap)
 	const char *capptr;
 	int seq;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INIT, "does_esc_m: Checking %s\n", cap);
-#endif
 	/* Is it just "\E[m" or "\E[0m"? */
 	if (!strcmp(cap, "\x1b[m") || !strcmp(cap, "\x1b[0m"))
 		return 1;
@@ -337,6 +331,35 @@ does_esc_m(const char *cap)
 }
 
 /*
+ * capdup_nodelay --
+ * A helper for does_ctrl_o below that creates a copy of the given
+ * capability with delay specifications dropped.
+ */
+static char *
+capdup_nodelay(const char *src)
+{
+	char *clean, *dst;
+
+	dst = clean = malloc(strlen(src) + 1);
+	if (__predict_false(clean == NULL))
+		return NULL;
+
+	while (*src != '\0') {
+		if (src[0] == '$' && src[1] == '<') {
+			const char *end = strchr(src + 2, '>');
+			if (__predict_true(end != NULL)) {
+				src = end + 1;
+				continue;
+			}
+		}
+		*dst++ = *src++;
+	}
+
+	*dst = '\0';
+	return clean;
+}
+
+/*
  * does_ctrl_o --
  * A hack for vt100/xterm-like terminals where the "me" capability also
  * unsets acs.
@@ -344,17 +367,40 @@ does_esc_m(const char *cap)
 static int
 does_ctrl_o(const char *exit_cap, const char *acs_cap)
 {
-	const char *eptr = exit_cap, *aptr = acs_cap;
-	int l;
+	char *eptr, *aptr;
+	int res;
 
-#ifdef DEBUG
-	__CTRACE(__CTRACE_INIT, "does_ctrl_o: Testing %s for %s\n", eptr, aptr);
-#endif
-	l = strlen(acs_cap);
-	while (*eptr != 0) {
-		if (!strncmp(eptr, aptr, l))
-			return 1;
-		eptr++;
+	__CTRACE(__CTRACE_INIT, "does_ctrl_o: Testing %s for %s\n",
+	    exit_cap, acs_cap);
+
+	eptr = capdup_nodelay(exit_cap);
+	if (__predict_false(eptr == NULL))
+		return 0;
+
+	aptr = capdup_nodelay(acs_cap);
+	if (__predict_false(aptr == NULL)) {
+		free(eptr);
+		return 0;
 	}
-	return 0;
+
+	res = strstr(eptr, aptr) != NULL;
+
+	free(eptr);
+	free(aptr);
+	return res;
+}
+
+/*
+ * set_tabsize --
+ *   Sets the tabsize for the current screen.
+ */
+int
+set_tabsize(int tabsize)
+{
+
+	if (_cursesi_screen == NULL)
+		return ERR;
+	_cursesi_screen->TABSIZE = tabsize;
+	TABSIZE = tabsize;
+	return OK;
 }

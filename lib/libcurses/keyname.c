@@ -1,4 +1,4 @@
-/*	$NetBSD: keyname.c,v 1.6 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: keyname.c,v 1.8 2019/06/11 10:17:24 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: keyname.c,v 1.6 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: keyname.c,v 1.8 2019/06/11 10:17:24 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -481,7 +481,7 @@ keyname(int key)
 		return name;
 	}
 	/* No more names. */
-	strncpy(name, "UNKOWN KEY\0", KEYNAMEMAX);
+	strncpy(name, "UNKNOWN KEY\0", KEYNAMEMAX);
 	return name;
 #endif
 }
@@ -495,7 +495,7 @@ key_name(wchar_t key)
 #ifndef HAVE_WCHAR
 	return NULL;
 #else
-	(void) keyname((int) key);
+	(void)keyname((int)key);
 
 	if (!strncmp(name, "M-", 2)) {
 		/* Remove the "M-" */
@@ -505,4 +505,3 @@ key_name(wchar_t key)
 	return name;
 #endif /* HAVE_WCHAR */
 }
-

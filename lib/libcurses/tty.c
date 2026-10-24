@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.43 2011/08/29 11:07:38 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.51 2024/12/23 02:58:04 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,17 +34,18 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.43 2011/08/29 11:07:38 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.51 2024/12/23 02:58:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
+#include <sys/fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/param.h>
 #include <sys/types.h>
 
 #include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
-#include <sys/fcntl.h>
-#include <sys/ioctl.h>
 
 #include "curses.h"
 #include "curses_private.h"
@@ -77,6 +78,7 @@ int __tcaction = TCSASOFT != 0;		/* Ignore hardware settings */
 int
 baudrate(void)
 {
+
 	if (_cursesi_screen->notty == TRUE)
 		return 0;
 
@@ -90,6 +92,7 @@ baudrate(void)
 int
 gettmode(void)
 {
+
 	if (_cursesi_gettmode(_cursesi_screen) == ERR)
 		return ERR;
 
@@ -110,7 +113,7 @@ _cursesi_gettmode(SCREEN *screen)
 
 	if (tcgetattr(fileno(screen->infd), &screen->orig_termios)) {
 		/* if the input fd is not a tty try the output */
-		if (tcgetattr(fileno(screen->infd), &screen->orig_termios)) {
+		if (tcgetattr(fileno(screen->outfd), &screen->orig_termios)) {
 			/* not a tty ... we will disable tty related stuff */
 			screen->notty = TRUE;
 			__GT = 0;
@@ -169,9 +172,7 @@ _cursesi_gettmode(SCREEN *screen)
 int
 raw(void)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "raw()\n");
-#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -191,9 +192,7 @@ raw(void)
 int
 noraw(void)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "noraw()\n");
-#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -213,9 +212,7 @@ noraw(void)
 int
 cbreak(void)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "cbreak()\n");
-#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -236,9 +233,7 @@ cbreak(void)
 int
 nocbreak(void)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "nocbreak()\n");
-#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -247,11 +242,11 @@ nocbreak(void)
 	if (_cursesi_screen->notty == TRUE)
 		return OK;
 	  /* if we were in halfdelay mode then nuke the timeout */
-	if ((_cursesi_screen->half_delay == TRUE) &&
+	if ((stdscr->flags & __HALFDELAY) &&
 	    (__notimeout() == ERR))
 		return ERR;
 
-	_cursesi_screen->half_delay = FALSE;
+	stdscr->flags &= ~__HALFDELAY;
 	_cursesi_screen->curt = _cursesi_screen->useraw ?
 		&_cursesi_screen->rawt : &_cursesi_screen->baset;
 	return tcsetattr(fileno(_cursesi_screen->infd), TCSASOFT | TCSADRAIN,
@@ -272,19 +267,19 @@ halfdelay(int duration)
 	if (cbreak() == ERR)
 		return ERR;
 
-	if (__timeout(duration) == ERR)
-		return ERR;
+	if (duration > 255)
+		stdscr->delay = 255;
+	else
+		stdscr->delay = duration;
 
-	_cursesi_screen->half_delay = TRUE;
+	stdscr->flags |= __HALFDELAY;
 	return OK;
 }
-	
+
 int
 __delay(void)
  {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "__delay()\n");
-#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -310,9 +305,7 @@ __delay(void)
 int
 __nodelay(void)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "__nodelay()\n");
-#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -368,9 +361,7 @@ __restore_termios(void)
 int
 __timeout(int delay)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "__timeout()\n");
-#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -398,9 +389,7 @@ __timeout(int delay)
 int
 __notimeout(void)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "__notimeout()\n");
-#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -421,9 +410,7 @@ __notimeout(void)
 int
 echo(void)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "echo()\n");
-#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -435,9 +422,7 @@ echo(void)
 int
 noecho(void)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "noecho()\n");
-#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -449,9 +434,7 @@ noecho(void)
 int
 nl(void)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "nl()\n");
-#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -474,9 +457,7 @@ nl(void)
 int
 nonl(void)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "nonl()\n");
-#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -500,19 +481,25 @@ nonl(void)
 void
 noqiflush(void)
 {
-	(void) intrflush(stdscr, FALSE);
+
+	(void)intrflush(stdscr, FALSE);
 }
 
 void
 qiflush(void)
 {
-	(void) intrflush(stdscr, TRUE);
+
+	(void)intrflush(stdscr, TRUE);
 }
 #endif	/* _CURSES_USE_MACROS */
 
+/*ARGSUSED*/
 int
-intrflush(WINDOW *win, bool bf)	/*ARGSUSED*/
+intrflush(WINDOW *win, bool bf)
 {
+	if (__predict_false(win == NULL))
+		return ERR;
+
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -538,14 +525,23 @@ void
 __startwin(SCREEN *screen)
 {
 
-	(void) fflush(screen->infd);
+	(void)fflush(screen->infd);
 
+#ifdef BSD
 	/*
 	 * Some C libraries default to a 1K buffer when talking to a tty.
 	 * With a larger screen, especially across a network, we'd like
 	 * to get it to all flush in a single write.  Make it twice as big
 	 * as just the characters (so that we have room for cursor motions
 	 * and attribute information) but no more than 8K.
+	 *
+	 * However, setvbuf may only be used after opening a stream and
+	 * before any operations have been performed on it.
+	 * This means we cannot work portably if an application wants
+	 * to stop curses and start curses after a resize.
+	 * Curses resizing is not standard, and thus not strictly portable
+	 * even though all curses today support it.
+	 * The BSD systems do not suffer from this limitation on setvbuf.
 	 */
 	if (screen->stdbuf == NULL) {
 		screen->len = LINES * COLS * 2;
@@ -554,7 +550,8 @@ __startwin(SCREEN *screen)
 		if ((screen->stdbuf = malloc(screen->len)) == NULL)
 			screen->len = 0;
 	}
-	(void) setvbuf(screen->outfd, screen->stdbuf, _IOFBF, screen->len);
+	(void)setvbuf(screen->outfd, screen->stdbuf, _IOFBF, screen->len);
+#endif
 
 	ti_puts(screen->term, t_enter_ca_mode(screen->term), 0,
 		__cputchar_args, (void *) screen->outfd);
@@ -569,22 +566,22 @@ __startwin(SCREEN *screen)
 int
 endwin(void)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "endwin\n");
-#endif
 	return __stopwin();
 }
 
 bool
 isendwin(void)
 {
+
 	return _cursesi_screen->endwin ? TRUE : FALSE;
 }
 
 int
 flushinp(void)
 {
-	(void) fpurge(_cursesi_screen->infd);
+
+	(void)fpurge(_cursesi_screen->infd);
 	return OK;
 }
 
@@ -597,19 +594,21 @@ flushinp(void)
 int
 savetty(void)
 {
+
 	if (_cursesi_screen->notty == TRUE)
 		return OK;
 	return tcgetattr(fileno(_cursesi_screen->infd),
-	    &_cursesi_screen->savedtty) ? ERR : OK;
+			 &_cursesi_screen->savedtty) ? ERR : OK;
 }
 
 int
 resetty(void)
 {
+
 	if (_cursesi_screen->notty == TRUE)
 		return OK;
 	return tcsetattr(fileno(_cursesi_screen->infd), TCSASOFT | TCSADRAIN,
-	    &_cursesi_screen->savedtty) ? ERR : OK;
+			 &_cursesi_screen->savedtty) ? ERR : OK;
 }
 
 /*
@@ -619,6 +618,7 @@ resetty(void)
 char
 erasechar(void)
 {
+
 	if (_cursesi_screen->notty == TRUE)
 		return 0;
 	return _cursesi_screen->baset.c_cc[VERASE];
@@ -631,6 +631,7 @@ erasechar(void)
 char
 killchar(void)
 {
+
 	if (_cursesi_screen->notty == TRUE)
 		return 0;
 	return _cursesi_screen->baset.c_cc[VKILL];
@@ -641,8 +642,9 @@ killchar(void)
  *     Return the wide character of the erase key.
  */
 int
-erasewchar( wchar_t *ch )
+erasewchar(wchar_t *ch)
 {
+
 #ifndef HAVE_WCHAR
 	return ERR;
 #else
@@ -660,6 +662,7 @@ erasewchar( wchar_t *ch )
 int
 killwchar( wchar_t *ch )
 {
+
 #ifndef HAVE_WCHAR
 	return ERR;
 #else
@@ -668,4 +671,12 @@ killwchar( wchar_t *ch )
 	*ch = _cursesi_screen->baset.c_cc[VKILL];
 	return OK;
 #endif /* HAVE_WCHAR */
+}
+
+int
+typeahead(int filedes)
+{
+
+	_cursesi_screen->checkfd = filedes;
+	return OK;
 }

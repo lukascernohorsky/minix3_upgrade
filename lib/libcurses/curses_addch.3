@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_addch.3,v 1.8 2007/07/15 21:37:55 wiz Exp $
+.\"	$NetBSD: curses_addch.3,v 1.11 2025/04/11 23:57:20 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd July 11, 2007
+.Dd October 25, 2018
 .Dt CURSES_ADDCH 3
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@
 .Fn mvwaddch "WINDOW *win" "int y" "int x" "chtype ch"
 .Sh DESCRIPTION
 These functions add characters to
-.Dv stdscr
+.Va stdscr
 or to the specified window.
 .Pp
 The
@@ -62,12 +62,12 @@ The
 function adds the character given in
 .Fa ch
 to
-.Dv stdscr
+.Va stdscr
 at the current cursor position and advances the current cursor position by one.
 Any character attributes set in
 .Fa ch
 will be merged with the background attributes currently set on
-.Dv stdscr .
+.Va stdscr .
 .Pp
 The
 .Fn waddch
@@ -98,8 +98,8 @@ Where the terminal does not support a specific character, the default
 (non-graphics) character is displayed instead.
 .Bl -column -offset indent ".Sy System V Name" ".Sy Default"
 .It Sy "Name" Ta Sy "Default" Ta Sy "Description"
-.It ACS_RARROW Ta \*[Gt] Ta "Arrow pointing right"
-.It ACS_LARROW Ta \*[Lt] Ta "Arrow pointing left"
+.It ACS_RARROW Ta > Ta "Arrow pointing right"
+.It ACS_LARROW Ta < Ta "Arrow pointing left"
 .It ACS_UARROW Ta ^ Ta "Arrow pointing up"
 .It ACS_DARROW Ta v Ta "Arrow pointing down"
 .It ACS_BLOCK Ta # Ta "Solid square block"
@@ -132,8 +132,8 @@ compatible, characters are also supported.
 .It Sy "Name" Ta Sy "Default" Ta Sy "Description"
 .It ACS_S3 Ta - Ta "Scan line 3"
 .It ACS_S7 Ta - Ta "Scan line 7"
-.It ACS_LEQUAL Ta \*[Lt] Ta "Less than or equal to"
-.It ACS_GEQUAL Ta \*[Gt] Ta "Greater than or equal to"
+.It ACS_LEQUAL Ta < Ta "Less than or equal to"
+.It ACS_GEQUAL Ta > Ta "Greater than or equal to"
 .It ACS_PI Ta * Ta "Pi symbol"
 .It ACS_NEQUAL Ta ! Ta "Not equal to"
 .It ACS_STERLING Ta f Ta "Sterling symbol"
@@ -176,7 +176,7 @@ An error occurred in the function.
 .Xr curses_cursor 3 ,
 .Xr curses_delch 3 ,
 .Xr curses_inch 3 ,
-.Xr curses_insertch 3
+.Xr curses_insch 3
 .Sh STANDARDS
 The
 .Nx

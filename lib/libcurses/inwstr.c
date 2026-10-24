@@ -1,4 +1,4 @@
-/*   $NetBSD: inwstr.c,v 1.3 2009/07/22 16:57:15 roy Exp $ */
+/*   $NetBSD: inwstr.c,v 1.11 2024/12/23 02:58:03 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inwstr.c,v 1.3 2009/07/22 16:57:15 roy Exp $");
+__RCSID("$NetBSD: inwstr.c,v 1.11 2024/12/23 02:58:03 blymn Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -51,21 +51,13 @@ __warn_references(inwstr,
 int
 inwstr(wchar_t *wstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return winwstr(stdscr, wstr);
-#endif /* HAVE_WCHAR */
 }
 
 int
 innwstr(wchar_t *wstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return winnwstr(stdscr, wstr, n);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -77,21 +69,13 @@ __warn_references(mvinwstr,
 int
 mvinwstr(int y, int x, wchar_t *wstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwinwstr(stdscr, y, x, wstr);
-#endif /* HAVE_WCHAR */
 }
 
 int
 mvinnwstr(int y, int x, wchar_t *wstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwinnwstr(stdscr, y, x, wstr, n);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -103,27 +87,19 @@ __warn_references(mvwinwstr,
 int
 mvwinwstr(WINDOW *win, int y, int x, wchar_t *wstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return winwstr(win, wstr);
-#endif /* HAVE_WCHAR */
 }
 
 int
 mvwinnwstr(WINDOW *win, int y, int x, wchar_t *wstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return winnwstr(win, wstr, n);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -135,12 +111,8 @@ __warn_references(winwstr,
 int
 winwstr(WINDOW *win, wchar_t *wstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 
 	return winnwstr(win, wstr, -1);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -155,19 +127,19 @@ winwstr(WINDOW *win, wchar_t *wstr)
 int
 winnwstr(WINDOW *win, wchar_t *wstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	__LDATA	*start;
 	int x, cw, cnt;
 	wchar_t *wcp;
+
+	if (__predict_false(win == NULL))
+		return ERR;
 
 	if (wstr == NULL)
 		return ERR;
 
 	start = &win->alines[win->cury]->line[win->curx];
 	x = win->curx;
-	cw = WCOL( *start );
+	cw = start->wcols;
 	if (cw < 0) {
 		start += cw;
 		x += cw;
@@ -176,12 +148,12 @@ winnwstr(WINDOW *win, wchar_t *wstr, int n)
 	wcp = wstr;
 	/* (n - 1) to leave room for the trailing 0 element */
 	while ((x < win->maxx) && ((n < 0) || ((n > 1) && (cnt < n - 1)))) {
-		cw = WCOL( *start );
+		cw = start->wcols;
 		*wcp = start->ch;
 		wcp++;
 		cnt++;
 		x += cw;
-		if ( x < win->maxx ) 
+		if (x < win->maxx)
 			start += cw;
 	}
 	*wcp = L'\0';
@@ -190,5 +162,4 @@ winnwstr(WINDOW *win, wchar_t *wstr, int n)
 		return OK;
 	else
 		return cnt;
-#endif /* HAVE_WCHAR */
 }

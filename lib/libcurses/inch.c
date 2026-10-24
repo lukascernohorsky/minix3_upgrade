@@ -1,4 +1,4 @@
-/*	$NetBSD: inch.c,v 1.10 2009/10/06 20:03:27 jdc Exp $	*/
+/*	$NetBSD: inch.c,v 1.15 2024/12/23 02:58:03 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inch.c,v 1.10 2009/10/06 20:03:27 jdc Exp $");
+__RCSID("$NetBSD: inch.c,v 1.15 2024/12/23 02:58:03 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: inch.c,v 1.10 2009/10/06 20:03:27 jdc Exp $");
 chtype
 inch(void)
 {
+
 	return winch(stdscr);
 }
 
@@ -56,6 +57,7 @@ inch(void)
 chtype
 mvinch(int y, int x)
 {
+
 	return mvwinch(stdscr, y, x);
 }
 
@@ -66,6 +68,7 @@ mvinch(int y, int x)
 chtype
 mvwinch(WINDOW *win, int y, int x)
 {
+
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
@@ -84,11 +87,14 @@ winch(WINDOW *win)
 	chtype	ch;
 	attr_t	attr;
 
+	if (__predict_false(win == NULL))
+		return ERR;
+
 	ch = (chtype) ((win)->alines[(win)->cury]->line[(win)->curx].ch &
 	    __CHARTEXT);
 	attr = (attr_t) ((win)->alines[(win)->cury]->line[(win)->curx].attr &
 	    __ATTRIBUTES);
 	if (__using_color && ((attr & __COLOR) == __default_color))
-		attr &= ~__default_color;
+		attr &= ~__COLOR;
 	return (ch | attr);
 }

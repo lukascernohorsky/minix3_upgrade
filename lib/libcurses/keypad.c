@@ -1,4 +1,4 @@
-/*	$NetBSD: keypad.c,v 1.12 2010/02/03 15:34:40 roy Exp $  */
+/*	$NetBSD: keypad.c,v 1.16 2024/12/23 02:58:03 blymn Exp $  */
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: keypad.c,v 1.12 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: keypad.c,v 1.16 2024/12/23 02:58:03 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -42,18 +42,33 @@ __RCSID("$NetBSD: keypad.c,v 1.12 2010/02/03 15:34:40 roy Exp $");
 int
 keypad(WINDOW *win, bool bf)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC,
 	    "keypad: win %p, %s\n", win, bf ? "TRUE" : "FALSE");
-#endif
+	if (__predict_false(win == NULL))
+		return ERR;
+
 	if (bf) {
 		win->flags |= __KEYPAD;
 		if (!(curscr->flags & __KEYPAD)) {
-			tputs (keypad_xmit, 0, __cputchar);
+			tputs(keypad_xmit, 0, __cputchar);
 			curscr->flags |= __KEYPAD;
 		}
 	} else
 		win->flags &= ~__KEYPAD;
 
 	return OK;
+}
+
+/*
+ * is_keypad --
+ *	Return true if window is set for keypad.
+ */
+bool
+is_keypad(const WINDOW *win)
+{
+	if (__predict_false(win == NULL))
+		return ERR;
+
+
+	return win->flags & __KEYPAD ? true : false;
 }

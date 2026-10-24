@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtobot.c,v 1.22 2012/02/19 19:38:13 christos Exp $	*/
+/*	$NetBSD: clrtobot.c,v 1.32 2024/12/23 02:58:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtobot.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtobot.c,v 1.22 2012/02/19 19:38:13 christos Exp $");
+__RCSID("$NetBSD: clrtobot.c,v 1.32 2024/12/23 02:58:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -65,7 +65,17 @@ wclrtobot(WINDOW *win)
 {
 	int	 minx, startx, starty, y;
 	__LDATA	*sp, *end, *maxx;
-	attr_t	attr;
+	wchar_t bch;
+	attr_t	battr;
+
+	if (__predict_false(win == NULL))
+		return ERR;
+
+	bch = win->bch;
+	if (win != curscr)
+		battr = win->battr & __ATTRIBUTES;
+	else
+		battr = 0;
 
 #ifdef __GNUC__
 	maxx = NULL;		/* XXX gcc -Wuninitialized */
@@ -77,42 +87,35 @@ wclrtobot(WINDOW *win)
 		starty = win->cury;
 		startx = win->curx;
 	}
-	if (win != curscr)
-		attr = win->battr & __ATTRIBUTES;
-	else
-		attr = 0;
+
 	for (y = starty; y < win->maxy; y++) {
 		minx = -1;
 		end = &win->alines[y]->line[win->maxx];
 		for (sp = &win->alines[y]->line[startx]; sp < end; sp++) {
-#ifndef HAVE_WCHAR
-			if (sp->ch != win->bch || sp->attr != attr) {
-#else
-			if (sp->ch != (wchar_t)btowc((int) win->bch) ||
-			    (sp->attr & WA_ATTRIBUTES) != attr || sp->nsp) {
-#endif /* HAVE_WCHAR */
-				maxx = sp;
-				if (minx == -1)
-					minx = (int)(sp - win->alines[y]->line);
-				if (sp->attr & __ALTCHARSET)
-					sp->attr = attr | __ALTCHARSET;
-				else
-					sp->attr = attr;
+			if (!(__NEED_ERASE(sp, bch, battr)))
+				continue;
+
+			maxx = sp;
+			if (minx == -1)
+				minx = (int)(sp - win->alines[y]->line);
+
+			sp->ch = bch;
+			sp->cflags |= CA_BACKGROUND;
+			sp->cflags &= CA_CONTINUATION;
+			sp->attr = battr | (sp->attr & __ALTCHARSET);
 #ifdef HAVE_WCHAR
-				sp->ch = ( wchar_t )btowc(( int ) win->bch);
-				if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
-					return ERR;
-				SET_WCOL( *sp, 1 );
-#else
-				sp->ch = win->bch;
-#endif /* HAVE_WCHAR */
-			}
+			if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
+				return ERR;
+			sp->wcols = 1;
+#endif
 		}
 
 		if (minx != -1)
 			__touchline(win, y, minx,
-				    (int) (maxx - win->alines[y]->line));
+				    (int)(maxx - win->alines[y]->line));
 		startx = 0;
 	}
-	return (OK);
+
+	__sync(win);
+	return OK;
 }

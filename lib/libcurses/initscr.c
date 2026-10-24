@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.29 2007/01/22 21:14:53 jdc Exp $	*/
+/*	$NetBSD: initscr.c,v 1.36 2021/09/06 07:03:49 rin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.29 2007/01/22 21:14:53 jdc Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.36 2021/09/06 07:03:49 rin Exp $");
 #endif
 #endif	/* not lint */
 
@@ -53,9 +53,7 @@ initscr(void)
 {
 	const char *sp;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INIT, "initscr\n");
-#endif
 
 	/*
 	 * If My_term is set, or can't find a terminal in the environment,
@@ -65,23 +63,19 @@ initscr(void)
 		sp = Def_term;
 
 	/* LINTED const castaway; newterm does not modify sp! */
-	if ((_cursesi_screen = newterm((char *) sp, stdout, stdin)) == NULL)
-		return NULL;
-
-	__echoit = _cursesi_screen->echoit;
-        __pfast = _cursesi_screen->pfast;
-	__rawmode = _cursesi_screen->rawmode;
-	__noqch = _cursesi_screen->noqch;
-	COLS = _cursesi_screen->COLS;
-	LINES = _cursesi_screen->LINES;
-	COLORS = _cursesi_screen->COLORS;
-	COLOR_PAIRS = _cursesi_screen->COLOR_PAIRS;
-	__GT = _cursesi_screen->GT;
-	__NONL = _cursesi_screen->NONL;
-	__UPPERCASE = _cursesi_screen->UPPERCASE;
+	if ((_cursesi_screen = newterm((char *) sp, stdout, stdin)) == NULL) {
+		/*
+		 * POSIX says we should write a diagnostic and exit on error.
+		 * As such some applications don't bother checking the return
+		 * value at all.
+		 */
+		perror("initscr");
+		exit(EXIT_FAILURE);
+	}
 
 	set_term(_cursesi_screen);
 	wrefresh(curscr);
+	__ripofftouch(_cursesi_screen);
 
-	return (stdscr);
+	return stdscr;
 }

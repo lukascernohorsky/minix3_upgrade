@@ -1,4 +1,4 @@
-/*	$NetBSD: addch.c,v 1.17 2013/11/09 11:16:59 blymn Exp $	*/
+/*	$NetBSD: addch.c,v 1.23 2021/09/06 07:45:48 rin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addch.c,v 1.17 2013/11/09 11:16:59 blymn Exp $");
+__RCSID("$NetBSD: addch.c,v 1.23 2021/09/06 07:45:48 rin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: addch.c,v 1.17 2013/11/09 11:16:59 blymn Exp $");
 int
 addch(chtype ch)
 {
+
 	return waddch(stdscr, ch);
 }
 
@@ -61,6 +62,7 @@ addch(chtype ch)
 int
 mvaddch(int y, int x, chtype ch)
 {
+
 	return mvwaddch(stdscr, y, x, ch);
 }
 
@@ -71,6 +73,7 @@ mvaddch(int y, int x, chtype ch)
 int
 mvwaddch(WINDOW *win, int y, int x, chtype ch)
 {
+
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
@@ -79,43 +82,41 @@ mvwaddch(WINDOW *win, int y, int x, chtype ch)
 
 #endif
 
+#ifdef HAVE_WCHAR
 /*
  * waddch --
  *	Add the character to the current position in the given window.
- *
  */
 int
 waddch(WINDOW *win, chtype ch)
 {
-#ifdef HAVE_WCHAR
 	cchar_t cc;
-#else
-	__LDATA buf;
-#endif
 
-#ifdef HAVE_WCHAR
 	__cursesi_chtype_to_cchar(ch, &cc);
-#else
-	buf.ch = (wchar_t) ch & __CHARTEXT;
-	buf.attr = (attr_t) ch & __ATTRIBUTES;
-#endif
-
-#ifdef DEBUG
-#ifdef HAVE_WCHAR
 	__CTRACE(__CTRACE_INPUT,
-		 "addch: %d : 0x%x (adding char as wide char)\n",
-		 cc.vals[0], cc.attributes);
-#else
-	__CTRACE(__CTRACE_INPUT, "addch: %d : 0x%x\n", buf.ch, buf.attr);
-#endif
-#endif
+	    "addch: %d : 0x%x (adding char as wide char)\n",
+	    cc.vals[0], cc.attributes);
 
-#ifdef HAVE_WCHAR
-	return (wadd_wch(win, &cc));
-#else
-	return (__waddch(win, &buf));
-#endif
+	return wadd_wch(win, &cc);
 }
+
+#else /* !HAVE_WCHAR */
+
+/*
+ * waddch --
+ *	Add the character to the current position in the given window.
+ */
+int
+waddch(WINDOW *win, chtype ch)
+{
+	__LDATA buf;
+
+	buf.ch = (wchar_t)ch & __CHARTEXT;
+	buf.attr = (attr_t)ch & __ATTRIBUTES;
+	__CTRACE(__CTRACE_INPUT, "addch: %d : 0x%x\n", buf.ch, buf.attr);
+	return __waddch(win, &buf);
+}
+#endif /* !HAVE_WCHAR */
 
 int
 __waddch(WINDOW *win, __LDATA *dp)
@@ -124,5 +125,5 @@ __waddch(WINDOW *win, __LDATA *dp)
 
 	buf[0] = dp->ch;
 	buf[1] = '\0';
-	return (_cursesi_waddbytes(win, buf, 1, dp->attr, 1));
+	return _cursesi_waddbytes(win, buf, 1, dp->attr, 1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.25 2011/07/10 12:11:49 blymn Exp $	*/
+/*	$NetBSD: erase.c,v 1.38 2024/12/23 02:58:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.25 2011/07/10 12:11:49 blymn Exp $");
+__RCSID("$NetBSD: erase.c,v 1.38 2024/12/23 02:58:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -64,47 +64,46 @@ erase(void)
 int
 werase(WINDOW *win)
 {
-
 	int     y;
 	__LDATA *sp, *end, *start;
-	attr_t	attr;
+	wchar_t	bch;
+	attr_t	battr;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_ERASE, "werase: (%p)\n", win);
-#endif
+
+	if (__predict_false(win == NULL))
+		return ERR;
+
+	bch = win->bch;
 	if (win != curscr)
-		attr = win->battr & __ATTRIBUTES;
+		battr = win->battr & __ATTRIBUTES;
 	else
-		attr = 0;
+		battr = 0;
+
 	for (y = 0; y < win->maxy; y++) {
 		start = win->alines[y]->line;
 		end = &start[win->maxx];
-		for (sp = start; sp < end; sp++)
-#ifndef HAVE_WCHAR
-			if (sp->ch != win->bch || sp->attr != 0) {
-#else
-			if (sp->ch != ( wchar_t )btowc(( int ) win->bch ) ||
-			    (sp->attr & WA_ATTRIBUTES) != 0 || sp->nsp) {
-#endif /* HAVE_WCHAR */
-				if (sp->attr & __ALTCHARSET)
-					sp->attr = attr | __ALTCHARSET;
-				else
-					sp->attr = attr;
+		for (sp = start; sp < end; sp++) {
+			if (!(__NEED_ERASE(sp, bch, battr)))
+				continue;
+
+			sp->ch = bch;
+			sp->cflags |= CA_BACKGROUND;
+			sp->cflags &= ~CA_CONTINUATION;
+			sp->attr = battr | (sp->attr & __ALTCHARSET);
 #ifdef HAVE_WCHAR
-				sp->ch = ( wchar_t )btowc(( int ) win->bch);
-				if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
-					return ERR;
-				SET_WCOL( *sp, 1 );
-#else
-				sp->ch = win->bch;
-#endif /* HAVE_WCHAR */
-			}
+			if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
+				return ERR;
+			sp->wcols = 1;
+#endif
+		}
 	}
+
 	/*
 	 * Mark the whole window as changed in case we have overlapping
 	 * windows - this will result in the (intended) clearing of the
 	 * screen over the area covered by the window. */
-	__touchwin(win);
+	__touchwin(win, 0);
 	wmove(win, 0, 0);
-	return (OK);
+	return OK;
 }

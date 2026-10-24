@@ -1,4 +1,4 @@
-/*   $NetBSD: in_wch.c,v 1.3 2009/07/22 16:57:14 roy Exp $ */
+/*   $NetBSD: in_wch.c,v 1.9 2024/12/23 02:58:03 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: in_wch.c,v 1.3 2009/07/22 16:57:14 roy Exp $");
+__RCSID("$NetBSD: in_wch.c,v 1.9 2024/12/23 02:58:03 blymn Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -49,11 +49,7 @@ __RCSID("$NetBSD: in_wch.c,v 1.3 2009/07/22 16:57:14 roy Exp $");
 int
 in_wch(cchar_t *wcval)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return win_wch(stdscr, wcval);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -63,11 +59,7 @@ in_wch(cchar_t *wcval)
 int
 mvin_wch(int y, int x, cchar_t *wcval)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwin_wch(stdscr, y, x, wcval);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -77,14 +69,10 @@ mvin_wch(int y, int x, cchar_t *wcval)
 int
 mvwin_wch(WINDOW *win, int y, int x, cchar_t *wcval)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return win_wch(win, wcval);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -94,26 +82,25 @@ mvwin_wch(WINDOW *win, int y, int x, cchar_t *wcval)
 int
 win_wch(WINDOW *win, cchar_t *wcval)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
-	nschar_t *np;
-	__LDATA *lp = &win->alines[ win->cury ]->line[ win->curx ];
-	int cw = WCOL( *lp );
+	if (__predict_false(win == NULL))
+		return ERR;
 
-	if ( cw < 0 ) 
+	nschar_t *np;
+	__LDATA *lp = &win->alines[win->cury]->line[win->curx];
+	int cw = lp->wcols;
+
+	if (cw < 0)
 		lp += cw;
-	wcval->vals[ 0 ] = lp->ch;
+	wcval->vals[0] = lp->ch;
 	wcval->attributes = lp->attr;
 	wcval->elements = 1;
 	np = lp->nsp;
 	if (np) {
 		do {
-			wcval->vals[ wcval->elements++ ] = np->ch;
+			wcval->vals[wcval->elements++] = np->ch;
 			np = np-> next;
-		} while ( np );
+		} while (np);
 	}
 
 	return OK;
-#endif /* HAVE_WCHAR */
 }
