@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.129 2014/09/19 17:43:33 matt Exp $
+#	$NetBSD: Makefile,v 1.151.2.3 2026/10/09 15:09:02 martin Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
-#MINIX:
-USE_BITCODE=no
-
+NOLIBCSANITIZER=# defined
+NOSANITIZER=	# defined
 WARNS?=4
 
 LDELFSO_MACHINE_ARCH?= ${MACHINE_ARCH}
@@ -48,10 +47,9 @@ M=		${.CURDIR}/arch/${ARCHSUBDIR}
 
 LDFLAGS+=	${${ACTIVE_CC} == "clang":? -Wl,-Bsymbolic : -symbolic} \
 		-shared -nostartfiles -nodefaultlibs
-.if defined(__MINIX) && ${HAVE_GOLD:Uno} == "no"
 LDFLAGS+=	-Wl,-static
-.endif
 LDFLAGS+=	-Wl,--warn-shared-textrel
+LDFLAGS+=	-Wl,--no-undefined
 LDFLAGS+=	-Wl,-Map=${.TARGET}.map
 
 COPTS+=		-fvisibility=hidden
@@ -66,15 +64,31 @@ COPTS+=		-fvisibility=hidden
 .if defined(MLIBDIR)
 PROG=		ld.elf_so-${MLIBDIR}
 CPPFLAGS+=	-DRTLD_ARCH_SUBDIR=\"${MLIBDIR}\"
+.	if ${MLIBDIR} == "o32"
+.	endif
 .else
 PROG=		ld.elf_so
 .endif
 
 CLIBOBJ!=	cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
 
-SRCS+=		rtld.c reloc.c symbol.c xmalloc.c xprintf.c debug.c \
-		map_object.c load.c search.c headers.c paths.c expand.c \
-		tls.c symver.c diagassert.c
+SRCS+=		compat.c
+SRCS+=		debug.c
+SRCS+=		diagassert.c
+SRCS+=		expand.c
+SRCS+=		hash.c
+SRCS+=		headers.c
+SRCS+=		load.c
+SRCS+=		map_object.c
+SRCS+=		paths.c
+SRCS+=		reloc.c
+SRCS+=		rtld.c
+SRCS+=		search.c
+SRCS+=		symbol.c
+SRCS+=		symver.c
+SRCS+=		tls.c
+SRCS+=		xmalloc.c
+SRCS+=		xprintf.c
 
 .if ${USE_FORT} == "yes"
 .PATH.c: ${NETBSDSRCDIR}/lib/libc/misc
@@ -83,6 +97,10 @@ SRCS+=		stack_protector.c
 
 .PATH.c: ${NETBSDSRCDIR}/lib/libc/stdlib
 SRCS+=		exit.c
+
+.PATH.c: ${NETBSDSRCDIR}/lib/libc/gen
+SRCS+=		ctype_.c	# ctype(3) tables without useless guard page
+CPPFLAGS.ctype_.c+=	-I${NETBSDSRCDIR}/lib/libc/locale
 
 errlist_concat.h: ${NETBSDSRCDIR}/lib/libc/gen/errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
 	${TOOL_AWK} -v concat=1 -f ${.ALLSRC} > ${.TARGET}.tmp && \
@@ -94,14 +112,20 @@ CLEANFILES+=	errlist_concat.h ${PROG}.map
 
 BINDIR=		${SHLINKINSTALLDIR}
 
+CPPFLAGS.tls.c+=	-std=gnu11
 CPPFLAGS+=	-DLIBDIR=\"${LIBDIR}\" -D_PATH_RTLD=\"${BINDIR}/${PROG}\"
-CPPFLAGS+=	-I${.CURDIR} -I.
-CPPFLAGS+=	-DRTLD_LOADER
+CPPFLAGS+=	-I${.CURDIR} -I. -D_KERNTYPES
+CPPFLAGS+=	-DRTLD_LOADER -D_LIBC_INTERNAL
+CPPFLAGS+=	-DGNU_RELRO
 CPPFLAGS+=	-D_RTLD_SOURCE
-CPPFLAGS+=	-DCOMBRELOC
+CPPFLAGS+=	-DHAVE_INITFINI_ARRAY
+.if ${LDELFSO_MACHINE_ARCH} == "powerpc"
+CPPFLAGS+=	-DRTLD_MAP_OBJECT_FIXUP
+.endif
 #CPPFLAGS+=	-DDEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG_RELOC
+#CPPFLAGS+=	-DMALLOC_DEBUG
 .if !empty(LDELFSO_MACHINE_ARCH:Mearm*)
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libexecinfo
 .endif
@@ -121,10 +145,7 @@ COPTS+=		-mno-3dnow -mno-mmx -mno-sse -mno-sse2 -mno-sse3
 CPPFLAGS+=	-DRTLD_DEFAULT_LIBRARY_PATH=\"${SHLIBDIR}:${LIBDIR}\"
 .endif
 
-# rtld.c and symbol.c use alloca, so disable SSP warnings.
-COPTS.rtld.c+=	-Wno-stack-protector
-COPTS.symbol.c+=-Wno-stack-protector
-
+LDADD+=		-Wl,--version-script=${.CURDIR}/symbols.map
 LDADD+=		-L${CLIBOBJ} -L${DESTDIR}${LIBDIR}
 .if ${MKPICLIB} != "no"
 LDADD+=		-lc_pic
@@ -147,19 +168,13 @@ STRIPFLAG=
 
 .PATH: $M
 
-
-${PROG}: ${OBJS} ${DPADD}
-	${_MKMSG_LINK} ${PROG}
-	${CC} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
 .if ${MKDEBUG} != "no"
-	(  ${OBJCOPY} --only-keep-debug ${.TARGET} ${.TARGET}.debug \
-	   && ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
-	   --add-gnu-debuglink=${.TARGET}.debug ${.TARGET} \
-	) || (rm -f ${.TARGET}.debug; false)
-
-_PROGDEBUG.${PROG} := ${PROG}.debug
+${PROG}.link:
+.else
+${PROG}:
 .endif
-
+	${_MKTARGET_LINK}
+	${CC} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
 
 .if ${SHLINKINSTALLDIR} != "/usr/libexec"
 SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /usr/libexec/${PROG}
