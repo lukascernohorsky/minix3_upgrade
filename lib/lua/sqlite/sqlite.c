@@ -1,7 +1,7 @@
-/*	$NetBSD: sqlite.c,v 1.7 2014/07/19 18:38:34 lneto Exp $ */
+/*	$NetBSD: sqlite.c,v 1.10 2019/05/16 12:42:35 tpaul Exp $ */
 
 /*
- * Copyright (c) 2011, 2013 Marc Balmer <marc@msys.ch>
+ * Copyright (c) 2011, 2013, 2016, 2017 Marc Balmer <marc@msys.ch>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -120,7 +120,11 @@ db_close(lua_State *L)
 	sqlite3 **db;
 
 	db = luaL_checkudata(L, 1, SQLITE_DB_METATABLE);
-	lua_pushinteger(L, sqlite3_close(*db));
+	if (*db) {
+		lua_pushinteger(L, sqlite3_close(*db));
+		*db = NULL;
+	} else
+		lua_pushnil(L);
 	return 1;
 
 }
@@ -332,7 +336,10 @@ stmt_clear_bindings(lua_State *L)
 	sqlite3_stmt **stmt;
 
 	stmt = luaL_checkudata(L, 1, SQLITE_STMT_METATABLE);
-	sqlite3_clear_bindings(*stmt);
+	if (*stmt) {
+		sqlite3_clear_bindings(*stmt);
+		*stmt = NULL;
+	}
 	return 0;
 }
 
@@ -342,7 +349,10 @@ stmt_finalize(lua_State *L)
 	sqlite3_stmt **stmt;
 
 	stmt = luaL_checkudata(L, 1, SQLITE_STMT_METATABLE);
-	sqlite3_finalize(*stmt);
+	if (*stmt) {
+		sqlite3_finalize(*stmt);
+		*stmt = NULL;
+	}
 	return 0;
 }
 
@@ -392,7 +402,7 @@ static const struct constant sqlite_constant[] = {
 };
 
 static void
-gpio_set_info(lua_State *L)
+sqlite_set_info(lua_State *L)
 {
 	lua_pushliteral(L, "_COPYRIGHT");
 	lua_pushliteral(L, "Copyright (C) 2011, 2012, 2013 by "
@@ -449,7 +459,7 @@ luaopen_sqlite(lua_State* L)
 	luaL_newlib(L, sqlite_methods);
 	luaL_setfuncs(L, db_methods, 0);
 	luaL_setfuncs(L, stmt_methods, 0);
-	gpio_set_info(L);
+	sqlite_set_info(L);
 
 	/* The database connection metatable */
 	if (luaL_newmetatable(L, SQLITE_DB_METATABLE)) {
