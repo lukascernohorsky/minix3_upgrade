@@ -1,4 +1,4 @@
-/*	$NetBSD: form.c,v 1.15 2004/11/24 11:57:09 blymn Exp $	*/
+/*	$NetBSD: form.c,v 1.17 2021/04/13 13:13:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: form.c,v 1.15 2004/11/24 11:57:09 blymn Exp $");
+__RCSID("$NetBSD: form.c,v 1.17 2021/04/13 13:13:04 christos Exp $");
 
 #include <stdlib.h>
 #include <strings.h>
@@ -487,12 +487,12 @@ new_form(FIELD **fields)
 {
 	FORM *new;
 
-	if ((new = (FORM *) malloc(sizeof(FORM))) == NULL)
+	if ((new = malloc(sizeof(*new))) == NULL)
 		return NULL;
 
 	
 	  /* copy in the defaults... */
-	bcopy(&_formi_default_form, new, sizeof(FORM));
+	memcpy(new, &_formi_default_form, sizeof(*new));
 
 	if (new->win == NULL)
 		new->scrwin = stdscr; /* something for curses to write to */
@@ -603,9 +603,7 @@ pos_form_cursor(FORM *form)
 		}
 	}
 	
-#ifdef DEBUG
-	fprintf(dbg, "pos_cursor: row=%d, col=%d\n", row, col);
-#endif
+	_formi_dbg_printf("%s: row=%d, col=%d\n", __func__, row, col);
 	
 	wmove(form->scrwin, row, col);
 

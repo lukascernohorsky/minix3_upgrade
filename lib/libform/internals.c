@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.37 2013/11/26 01:17:00 christos Exp $	*/
+/*	$NetBSD: internals.c,v 1.43 2023/08/01 07:56:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: internals.c,v 1.37 2013/11/26 01:17:00 christos Exp $");
+__RCSID("$NetBSD: internals.c,v 1.43 2023/08/01 07:56:23 mrg Exp $");
 
 #include <limits.h>
 #include <ctype.h>
@@ -38,6 +38,8 @@ __RCSID("$NetBSD: internals.c,v 1.37 2013/11/26 01:17:00 christos Exp $");
 #include <stdlib.h>
 #include <strings.h>
 #include <assert.h>
+#include <err.h>
+#include <stdarg.h>
 #include "internals.h"
 #include "form.h"
 
@@ -46,12 +48,11 @@ __RCSID("$NetBSD: internals.c,v 1.37 2013/11/26 01:17:00 christos Exp $");
  *  file handle to write debug info to, this will be initialised when
  *  the form is first posted.
  */
-FILE *dbg = NULL;
 
 /*
  * map the request numbers to strings for debug
  */
-char *reqs[] = {
+static const char *reqs[] = {
 	"NEXT_PAGE", "PREV_PAGE", "FIRST_PAGE",	"LAST_PAGE", "NEXT_FIELD",
 	"PREV_FIELD", "FIRST_FIELD", "LAST_FIELD", "SNEXT_FIELD",
 	"SPREV_FIELD", "SFIRST_FIELD", "SLAST_FIELD", "LEFT_FIELD",
@@ -218,19 +219,18 @@ copy_row(_FORMI_FIELD_LINES *row)
 	_FORMI_FIELD_LINES *new;
 	_formi_tab_t *tp, *newt;
 
-	if ((new = (_FORMI_FIELD_LINES *) malloc(sizeof(_FORMI_FIELD_LINES)))
-	    == NULL) {
+	if ((new = malloc(sizeof(*new))) == NULL) {
 		return NULL;
 	}
 
-	memcpy(new, row, sizeof(_FORMI_FIELD_LINES));
+	memcpy(new, row, sizeof(*new));
 	
 	  /* nuke the pointers from the source row so we don't get confused */
 	new->next = NULL;
 	new->prev = NULL;
 	new->tabs = NULL;
 
-	if ((new->string = (char *) malloc((size_t)new->allocated)) == NULL) {
+	if ((new->string = malloc((size_t)new->allocated)) == NULL) {
 		free(new);
 		return NULL;
 	}
@@ -239,14 +239,13 @@ copy_row(_FORMI_FIELD_LINES *row)
 
 	if (row->tabs != NULL) {
 		tp = row->tabs;
-		if ((new->tabs = (_formi_tab_t *) malloc(sizeof(_formi_tab_t)))
-		    == NULL) {
+		if ((new->tabs = malloc(sizeof(*new->tabs))) == NULL) {
 			free(new->string);
 			free(new);
 			return NULL;
 		}
 
-		memcpy(new->tabs, row->tabs, sizeof(_formi_tab_t));
+		memcpy(new->tabs, row->tabs, sizeof(*new->tabs));
 		new->tabs->back = NULL;
 		new->tabs->fwd = NULL;
 		
@@ -254,9 +253,7 @@ copy_row(_FORMI_FIELD_LINES *row)
 		newt = new->tabs;
 
 		while (tp != NULL) {
-			if ((newt->fwd =
-			     (_formi_tab_t *) malloc(sizeof(_formi_tab_t)))
-			    == NULL) {
+			if ((newt->fwd = malloc(sizeof(*newt->fwd))) == NULL) {
 				/* error... unwind allocations */
 				tp = new->tabs;
 				while (tp != NULL) {
@@ -270,7 +267,7 @@ copy_row(_FORMI_FIELD_LINES *row)
 				return NULL;
 			}
 
-			memcpy(newt->fwd, tp, sizeof(_formi_tab_t));
+			memcpy(newt->fwd, tp, sizeof(*newt->fwd));
 			newt->fwd->back = newt;
 			newt = newt->fwd;
 			newt->fwd = NULL;
@@ -317,18 +314,21 @@ _formi_init_field_xpos(FIELD *field)
  * Open the debug file if it is not already open....
  */
 #ifdef DEBUG
-int
-_formi_create_dbg_file(void)
-{
-	if (dbg == NULL) {
-		dbg = fopen("___form_dbg.out", "w");
-		if (dbg == NULL) {
-			fprintf(stderr, "Cannot open debug file!\n");
-			return E_SYSTEM_ERROR;
-		}
-	}
+static FILE *dbg;
+static const char dbg_file[] = "___form_dbg.out";
 
-	return E_OK;
+void
+_formi_dbg_printf(const char *fmt, ...)
+{
+	va_list ap;
+
+	if (dbg == NULL && (dbg = fopen(dbg_file, "w")) == NULL) {
+		warn("Cannot open debug file `%s'", dbg_file);
+		return;
+	}
+	va_start(ap, fmt);
+	vfprintf(dbg, fmt, ap);
+	va_end(ap);
 }
 #endif
 
@@ -709,18 +709,9 @@ _formi_join_line(FIELD *field, _FORMI_FIELD_LINES **rowp, int direction)
 	struct _formi_field_lines *saved;
 	char *newp;
 	_FORMI_FIELD_LINES *row = *rowp;
-#ifdef DEBUG
-	int dbg_ok = FALSE;
 
-	if (_formi_create_dbg_file() == E_OK) {
-		dbg_ok = TRUE;
-	}
-
-	if (dbg_ok == TRUE) {
-		fprintf(dbg, "join_line: working on row %p, row_count = %d\n",
-			row, field->row_count);
-	}
-#endif
+	_formi_dbg_printf("%s: working on row %p, row_count = %d\n",
+	    __func__, row, field->row_count);
 
 	if ((direction == JOIN_NEXT) || (direction == JOIN_NEXT_NW)) {
 		  /*
@@ -732,16 +723,12 @@ _formi_join_line(FIELD *field, _FORMI_FIELD_LINES **rowp, int direction)
 			return E_REQUEST_DENIED;
 		}
 
-#ifdef DEBUG
-		if (dbg_ok == TRUE) {
-			fprintf(dbg,
-			"join_line: join_next before length = %d, expanded = %d",
-				row->length, row->expanded);
-			fprintf(dbg,
-				" :: next row length = %d, expanded = %d\n",
-				row->length, row->expanded);
-		}
-#endif
+		_formi_dbg_printf(
+		    "%s: join_next before length = %d, expanded = %d",
+		    __func__, row->length, row->expanded);
+		_formi_dbg_printf(
+		    " :: next row length = %d, expanded = %d\n",
+		    row->length, row->expanded);
 
 		if (row->allocated < (row->length + row->next->length + 1)) {
 			if ((newp = realloc(row->string, (size_t)(row->length +
@@ -787,13 +774,9 @@ _formi_join_line(FIELD *field, _FORMI_FIELD_LINES **rowp, int direction)
 		  /* remove joined line record from the row list */
 		add_to_free(field, row->next);
 
-#ifdef DEBUG
-		if (dbg_ok == TRUE) {
-			fprintf(dbg,
-				"join_line: exit length = %d, expanded = %d\n",
-				row->length, row->expanded);
-		}
-#endif
+		_formi_dbg_printf(
+		    "%s: exit length = %d, expanded = %d\n",
+		    __func__, row->length, row->expanded);
 	} else {
 		if (row->prev == NULL) {
 			return E_REQUEST_DENIED;
@@ -809,16 +792,12 @@ _formi_join_line(FIELD *field, _FORMI_FIELD_LINES **rowp, int direction)
 			return E_REQUEST_DENIED;
 		}
 
-#ifdef DEBUG
-		if (dbg_ok == TRUE) {
-			fprintf(dbg,
-			"join_line: join_prev before length = %d, expanded = %d",
-				row->length, row->expanded);
-			fprintf(dbg,
-				" :: prev row length = %d, expanded = %d\n",
-				saved->length, saved->expanded);
-		}
-#endif
+		_formi_dbg_printf(
+		    "%s: join_prev before length = %d, expanded = %d",
+		    __func__, row->length, row->expanded);
+		_formi_dbg_printf(
+		    " :: prev row length = %d, expanded = %d\n",
+		    saved->length, saved->expanded);
 
 		if (saved->allocated < (row->length + saved->length + 1)) {
 			if ((newp = realloc(saved->string,
@@ -855,13 +834,9 @@ _formi_join_line(FIELD *field, _FORMI_FIELD_LINES **rowp, int direction)
 
 		add_to_free(field, row);
 
-#ifdef DEBUG
-		if (dbg_ok == TRUE) {
-			fprintf(dbg,
-				"join_line: exit length = %d, expanded = %d\n",
-				saved->length, saved->expanded);
-		}
-#endif
+		_formi_dbg_printf(
+		    "%s: exit length = %d, expanded = %d\n", __func__,
+		    saved->length, saved->expanded);
 		row = saved;
 	}
 
@@ -910,9 +885,6 @@ split_line(FIELD *field, bool hard_split, unsigned pos,
 	struct _formi_field_lines *new_line;
 	char *newp;
 	_FORMI_FIELD_LINES *row = *rowp;
-#ifdef DEBUG
-	short dbg_ok = FALSE;
-#endif
 
 	  /* if asked to split right where the line already starts then
 	   * just return - nothing to do unless we are appending a line
@@ -921,12 +893,7 @@ split_line(FIELD *field, bool hard_split, unsigned pos,
 	if ((pos == 0) && (hard_split == FALSE))
 		return E_OK;
 
-#ifdef DEBUG
-	if (_formi_create_dbg_file() == E_OK) {
-		fprintf(dbg, "split_line: splitting line at %d\n", pos);
-		dbg_ok = TRUE;
-	}
-#endif
+	_formi_dbg_printf("%s: splitting line at %d\n", __func__, pos);
 
 	  /* Need an extra line struct, check free list first */
 	if (field->free != NULL) {
@@ -935,8 +902,7 @@ split_line(FIELD *field, bool hard_split, unsigned pos,
 		if (field->free != NULL)
 			field->free->prev = NULL;
 	} else {
-		if ((new_line = (struct _formi_field_lines *)
-		     malloc(sizeof(struct _formi_field_lines))) == NULL)
+		if ((new_line = malloc(sizeof(*new_line))) == NULL)
 			return E_SYSTEM_ERROR;
 		new_line->prev = NULL;
 		new_line->next = NULL;
@@ -948,13 +914,8 @@ split_line(FIELD *field, bool hard_split, unsigned pos,
 		new_line->tabs = NULL;
 	}
 
-#ifdef DEBUG
-	if (dbg_ok == TRUE) {
-		fprintf(dbg,
-	"split_line: enter: length = %d, expanded = %d\n",
-			row->length, row->expanded);
-	}
-#endif
+	_formi_dbg_printf("%s: enter: length = %d, expanded = %d\n", __func__,
+	    row->length, row->expanded);
 
 	assert((row->length < INT_MAX) && (row->expanded < INT_MAX));
 
@@ -1043,17 +1004,12 @@ split_line(FIELD *field, bool hard_split, unsigned pos,
 		(row->length < INT_MAX) &&
 		(new_line->length < INT_MAX)));
 
-#ifdef DEBUG
-	if (dbg_ok == TRUE) {
-		fprintf(dbg, "split_line: exit: ");
-		fprintf(dbg, "row.length = %d, row.expanded = %d, ",
-			row->length, row->expanded);
-		fprintf(dbg,
-			"next_line.length = %d, next_line.expanded = %d, ",
-			new_line->length, new_line->expanded);
-		fprintf(dbg, "row_count = %d\n", field->row_count + 1);
-	}
-#endif
+	_formi_dbg_printf("%s: exit: ", __func__);
+	_formi_dbg_printf("row.length = %d, row.expanded = %d, ",
+	    row->length, row->expanded);
+	_formi_dbg_printf("next_line.length = %d, next_line.expanded = %d, ",
+	    new_line->length, new_line->expanded);
+	_formi_dbg_printf("row_count = %d\n", field->row_count + 1);
 
 	field->row_count++;
 	*rowp = new_line;
@@ -1509,15 +1465,11 @@ _formi_find_pages(FORM *form)
 {
 	int i, cur_page = 0;
 
-	if ((form->page_starts = (_FORMI_PAGE_START *)
-	     malloc((form->max_page + 1) * sizeof(_FORMI_PAGE_START))) == NULL)
+	if ((form->page_starts = calloc((form->max_page + 1),
+	    sizeof(*form->page_starts))) == NULL)
 		return E_SYSTEM_ERROR;
 
-	  /* initialise the page starts array */
-	memset(form->page_starts, 0,
-	       (form->max_page + 1) * sizeof(_FORMI_PAGE_START));
-
-	for (i =0; i < form->field_count; i++) {
+	for (i = 0; i < form->field_count; i++) {
 		if (form->fields[i]->page_break == 1)
 			cur_page++;
 		if (form->page_starts[cur_page].in_use == 0) {
@@ -1654,54 +1606,50 @@ _formi_redraw_field(FORM *form, int field)
 			}
 		}
 
-		if (form->cur_field == field)
-			wattrset(form->scrwin, cur->fore);
-		else
-			wattrset(form->scrwin, cur->back);
-
 		str = &row->string[cur->start_char];
 
 #ifdef DEBUG
-		if (_formi_create_dbg_file() == E_OK) {
-			fprintf(dbg,
-  "redraw_field: start=%d, pre=%d, slen=%d, flen=%d, post=%d, start_char=%d\n",
-				start, pre, slen, flen, post, cur->start_char);
-			if (str != NULL) {
-				if (row->expanded != 0) {
-					strncpy(buffer, str, flen);
-				} else {
-					strcpy(buffer, "(empty)");
-				}
+		_formi_dbg_printf(
+		    "%s: start=%d, pre=%d, slen=%d, flen=%d, post=%d, "
+		    "start_char=%d\n", __func__,
+		    start, pre, slen, flen, post, cur->start_char);
+		if (str != NULL) {
+			if (row->expanded != 0) {
+				strncpy(buffer, str, flen);
 			} else {
-				strcpy(buffer, "(null)");
+				strcpy(buffer, "(empty)");
 			}
-			buffer[flen] = '\0';
-			fprintf(dbg, "redraw_field: %s\n", buffer);
+		} else {
+			strcpy(buffer, "(null)");
 		}
+		buffer[flen] = '\0';
+		_formi_dbg_printf("%s: %s\n", __func__,  buffer);
 #endif
+
+		wattrset(form->scrwin, cur->back);
 
 		for (i = start + cur->start_char; i < pre; i++)
 			waddch(form->scrwin, cur->pad);
 
-#ifdef DEBUG
-		fprintf(dbg, "redraw_field: will add %d chars\n",
+		_formi_dbg_printf("%s: will add %d chars\n", __func__,
 			min(slen, flen));
-#endif
+		wattrset(form->scrwin, cur->fore);
 		for (i = 0, cpos = cur->start_char; i < min(slen, flen);
 		     i++, str++, cpos++) 
 		{
 			c = *str;
 			tab = 0; /* just to shut gcc up */
-#ifdef DEBUG
-			fprintf(dbg, "adding char str[%d]=%c\n",
-				cpos + cur->start_char,	c);
-#endif
+			_formi_dbg_printf("adding char str[%d]=%c\n",
+			    cpos + cur->start_char,	c);
 			if (((cur->opts & O_PUBLIC) != O_PUBLIC)) {
 				if (c == '\t')
 					tab = add_tab(form, row, cpos,
 						      cur->pad);
-				else
+				else {
+					wattrset(form->scrwin, cur->back);
 					waddch(form->scrwin, cur->pad);
+					wattrset(form->scrwin, cur->fore);
+				}
 			} else if ((cur->opts & O_VISIBLE) == O_VISIBLE) {
 				if (c == '\t')
 					tab = add_tab(form, row, cpos, ' ');
@@ -1723,6 +1671,7 @@ _formi_redraw_field(FORM *form, int field)
 				i += tab - 1;
 		}
 
+		wattrset(form->scrwin, cur->back);
 		for (i = 0; i < post; i++)
 			waddch(form->scrwin, cur->pad);
 	}
@@ -1731,10 +1680,7 @@ _formi_redraw_field(FORM *form, int field)
 		wmove(form->scrwin, (int) (cur->form_row + i),
 		      (int) cur->form_col);
 
-		if (form->cur_field == field)
-			wattrset(form->scrwin, cur->fore);
-		else
-			wattrset(form->scrwin, cur->back);
+		wattrset(form->scrwin, cur->back);
 
 		for (j = 0; j < cur->cols; j++) {
 			waddch(form->scrwin, cur->pad);
@@ -1742,6 +1688,12 @@ _formi_redraw_field(FORM *form, int field)
 	}
 
 	wattrset(form->scrwin, cur->back);
+
+	cur = form->fields[form->cur_field];
+	wmove(form->scrwin, cur->form_row + cur->cursor_ypos,
+	    cur->form_col + cur->cursor_xpos);
+	wcursyncup(form->scrwin);
+
 	return;
 }
 
@@ -1807,8 +1759,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	   * string.  Everything should flow from there....
 	   */
 	if (row->string == NULL) {
-		if ((row->string = (char *) malloc((size_t)INITIAL_LINE_ALLOC))
-		    == NULL)
+		if ((row->string = malloc((size_t)INITIAL_LINE_ALLOC)) == NULL)
 			return E_SYSTEM_ERROR;
 		row->string[0] = '\0';
 		row->allocated = INITIAL_LINE_ALLOC;
@@ -1817,28 +1768,23 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	}
 
 	if (_formi_validate_char(field, c) != E_OK) {
-#ifdef DEBUG
-		fprintf(dbg, "add_char: char %c failed char validation\n", c);
-#endif
+		_formi_dbg_printf("%s: char %c failed char validation\n",
+		    __func__, c);
 		return E_INVALID_FIELD;
 	}
 
 	if ((c == '\t') && (field->cols <= 8)) {
-#ifdef DEBUG
-		fprintf(dbg, "add_char: field too small for a tab\n");
-#endif
+		_formi_dbg_printf("%s: field too small for a tab\n", __func__);
 		return E_NO_ROOM;
 	}
 
-#ifdef DEBUG
-	fprintf(dbg, "add_char: pos=%d, char=%c\n", pos, c);
-	fprintf(dbg, "add_char enter: xpos=%d, row_pos=%d, start=%d\n",
+	_formi_dbg_printf("%s: pos=%d, char=%c\n", __func__, pos, c);
+	_formi_dbg_printf("%s: xpos=%d, row_pos=%d, start=%d\n", __func__,
 		field->cursor_xpos, field->row_xpos, field->start_char);
-	fprintf(dbg, "add_char enter: length=%d(%d), allocated=%d\n",
+	_formi_dbg_printf("%s: length=%d(%d), allocated=%d\n", __func__,
 		row->expanded, row->length, row->allocated);
-	fprintf(dbg, "add_char enter: %s\n", row->string);
-	fprintf(dbg, "add_char enter: buf0_status=%d\n", field->buf0_status);
-#endif
+	_formi_dbg_printf("%s: %s\n", __func__, row->string);
+	_formi_dbg_printf("%s: buf0_status=%d\n", __func__, field->buf0_status);
 	if (((field->opts & O_BLANK) == O_BLANK) &&
 	    (field->buf0_status == FALSE) &&
 	    ((field->row_xpos + field->start_char) == 0)) {
@@ -1877,7 +1823,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 		if (row->length + 2
 		    >= row->allocated) {
 			new_size = row->allocated + 16 - (row->allocated % 16);
-			if ((new = (char *) realloc(row->string,
+			if ((new = realloc(row->string,
 						  (size_t) new_size )) == NULL)
 				return E_SYSTEM_ERROR;
 			row->allocated = new_size;
@@ -1886,7 +1832,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	}
 
 	if ((field->overlay == 0) && (row->length > pos)) {
-		bcopy(&row->string[pos], &row->string[pos + 1],
+		memmove(&row->string[pos + 1], &row->string[pos],
 		      (size_t) (row->length - pos + 1));
 	}
 
@@ -1895,7 +1841,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	if (pos >= row->length) {
 		  /* make sure the string is terminated if we are at the
 		   * end of the string, the terminator would be missing
-		   * if we are are at the end of the field.
+		   * if we are at the end of the field.
 		   */
 		row->string[pos + 1] = '\0';
 	}
@@ -1931,7 +1877,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 			   * wrap failed for some reason, back out the
 			   * char insert
 			   */
-			bcopy(&row->string[pos + 1], &row->string[pos],
+			memmove(&row->string[pos], &row->string[pos + 1],
 			      (size_t) (row->length - pos));
 			row->length--;
 			if (pos > 0)
@@ -1980,18 +1926,16 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	assert((field->cursor_xpos <= field->cols)
 	       && (field->cursor_ypos < 400000));
 
-#ifdef DEBUG
-	fprintf(dbg, "add_char exit: xpos=%d, row_pos=%d, start=%d\n",
+	_formi_dbg_printf("%s: xpos=%d, row_pos=%d, start=%d\n", __func__,
 		field->cursor_xpos, field->row_xpos, field->start_char);
-	fprintf(dbg, "add_char_exit: length=%d(%d), allocated=%d\n",
+	_formi_dbg_printf("%s: length=%d(%d), allocated=%d\n", __func__,
 		row->expanded, row->length, row->allocated);
-	fprintf(dbg, "add_char exit: ypos=%d, start_line=%p\n",
+	_formi_dbg_printf("%s: ypos=%d, start_line=%p\n", __func__,
 		field->cursor_ypos, field->start_line);
-	fprintf(dbg,"add_char exit: %s\n", row->string);
-	fprintf(dbg, "add_char exit: buf0_status=%d\n", field->buf0_status);
-	fprintf(dbg, "add_char exit: status = %s\n",
+	_formi_dbg_printf("%s: %s\n", __func__, row->string);
+	_formi_dbg_printf("%s: buf0_status=%d\n", __func__, field->buf0_status);
+	_formi_dbg_printf("%s: status = %s\n", __func__,
 		(status == E_OK)? "OK" : "FAILED");
-#endif
 	return status;
 }
 
@@ -2009,11 +1953,9 @@ _formi_set_cursor_xpos(FIELD *field, int noscroll)
 	just = field->justification;
 	pos = field->start_char + field->row_xpos;
 
-#ifdef DEBUG
-	fprintf(dbg,
-	  "cursor_xpos enter: pos %d, start_char %d, row_xpos %d, xpos %d\n",
-		pos, field->start_char, field->row_xpos, field->cursor_xpos);
-#endif
+	_formi_dbg_printf(
+	    "%s: pos %d, start_char %d, row_xpos %d, xpos %d\n", __func__,
+	    pos, field->start_char, field->row_xpos, field->cursor_xpos);
 
 	  /*
 	   * make sure we apply the correct justification to non-static
@@ -2097,11 +2039,9 @@ _formi_set_cursor_xpos(FIELD *field, int noscroll)
 		break;
 	}
 
-#ifdef DEBUG
-	fprintf(dbg,
-	  "cursor_xpos exit: pos %d, start_char %d, row_xpos %d, xpos %d\n",
-		pos, field->start_char, field->row_xpos, field->cursor_xpos);
-#endif
+	_formi_dbg_printf(
+	    "%s: pos %d, start_char %d, row_xpos %d, xpos %d\n", __func__,
+	    pos, field->start_char, field->row_xpos, field->cursor_xpos);
 	return E_OK;
 }
 
@@ -2125,20 +2065,19 @@ _formi_manipulate_field(FORM *form, int c)
 	if (cur->cur_line->string == NULL)
 		return E_REQUEST_DENIED;
 
-#ifdef DEBUG
-	fprintf(dbg, "entry: request is REQ_%s\n", reqs[c - REQ_MIN_REQUEST]);
-	fprintf(dbg,
-	"entry: xpos=%d, row_pos=%d, start_char=%d, length=%d, allocated=%d\n",
-		cur->cursor_xpos, cur->row_xpos, cur->start_char,
-		cur->cur_line->length,	cur->cur_line->allocated);
-	fprintf(dbg, "entry: start_line=%p, ypos=%d\n", cur->start_line,
-		cur->cursor_ypos);
-	fprintf(dbg, "entry: string=");
+	_formi_dbg_printf("%s: request is REQ_%s\n",
+	    __func__, reqs[c - REQ_MIN_REQUEST]);
+	_formi_dbg_printf(
+	    "%s: xpos=%d, row_pos=%d, start_char=%d, length=%d, allocated=%d\n",
+	    __func__, cur->cursor_xpos, cur->row_xpos, cur->start_char,
+	    cur->cur_line->length, cur->cur_line->allocated);
+	_formi_dbg_printf("%s: start_line=%p, ypos=%d\n", __func__,
+	    cur->start_line, cur->cursor_ypos);
 	if (cur->cur_line->string == NULL)
-		fprintf(dbg, "(null)\n");
+		_formi_dbg_printf("%s: string=(null)\n", __func__);
 	else
-		fprintf(dbg, "\"%s\"\n", cur->cur_line->string);
-#endif
+		_formi_dbg_printf("%s: string=\"%s\"\n", __func__,
+		    cur->cur_line->string);
 
 	  /* Cannot manipulate a null string! */
 	if (cur->cur_line->string == NULL)
@@ -2601,7 +2540,7 @@ _formi_manipulate_field(FORM *form, int c)
 		}
 			
 		saved = row->string[start];
-		bcopy(&row->string[start + 1], &row->string[start],
+		memmove(&row->string[start], &row->string[start + 1],
 		      (size_t) (end - start + 1));
 		row->string[end] = '\0';
 		row->length--;
@@ -2669,8 +2608,8 @@ _formi_manipulate_field(FORM *form, int c)
 		
 		if ((cur->rows + cur->nrows) > 1) {
 			if (_formi_wrap_field(cur, row) != E_OK) {
-				bcopy(&row->string[start],
-				      &row->string[start + 1],
+				memmove(&row->string[start + 1],
+				      &row->string[start],
 				      (size_t) (end - start));
 				row->length++;
 				row->string[start] = saved;
@@ -2732,7 +2671,7 @@ _formi_manipulate_field(FORM *form, int c)
 			   * without losing a char.
 			   */
 			saved = row->string[start - 1];
-			bcopy(&row->string[start], &row->string[start - 1],
+			memmove(&row->string[start - 1], &row->string[start],
 			      (size_t) (end - start + 1));
 			row->length--;
 			row->string[row->length] = '\0';
@@ -2764,8 +2703,8 @@ _formi_manipulate_field(FORM *form, int c)
 			}
 			
 			if ((_formi_wrap_field(cur, row) != E_OK)) {
-				bcopy(&row->string[start - 1],
-				      &row->string[start],
+				memmove(&row->string[start],
+				      &row->string[start - 1],
 				      (size_t) (end - start));
 				row->length++;
 				row->string[start - 1] = saved;
@@ -2854,7 +2793,7 @@ _formi_manipulate_field(FORM *form, int c)
 			start = find_sow(start, &row);
 		str = row->string;
 		  /* XXXX hmmmm what if start and end on diff rows? XXXX */
-		bcopy(&str[end], &str[start],
+		memmove(&str[start], &str[end],
 		      (size_t) (row->length - end + 1));
 		len = end - start;
 		row->length -= len;
@@ -2981,17 +2920,16 @@ _formi_manipulate_field(FORM *form, int c)
 		return 0;
 	}
 	
-#ifdef DEBUG
-	fprintf(dbg,
-	 "exit: cursor_xpos=%d, row_xpos=%d, start_char=%d, length=%d, allocated=%d\n",
-		cur->cursor_xpos, cur->row_xpos, cur->start_char,
-		cur->cur_line->length,	cur->cur_line->allocated);
-	fprintf(dbg, "exit: start_line=%p, ypos=%d\n", cur->start_line,
-		cur->cursor_ypos);
-	fprintf(dbg, "exit: string=\"%s\"\n", cur->cur_line->string);
+	_formi_dbg_printf(
+	     "%s: cursor_xpos=%d, row_xpos=%d, start_char=%d, length=%d, "
+	     "allocated=%d\n", __func__, cur->cursor_xpos, cur->row_xpos,
+	     cur->start_char, cur->cur_line->length, cur->cur_line->allocated);
+	_formi_dbg_printf("%s: start_line=%p, ypos=%d\n", __func__,
+	    cur->start_line, cur->cursor_ypos);
+	_formi_dbg_printf("%s: string=\"%s\"\n", __func__,
+	    cur->cur_line->string);
 	assert ((cur->cursor_xpos < INT_MAX) && (cur->row_xpos < INT_MAX)
 		&& (cur->cursor_xpos >= cur->row_xpos));
-#endif
 	return 1;
 }
 
@@ -3208,9 +3146,8 @@ field_sort_compare(const void *one, const void *two)
 	const FIELD *a, *b;
 	int tl;
 	
-	  /* LINTED const castaway; we don't modify these! */	
-	a = (const FIELD *) *((const FIELD **) one);
-	b = (const FIELD *) *((const FIELD **) two);
+	a = *(const FIELD **) __UNCONST(one);
+	b = *(const FIELD **) __UNCONST(two);
 
 	if (a == NULL)
 		return 1;
@@ -3249,8 +3186,7 @@ _formi_sort_fields(FORM *form)
 	    == NULL)
 		return;
 
-	bcopy(form->fields, sort_area,
-	      (size_t) (sizeof(FIELD *) * form->field_count));
+	memcpy(sort_area, form->fields, sizeof(*sort_area) * form->field_count);
 	qsort(sort_area, (size_t) form->field_count, sizeof(FIELD *),
 	      field_sort_compare);
 	
@@ -3415,13 +3351,9 @@ _formi_tab_expanded_length(char *str, unsigned int start, unsigned int end)
 			len++;
 	}
 
-#ifdef DEBUG
-	if (dbg != NULL) {
-		fprintf(dbg,
-		    "tab_expanded: start=%d, end=%d, expanded=%d (diff=%d)\n",
-			start, end, (len - start_len), (end - start));
-	}
-#endif
+	_formi_dbg_printf(
+	    "%s: start=%d, end=%d, expanded=%d (diff=%d)\n", __func__,
+	    start, end, (len - start_len), (end - start));
 	
 	return (len - start_len);
 }
@@ -3454,8 +3386,7 @@ _formi_calculate_tabs(_FORMI_FIELD_LINES *row)
 	for (i = 0, j = 0; i < row->length; i++, j++) {
 		if (row->string[i] == '\t') {
 			if (*tsp == NULL) {
-				if ((*tsp = (_formi_tab_t *)
-				     malloc(sizeof(_formi_tab_t))) == NULL)
+				if ((*tsp = malloc(sizeof(**tsp))) == NULL)
 					return;
 				(*tsp)->back = old_ts;
 				(*tsp)->fwd = NULL;
@@ -3614,7 +3545,7 @@ _formi_sync_buffer(FIELD *field)
 	   * init nstr up front, just in case there are no line contents,
 	   * this could happen if the field just contains hard returns.
 	   */
-	if ((nstr = malloc(sizeof(char))) == NULL)
+	if ((nstr = malloc(sizeof(*nstr))) == NULL)
 		return E_SYSTEM_ERROR;
 	nstr[0] = '\0';
 	

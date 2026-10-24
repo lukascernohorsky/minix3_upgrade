@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.29 2015/09/07 15:50:49 joerg Exp $	*/
+/*	$NetBSD: field.c,v 1.32 2021/04/13 13:13:03 christos Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: field.c,v 1.29 2015/09/07 15:50:49 joerg Exp $");
+__RCSID("$NetBSD: field.c,v 1.32 2021/04/13 13:13:03 christos Exp $");
 
 #include <sys/param.h>
 #include <stdlib.h>
@@ -425,26 +425,19 @@ set_field_buffer(FIELD *field, int buffer, const char *value)
 	    && ((field->rows + field->nrows) == 1))
 		len = field->cols;
 
-#ifdef DEBUG
-	if (_formi_create_dbg_file() != E_OK)
-		return E_SYSTEM_ERROR;
-
-	fprintf(dbg,
-		"set_field_buffer: entry: len = %d, value = %s, buffer=%d\n",
-		len, value, buffer);
-	fprintf(dbg, "set_field_buffer: entry: string = ");
+	_formi_dbg_printf( "%s: len = %d, value = %s, buffer=%d\n", __func__,
+	    len, value, buffer);
 	if (field->buffers[buffer].string != NULL)
-		fprintf(dbg, "%s, len = %d\n", field->buffers[buffer].string,
-			field->buffers[buffer].length);
+		_formi_dbg_printf("%s: string=%s, len = %d\n", __func__,
+		    field->buffers[buffer].string,
+		    field->buffers[buffer].length);
 	else
-		fprintf(dbg, "(null), len = 0\n");
-	fprintf(dbg, "set_field_buffer: entry: lines.len = %d\n",
-		field->alines[0].length);
-#endif
+		_formi_dbg_printf("%s: string=(null), len = 0\n", __func__);
+	_formi_dbg_printf("%s: lines.len = %d\n", __func__,
+	    field->alines[0].length);
 	
-	if ((field->buffers[buffer].string =
-	     (char *) realloc(field->buffers[buffer].string,
-			      (size_t) len + 1)) == NULL)
+	if ((field->buffers[buffer].string = realloc(
+	    field->buffers[buffer].string, (size_t) len + 1)) == NULL)
 		return E_SYSTEM_ERROR;
 
 	strlcpy(field->buffers[buffer].string, value, (size_t) len + 1);
@@ -452,14 +445,11 @@ set_field_buffer(FIELD *field, int buffer, const char *value)
 	field->buffers[buffer].allocated = len + 1;
 	status = field_buffer_init(field, buffer, len);
 
-#ifdef DEBUG
-	fprintf(dbg, "set_field_buffer: exit: len = %d, value = %s\n",
-		len, value);
-	fprintf(dbg, "set_field_buffer: exit: string = %s, len = %d\n",
-		field->buffers[buffer].string, field->buffers[buffer].length);
-	fprintf(dbg, "set_field_buffer: exit: lines.len = %d\n",
+	_formi_dbg_printf("%s: len = %d, value = %s\n", __func__, len, value);
+	_formi_dbg_printf("%s: string = %s, len = %d\n", __func__,
+	    field->buffers[buffer].string, field->buffers[buffer].length);
+	_formi_dbg_printf("%s: lines.len = %d\n", __func__,
 		field->alines[0].length);
-#endif
 
 	return status;
 }
@@ -761,12 +751,12 @@ _formi_create_field(FIELD *prototype, int rows, int cols, int frow,
 	    (nrows < 0) || (nbuf < 0))
 		return NULL;
 	
-	if ((new = (FIELD *)malloc(sizeof(FIELD))) == NULL) {
+	if ((new = malloc(sizeof(*new))) == NULL) {
 		return NULL;
 	}
 
 	  /* copy in the default field info */
-	bcopy(prototype, new, sizeof(FIELD));
+	memcpy(new, prototype, sizeof(*new));
 
 	new->nbuf = nbuf + 1;
 	new->rows = rows;
@@ -785,7 +775,6 @@ FIELD *
 new_field(int rows, int cols, int frow, int fcol, int nrows, int nbuf)
 {
 	FIELD *new;
-	size_t buf_len;
 	int i;
 	
 
@@ -793,31 +782,24 @@ new_field(int rows, int cols, int frow, int fcol, int nrows, int nbuf)
 				       frow, fcol, nrows, nbuf)) == NULL)
 		return NULL;
 	
-	buf_len = (nbuf + 1) * sizeof(FORM_STR);
-	
-	if ((new->buffers = (FORM_STR *)malloc(buf_len)) == NULL) {
+	if ((new->buffers = calloc(nbuf + 1, sizeof(*new->buffers))) == NULL) {
 		free(new);
 		return NULL;
 	}
 
-	  /* Initialise the strings to a zero length string */
+	/* Initialise the strings to a zero length string */
 	for (i = 0; i < nbuf + 1; i++) {
 		if ((new->buffers[i].string =
-		     (char *) malloc(sizeof(char))) == NULL) {
-			free(new->buffers);
-			free(new);
-			return NULL;
+		    malloc(sizeof(*new->buffers[i].string))) == NULL) {
+			goto out;
 		}
 		new->buffers[i].string[0] = '\0';
 		new->buffers[i].length = 0;
 		new->buffers[i].allocated = 1;
 	}
 
-	if ((new->alines = (_FORMI_FIELD_LINES *)
-	     malloc(sizeof(struct _formi_field_lines))) == NULL) {
-		free(new->buffers);
-		free(new);
-		return NULL;
+	if ((new->alines = malloc(sizeof(*new->alines))) == NULL) {
+		goto out;
 	}
 
 	new->alines->prev = NULL;
@@ -832,6 +814,13 @@ new_field(int rows, int cols, int frow, int fcol, int nrows, int nbuf)
 	new->cur_line = new->alines;
 	
 	return new;
+out:
+	while (--i >= 0) {
+		free(new->buffers[i].string);
+	}
+	free(new->buffers);
+	free(new);
+	return NULL;
 }
 
 /*
@@ -846,23 +835,24 @@ dup_field(FIELD *field, int frow, int fcol)
 	if (field == NULL)
 		return NULL;
 
-	  /* XXXX this right???? */
+	/* XXX: this right???? */
 	if ((new = _formi_create_field(field, (int) field->rows,
-				       (int ) field->cols,
+				       (int) field->cols,
 				       frow, fcol, (int) field->nrows,
 				       field->nbuf - 1)) == NULL)
 		return NULL;
 
 	row_len = (field->rows + field->nrows + 1) * field->cols;
-	buf_len = (field->nbuf + 1) * row_len * sizeof(FORM_STR);
+	buf_len = (field->nbuf + 1) * row_len * sizeof(*new->buffers);
 	
-	if ((new->buffers = (FORM_STR *)malloc(buf_len)) == NULL) {
+	/* XXX: dups buffers but not their strings? */
+	if ((new->buffers = malloc(buf_len)) == NULL) {
 		free(new);
 		return NULL;
 	}
 
 	  /* copy the buffers from the source field into the new copy */
-	bcopy(field->buffers, new->buffers, buf_len);
+	memcpy(new->buffers, field->buffers, buf_len);
 
 	return new;
 }
@@ -900,7 +890,7 @@ int
 free_field(FIELD *field)
 {
 	FIELD *flink;
-	int i;
+	unsigned int i;
 	_formi_tab_t *ts, *nts;
 	
 	if (field == NULL)
@@ -913,7 +903,7 @@ free_field(FIELD *field)
 		  /* no it is not - release the buffers */
 		free(field->buffers);
 		  /* free the tab structures */
-		for (i = 0; i < field->row_count - 1; i++) {
+		for (i = 0; i + 1 < field->row_count; i++) {
 			if (field->alines[i].tabs != NULL) {
 				ts = field->alines[i].tabs;
 				while (ts != NULL) {
