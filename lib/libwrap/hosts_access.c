@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_access.c,v 1.20 2012/03/21 10:10:37 matt Exp $	*/
+/*	$NetBSD: hosts_access.c,v 1.24 2021/03/18 01:49:09 christos Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #else
-__RCSID("$NetBSD: hosts_access.c,v 1.20 2012/03/21 10:10:37 matt Exp $");
+__RCSID("$NetBSD: hosts_access.c,v 1.24 2021/03/18 01:49:09 christos Exp $");
 #endif
 #endif
 
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: hosts_access.c,v 1.20 2012/03/21 10:10:37 matt Exp $");
 #endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <blocklist.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <syslog.h>
@@ -103,6 +104,23 @@ static int masked_match6(char *, char *, char *);
 
 #define	BUFLEN 2048
 
+static void
+pfilter_notify(struct request_info *request, int b)
+{
+    static struct blocklist *blstate;
+    int fd = request->fd != -1 ? request->fd : 3;
+
+    if (blstate == NULL) {
+	blstate = blocklist_open();
+    }
+    if (request->client->sin != NULL) {
+	    blocklist_sa_r(blstate, b, fd, request->client->sin,
+		request->client->sin->sa_len, request->daemon);
+    } else {
+	    blocklist_r(blstate, b, fd, request->daemon);
+    }
+}
+
 /* hosts_access - host access control facility */
 
 int
@@ -128,12 +146,21 @@ hosts_access(struct request_info *request)
     if (resident <= 0)
 	resident++;
     verdict = setjmp(tcpd_buf);
-    if (verdict != 0)
+    if (verdict != 0) {
+	if (verdict != AC_PERMIT)
+	    pfilter_notify(request, BLOCKLIST_AUTH_FAIL);
+	/* XXX pfilter_notify(0)??? */
 	return (verdict == AC_PERMIT);
-    if (table_match(hosts_allow_table, request))
+    }
+    if (table_match(hosts_allow_table, request)) {
+	/* XXX pfilter_notify(0)??? */
 	return (YES);
-    if (table_match(hosts_deny_table, request))
+    }
+    if (table_match(hosts_deny_table, request)) {
+	pfilter_notify(request, BLOCKLIST_AUTH_FAIL);
 	return (NO);
+    }
+    /* XXX pfilter_notify(0)??? */
     return (YES);
 }
 
@@ -309,12 +336,12 @@ host_match(char *tok, struct host_info *host)
 static int
 hostfile_match(char *path, struct host_info *host)
 {
-    char    tok[BUFSIZ];
+    char    tok[512];
     int     match = NO;
     FILE   *fp;
 
     if ((fp = fopen(path, "r")) != 0) {
-	while (fscanf(fp, "%s", tok) == 1 && !(match = host_match(tok, host)))
+	while (fscanf(fp, "%511s", tok) == 1 && !(match = host_match(tok, host)))
 	     /* void */ ;
 	fclose(fp);
     } else if (errno != ENOENT) {
@@ -561,7 +588,7 @@ masked_match6(char *net_tok, char *mask_tok, char *string)
     for (i = 0; i < alen; i++)
 	ap[i] &= mp[i];
 
-    if (addr.sa.sa_family == AF_INET6 && addr.sin6.sin6_scope_id &&
+    if (addr.sa.sa_family == AF_INET6 && net.sin6.sin6_scope_id &&
         addr.sin6.sin6_scope_id != net.sin6.sin6_scope_id)
 	return NO;
     return (memcmp(ap, np, alen) == 0);
