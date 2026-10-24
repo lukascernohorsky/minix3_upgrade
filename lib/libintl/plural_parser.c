@@ -1,4 +1,4 @@
-/*	$NetBSD: plural_parser.c,v 1.2 2007/01/17 23:24:22 hubertf Exp $	*/
+/*	$NetBSD: plural_parser.c,v 1.5 2025/02/26 04:49:45 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2005 Citrus Project,
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: plural_parser.c,v 1.2 2007/01/17 23:24:22 hubertf Exp $");
+__RCSID("$NetBSD: plural_parser.c,v 1.5 2025/02/26 04:49:45 andvar Exp $");
 
 #include <assert.h>
 #include <stdio.h>
@@ -188,8 +188,9 @@ retry:
 			return T_LAND;
 		case '|':
 			return T_LOR;
+		default:
+			return T_ILTOKEN;
 		}
-		/*NOTREACHED*/
 	case '=': case '!': case '<': case '>':
 		prevch = ch;
 		ch = _memstream_getc(&tcx->memstream);
@@ -350,7 +351,7 @@ quit:
 do {									      \
 	if (T_IS_ERROR(token))						      \
 		goto label;						      \
-} while (/*CONSTCOND*/0)
+} while (0)
 #define T_ENSURE_SOMETHING(token, label)				      \
 do {									      \
 	if ((token) == T_EOF) {						      \
@@ -358,7 +359,7 @@ do {									      \
 		goto label;						      \
 	} else if (T_IS_ERROR(token))					      \
 		goto label;						      \
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define parser_element	plural_element
 
@@ -784,7 +785,7 @@ main(int argc, char **argv)
 #endif /* TEST_PARSER */
 
 /* ----------------------------------------------------------------------
- * calcurate plural number
+ * calculate plural number
  */
 static unsigned long
 calculate_plural(const struct parser_element *pe, unsigned long n)

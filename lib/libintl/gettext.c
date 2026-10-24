@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.29 2015/05/29 12:26:28 christos Exp $	*/
+/*	$NetBSD: gettext.c,v 1.34 2025/03/13 06:49:49 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.29 2015/05/29 12:26:28 christos Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.34 2025/03/13 06:49:49 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -174,8 +174,13 @@ pgettext_impl(const char *domainname, const char *msgctxt, const char *msgid1,
 
 	translation = dcngettext(domainname, msgctxt_id,
 		msgid2, n, category);
-	free(msgctxt_id);
 
+	if (translation == msgctxt_id) {
+		free(msgctxt_id);
+		return msgid1;
+	}
+
+	free(msgctxt_id);
 	p = strchr(translation, '\004');
 	if (p)
 		return p + 1;
@@ -229,6 +234,7 @@ lookup_category(int category)
 	return NULL;
 }
 
+#define MAXBUFLEN	1024
 /*
  * XPG syntax: language[_territory[.codeset]][@modifier]
  * XXX boundary check on "result" is lacking
@@ -236,9 +242,9 @@ lookup_category(int category)
 static const char *
 split_locale(const char *lname)
 {
-	char buf[BUFSIZ], tmp[BUFSIZ];
+	char buf[MAXBUFLEN], tmp[2 * MAXBUFLEN];
 	char *l, *t, *c, *m;
-	static char result[BUFSIZ];
+	static char result[4 * MAXBUFLEN];
 
 	memset(result, 0, sizeof(result));
 
@@ -329,8 +335,10 @@ lookup_mofile(char *buf, size_t len, const char *dir, const char *lpath,
 			continue;
 #endif
 
-		snprintf(buf, len, "%s/%s/%s/%s.mo", dir, p,
+		int rv = snprintf(buf, len, "%s/%s/%s/%s.mo", dir, p,
 		    category, domainname);
+		if (rv > (int)len)
+			return NULL;
 		if (stat(buf, &st) < 0)
 			continue;
 		if ((st.st_mode & S_IFMT) != S_IFREG)
@@ -573,7 +581,7 @@ mapit(const char *path, struct domainbinding *db)
 	struct mo *mo;
 	size_t l, headerlen;
 	unsigned int i;
-	char *v;
+	const char *value;
 	struct mohandle *mohandle = &db->mohandle;
 
 	if (mohandle->addr && mohandle->addr != MAP_FAILED &&
@@ -705,16 +713,16 @@ mapit(const char *path, struct domainbinding *db)
 	/* grab MIME-header and charset field */
 	mohandle->mo.mo_header = lookup("", db, &headerlen);
 	if (mohandle->mo.mo_header)
-		v = strstr(mohandle->mo.mo_header, "charset=");
+		value = strstr(mohandle->mo.mo_header, "charset=");
 	else
-		v = NULL;
-	if (v) {
-		mohandle->mo.mo_charset = strdup(v + 8);
+		value = NULL;
+	if (value != NULL) {
+		mohandle->mo.mo_charset = strdup(value + 8);
 		if (!mohandle->mo.mo_charset)
 			goto fail;
-		v = strchr(mohandle->mo.mo_charset, '\n');
-		if (v)
-			*v = '\0';
+		char *newline = strchr(mohandle->mo.mo_charset, '\n');
+		if (newline != NULL)
+			*newline = '\0';
 	}
 	if (!mohandle->mo.mo_header ||
 	    _gettext_parse_plural(&mohandle->mo.mo_plural,
@@ -942,7 +950,7 @@ dcngettext(const char *domainname, const char *msgid1, const char *msgid2,
 	   unsigned long int n, int category)
 {
 	const char *msgid;
-	char path[PATH_MAX];
+	char path[PATH_MAX+1];
 	const char *lpath;
 	static char olpath[PATH_MAX];
 	const char *cname = NULL;
