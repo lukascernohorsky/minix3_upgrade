@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.90 2015/05/01 14:17:56 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.105 2025/07/20 23:09:09 dholland Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -6,7 +6,7 @@
 
 SRCS+=	_env.c _rand48.c \
 	a64l.c abort.c atexit.c atof.c atoi.c atol.c atoll.c \
-	bsearch.c drand48.c exit.c \
+	bsearch.c cxa_thread_atexit.c drand48.c exit.c \
 	getenv.c getopt.c getopt_long.c getsubopt.c \
 	hcreate.c heapsort.c imaxdiv.c insque.c jrand48.c l64a.c lldiv.c \
 	lcong48.c lrand48.c lsearch.c merge.c mi_vector_hash.c mrand48.c \
@@ -26,16 +26,16 @@ SRCS+=	div.c ldiv.c imaxdiv.c
 SRCS+= erand48_ieee754.c
 
 .if ${RUMPRUN} != "yes"
-.if (${USE_JEMALLOC} != "no")
-SRCS+=	jemalloc.c
-.else
+.   if (${USE_JEMALLOC} != "no")
+.      if ${HAVE_JEMALLOC} > 100
+.         include "${NETBSDSRCDIR}/external/bsd/${EXTERNAL_JEMALLOC_SUBDIR}/lib/Makefile.inc"
+.      else
+SRCS+=	jemalloc.c aligned_alloc.c
+.      endif 
+.   else
 SRCS+=	malloc.c
+.   endif
 .endif
-.endif
-
-.if defined(__MINIX)
-.include "${NETBSDSRCDIR}/minix/lib/libc/Makefile.inc"
-.endif # defined(__MINIX)
 
 CPPFLAGS.strtol.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.strtoq.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
@@ -62,6 +62,13 @@ MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 	tsearch.3 \
 	unlockpt.3
 
+strtou.3: strtoi.3
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/strtoi/strtou/g -e s/STRTOI/STRTOU/g \
+	    -e 's/an intmax_t/a unitmax_t/g' -e 's/strtou 3/strtoi 3/g' \
+	    -e s/intmax_t/uintmax_t/g -e s/%jd/%ju/g ${.ALLSRC} > ${.TARGET}
+CLEANFILES += strtou.3
+
 MLINKS+=a64l.3 l64a.3
 MLINKS+=a64l.3 l64a_r.3
 MLINKS+=abs.3 labs.3 \
@@ -76,10 +83,15 @@ MLINKS+=hcreate.3 hdestroy.3 hcreate.3 hsearch.3
 MLINKS+=hcreate.3 hcreate_r.3 hcreate.3 hdestroy_r.3 hcreate.3 hsearch_r.3
 MLINKS+=hcreate.3 hdestroy1.3 hcreate.3 hdestroy1_r.3
 MLINKS+=insque.3 remque.3
+MLINKS+=jemalloc.3 malloc.conf.5
 MLINKS+=lsearch.3 lfind.3
 MLINKS+=malloc.3 calloc.3 malloc.3 realloc.3 malloc.3 free.3
-MLINKS+=qsort.3 heapsort.3 qsort.3 mergesort.3
+MLINKS+=posix_memalign.3 aligned_alloc.3
 MLINKS+=ptsname.3 ptsname_r.3
+MLINKS+=qsort.3 heapsort.3 qsort.3 mergesort.3
+MLINKS+=qsort.3 heapsort_r.3
+MLINKS+=qsort.3 mergesort_r.3
+MLINKS+=qsort.3 qsort_r.3
 MLINKS+=rand.3 rand_r.3
 MLINKS+=rand.3 srand.3
 MLINKS+=rand48.3 drand48.3 rand48.3 erand48.3 rand48.3 lrand48.3
@@ -87,12 +99,19 @@ MLINKS+=rand48.3 mrand48.3 rand48.3 nrand48.3 rand48.3 jrand48.3
 MLINKS+=rand48.3 srand48.3 rand48.3 seed48.3 rand48.3 lcong48.3
 MLINKS+=random.3 initstate.3 random.3 setstate.3 random.3 srandom.3
 MLINKS+=radixsort.3 sradixsort.3
+MLINKS+=strfmon.3 strfmon_l.3
 MLINKS+=strsuftoll.3 strsuftollx.3
 MLINKS+=strtod.3 strtof.3 strtod.3 strtold.3
+MLINKS+=strtoi.3 strtoi_l.3
 MLINKS+=strtol.3 strtoimax.3
 MLINKS+=strtol.3 strtoll.3
 MLINKS+=strtol.3 strtoq.3
+MLINKS+=strtou.3 strtou_l.3
 MLINKS+=strtoul.3 strtoull.3
 MLINKS+=strtoul.3 strtoumax.3
 MLINKS+=strtoul.3 strtouq.3
 MLINKS+=tsearch.3 tfind.3 tsearch.3 twalk.3 tsearch.3 tdelete.3
+
+# lint(1) spuriously complains about `*s == CHAR_MAX' even though *s
+# has type char.
+LINTFLAGS.strfmon.c += -X 230

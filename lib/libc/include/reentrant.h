@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.18 2015/01/20 18:31:25 christos Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.23.2.1 2025/11/20 18:46:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  * One approach for thread safety is to provide discrete versions of the
  * library: one thread safe, the other not.  The disadvantage of this is
  * that libc is rather large, and two copies of a library which are 99%+
- * identical is not an efficent use of resources.
+ * identical is not an efficient use of resources.
  * 
  * Another approach is to provide a single thread safe library.  However,
  * it should not add significant run time or code size overhead to non-
@@ -65,7 +65,7 @@
  * Implementation Details:
  * 
  * The thread primitives used by the library (mutex_t, mutex_lock, etc.)
- * are macros which expand to the cooresponding primitives provided by
+ * are macros which expand to the corresponding primitives provided by
  * the thread engine or to nothing.  The latter is used so that code is
  * not unreasonably cluttered with #ifdefs when all thread safe support
  * is removed.
@@ -84,15 +84,6 @@
  *
  */
 
-#if !defined(__minix) || !defined(_LIBC_REENTRANT_H)
-#ifdef __minix
-/*
- * If _REENTRANT is not defined, the header may not be included more than once.
- * This is probably a NetBSD libc bug, but for now we solve it for MINIX3 only.
- */
-#define _LIBC_REENTRANT_H
-#endif /* __minix */
-
 /*
  * Abstract thread interface for thread-safe libraries.  These routines
  * will use stubs in libc if the application is not linked against the
@@ -100,7 +91,8 @@
  * is.
  */
 
-#ifndef __minix
+#ifndef	_LIBC_REENTRANT_H_
+#define	_LIBC_REENTRANT_H_
 
 #include <pthread.h>
 #include <signal.h>
@@ -132,15 +124,6 @@
 
 #define	once_t			pthread_once_t
 #define	ONCE_INITIALIZER	PTHREAD_ONCE_INIT
-
-#else /* __minix */
-
-typedef struct {
-	int pto_done;
-} once_t;
-#define ONCE_INITIALIZER	{ .pto_done = 0 }
-
-#endif /* __minix */
 
 #ifdef _REENTRANT
 
@@ -221,8 +204,6 @@ int	__libc_thr_once(once_t *, void (*)(void));
 int	__libc_thr_sigsetmask(int, const sigset_t *, sigset_t *);
 thr_t	__libc_thr_self(void);
 int	__libc_thr_yield(void);
-void	__libc_thr_create(thr_t *, const thrattr_t *,
-	    void *(*)(void *), void *);
 void	__libc_thr_exit(void *) __attribute__((__noreturn__));
 int	*__libc_thr_errno(void);
 int	__libc_thr_setcancelstate(int, int *);
@@ -284,6 +265,8 @@ thr_t	__libc_thr_self_stub(void);
 int	__libc_thr_yield_stub(void);
 int	__libc_thr_create_stub(thr_t *, const thrattr_t *,
 	    void *(*)(void *), void *);
+int	__libc_thr_detach_stub(thr_t);
+int	__libc_thr_join_stub(thr_t, void **);
 void	__libc_thr_exit_stub(void *) __dead;
 int	*__libc_thr_errno_stub(void);
 int	__libc_thr_setcancelstate_stub(int, int *);
@@ -298,38 +281,35 @@ __END_DECLS
 
 #else /* _REENTRANT */
 
-#ifndef __empty
-#define __empty do {} while (/*CONSTCOND*/0)
-#endif
-#define	mutex_init(m, a) __empty
-#define	mutex_lock(m) __empty
-#define	mutex_trylock(m) __empty
-#define	mutex_unlock(m)	__empty
-#define	mutex_destroy(m) __empty
+#define	mutex_init(m, a) __nothing
+#define	mutex_lock(m) __nothing
+#define	mutex_trylock(m) __nothing
+#define	mutex_unlock(m)	__nothing
+#define	mutex_destroy(m) __nothing
 
-#define	cond_init(c, t, a) __empty
-#define	cond_signal(c) __empty
-#define	cond_broadcast(c) __empty
-#define	cond_wait(c, m) __empty
-#define	cond_timedwait(c, m, t) __empty
-#define	cond_destroy(c) __empty
+#define	cond_init(c, t, a) __nothing
+#define	cond_signal(c) __nothing
+#define	cond_broadcast(c) __nothing
+#define	cond_wait(c, m) __nothing
+#define	cond_timedwait(c, m, t) __nothing
+#define	cond_destroy(c) __nothing
 
-#define	rwlock_init(l, a) __empty
-#define	rwlock_rdlock(l) __empty
-#define	rwlock_wrlock(l) __empty
-#define	rwlock_tryrdlock(l) __empty
-#define	rwlock_trywrlock(l) __empty
-#define	rwlock_unlock(l) __empty
-#define	rwlock_destroy(l) __empty
+#define	rwlock_init(l, a) __nothing
+#define	rwlock_rdlock(l) __nothing
+#define	rwlock_wrlock(l) __nothing
+#define	rwlock_tryrdlock(l) __nothing
+#define	rwlock_trywrlock(l) __nothing
+#define	rwlock_unlock(l) __nothing
+#define	rwlock_destroy(l) __nothing
 
 #define	thr_keycreate(k, d) /*LINTED*/0
-#define	thr_setspecific(k, p) __empty
+#define	thr_setspecific(k, p) __nothing
 #define	thr_getspecific(k) /*LINTED*/0
-#define	thr_keydelete(k) __empty
+#define	thr_keydelete(k) __nothing
 
-#define	mutexattr_init(ma) __empty
-#define	mutexattr_settype(ma, t) __empty
-#define	mutexattr_destroy(ma) __empty
+#define	mutexattr_init(ma) __nothing
+#define	mutexattr_settype(ma, t) __nothing
+#define	mutexattr_destroy(ma) __nothing
 
 static inline int
 thr_once(once_t *once_control, void (*routine)(void))
@@ -340,14 +320,14 @@ thr_once(once_t *once_control, void (*routine)(void))
 	}
 	return 0;
 }
-#define	thr_sigsetmask(f, n, o)	__empty
-#define	thr_self() __empty
-#define	thr_errno() __empty
+#define	thr_sigsetmask(f, n, o)	__nothing
+#define	thr_self() __nothing
+#define	thr_errno() __nothing
 #define	thr_curcpu()		((unsigned int)0)
 
-#define	FLOCKFILE(fp) __empty
-#define	FUNLOCKFILE(fp) __empty
+#define	FLOCKFILE(fp) __nothing
+#define	FUNLOCKFILE(fp) __nothing
 
 #endif /* _REENTRANT */
 
-#endif /* !defined(__minix) || !defined(_LIBC_REENTRANT_H) */
+#endif	/* _LIBC_REENTRANT_H_ */

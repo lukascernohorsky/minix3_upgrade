@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.18 2015/05/19 13:20:52 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.21 2024/01/20 14:52:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: db.c,v 1.18 2015/05/19 13:20:52 christos Exp $");
+__RCSID("$NetBSD: db.c,v 1.21 2024/01/20 14:52:46 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: db.c,v 1.18 2015/05/19 13:20:52 christos Exp $");
 #include <stdio.h>
 
 #include <db.h>
-static int __dberr(void);
+static int __dberr(const DB *, ...);
 
 #ifdef __weak_alias
 __weak_alias(dbopen,_dbopen)
@@ -61,15 +61,9 @@ dbopen(const char *fname, int flags, mode_t mode, DBTYPE type,
 {
 
 #define	DB_FLAGS	(DB_LOCK | DB_SHMEM | DB_TXN)
-#if defined(__minix)
-#define USE_OPEN_FLAGS 							\
-	(O_CREAT | O_EXCL | O_NONBLOCK | O_RDONLY |			\
-	 O_RDWR | O_TRUNC | O_CLOEXEC)
-#else
 #define	USE_OPEN_FLAGS							\
 	(O_CREAT | O_EXCL | O_EXLOCK | O_NONBLOCK | O_RDONLY |		\
 	 O_RDWR | O_SHLOCK | O_TRUNC | O_CLOEXEC)
-#endif  /* defined(__minix) */
 
 	if ((flags & ~(USE_OPEN_FLAGS | DB_FLAGS)) == 0)
 		switch (type) {
@@ -87,8 +81,9 @@ dbopen(const char *fname, int flags, mode_t mode, DBTYPE type,
 	return (NULL);
 }
 
+/*ARGSUSED*/
 static int
-__dberr(void)
+__dberr(const DB *dbp, ...)
 {
 	return (RET_ERROR);
 }
@@ -103,10 +98,10 @@ void
 __dbpanic(DB *dbp)
 {
 	/* The only thing that can succeed is a close. */
-	dbp->del = (int (*)(const struct __db *, const DBT*, u_int))__dberr;
-	dbp->fd = (int (*)(const struct __db *))__dberr;
-	dbp->get = (int (*)(const struct __db *, const DBT*, DBT *, u_int))__dberr;
-	dbp->put = (int (*)(const struct __db *, DBT *, const DBT *, u_int))__dberr;
-	dbp->seq = (int (*)(const struct __db *, DBT *, DBT *, u_int))__dberr;
-	dbp->sync = (int (*)(const struct __db *, u_int))__dberr;
+	dbp->del = (int (*)(const DB *, const DBT *, u_int))__dberr;
+	dbp->fd = (int (*)(const DB *))__dberr;
+	dbp->get = (int (*)(const DB *, const DBT *, DBT *, u_int))__dberr;
+	dbp->put = (int (*)(const DB *, DBT *, const DBT *, u_int))__dberr;
+	dbp->seq = (int (*)(const DB *, DBT *, DBT *, u_int))__dberr;
+	dbp->sync = (int (*)(const DB *, u_int))__dberr;
 }

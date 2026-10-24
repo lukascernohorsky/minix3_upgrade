@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.30 2015/02/24 17:56:20 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.32 2021/09/30 12:35:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -72,7 +72,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.26 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.30 2015/02/24 17:56:20 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.32 2021/09/30 12:35:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,9 +84,7 @@ __RCSID("$NetBSD: res_init.c,v 1.30 2015/02/24 17:56:20 christos Exp $");
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#if !defined(__minix)
 #include <sys/event.h>
-#endif /* !defined(__minix) */
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -158,9 +156,7 @@ static uint32_t net_mask(struct in_addr);
 #endif
 
 static struct timespec __res_conf_time;
-#if !defined(__minix)
 static const struct timespec ts = { 0, 0 };
-#endif /* !defined(__minix) */
 
 const char *__res_conf_name = _PATH_RESCONF;
 
@@ -192,6 +188,21 @@ const char *__res_conf_name = _PATH_RESCONF;
 int
 res_ninit(res_state statp) {
 	return (__res_vinit(statp, 0));
+}
+
+static int
+__res_kqinit(res_state statp)
+{
+	struct kevent kc;
+	struct __res_state_ext *ext = statp->_u._ext.ext;
+
+	ext->kq = kqueue1(O_CLOEXEC);
+	ext->kqpid = getpid();
+	EV_SET(&kc, ext->resfd, EVFILT_VNODE,
+	    EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_DELETE|NOTE_WRITE| NOTE_EXTEND|
+	    NOTE_ATTRIB|NOTE_LINK|NOTE_RENAME|NOTE_REVOKE, 0, 0);
+	(void)kevent(ext->kq, &kc, 1, NULL, 0, &ts);
+	return ext->kq;
 }
 
 /*% This function has to be reachable by res_data.c but not publically. */
@@ -350,9 +361,6 @@ __res_vinit(res_state statp, int preinit) {
 	nserv = 0;
 	if ((fp = fopen(__res_conf_name, "re")) != NULL) {
 	    struct stat st;
-#if !defined(__minix)
-	    struct kevent kc;
-#endif /* !defined(__minix) */
 
 	    /* read the config file */
 	    while (fgets(buf, (int)sizeof(buf), fp) != NULL) {
@@ -501,20 +509,12 @@ __res_vinit(res_state statp, int preinit) {
 #ifdef RESOLVSORT
 	    statp->nsort = nsort;
 #endif
-	    statp->_u._ext.ext->resfd = fcntl(fileno(fp), F_DUPFD_CLOEXEC);
+	    statp->_u._ext.ext->resfd = fcntl(fileno(fp), F_DUPFD_CLOEXEC, 0);
 	    (void) fclose(fp);
 	    if (fstat(statp->_u._ext.ext->resfd, &st) != -1)
 		    __res_conf_time = statp->_u._ext.ext->res_conf_time =
 			st.st_mtimespec;
-#if !defined(__minix)
-	    statp->_u._ext.ext->kq = kqueue1(O_CLOEXEC);
-	    EV_SET(&kc, statp->_u._ext.ext->resfd, EVFILT_VNODE,
-		EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_DELETE|NOTE_WRITE| NOTE_EXTEND|
-		NOTE_ATTRIB|NOTE_LINK|NOTE_RENAME|NOTE_REVOKE, 0, 0);
-	    (void)kevent(statp->_u._ext.ext->kq, &kc, 1, NULL, 0, &ts);
-#else
-	statp->_u._ext.ext->kq = -1;
-#endif /* !defined(__minix) */
+	    __res_kqinit(statp);
 	} else {
 	    statp->_u._ext.ext->kq = -1;
 	    statp->_u._ext.ext->resfd = -1;
@@ -571,12 +571,6 @@ __res_vinit(res_state statp, int preinit) {
 int
 res_check(res_state statp, struct timespec *mtime)
 {
-#if defined(__minix)
-	/*
-	 * XXX: No update on change.
-	 */
-	return 0;
-#else
 	/*
 	 * If the times are equal, then we check if there
 	 * was a kevent related to resolv.conf and reload.
@@ -588,6 +582,9 @@ res_check(res_state statp, struct timespec *mtime)
 	    &__res_conf_time, ==)) {
 		struct kevent ke;
 		if (statp->_u._ext.ext->kq == -1)
+			goto out;
+		if (statp->_u._ext.ext->kqpid != getpid() &&
+		    __res_kqinit(statp) == -1)
 			goto out;
 
 		switch (kevent(statp->_u._ext.ext->kq, NULL, 0, &ke, 1, &ts)) {
@@ -605,7 +602,6 @@ out:
 	if (mtime)
 		*mtime = __res_conf_time;
 	return 1;
-#endif /* defined(__minix) */
 }
 
 static void
@@ -829,13 +825,14 @@ res_nclose(res_state statp)
 void
 res_ndestroy(res_state statp)
 {
+	struct __res_state_ext *ext = statp->_u._ext.ext;
 	res_nclose(statp);
-	if (statp->_u._ext.ext != NULL) {
-		if (statp->_u._ext.ext->kq != -1)
-			(void)close(statp->_u._ext.ext->kq);
-		if (statp->_u._ext.ext->resfd != -1)
-			(void)close(statp->_u._ext.ext->resfd);
-		free(statp->_u._ext.ext);
+	if (ext != NULL) {
+		if (ext->kq != -1 && ext->kqpid == getpid())
+			(void)close(ext->kq);
+		if (ext->resfd != -1)
+			(void)close(ext->resfd);
+		free(ext);
 		statp->_u._ext.ext = NULL;
 	}
 	if (statp->_rnd != NULL) {

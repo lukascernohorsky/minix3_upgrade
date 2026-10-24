@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile.inc,v 1.10 2014/01/16 20:31:42 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2024/06/07 20:50:13 riastradh Exp $
 
 # gdtoa sources
 .PATH: ${.CURDIR}/gdtoa
 CPPFLAGS+=-I${.CURDIR}/gdtoa -I${.CURDIR}/locale
 
+.if ${MACHINE_ARCH} == "vax"
 CPPFLAGS+=-DNO_FENV_H
+.else
+CPPFLAGS+=-DHonor_FLT_ROUNDS
+.endif
 
 # machine-dependent directory must provide the following:
 # 	arith.h gd_qnan.h
@@ -24,11 +28,10 @@ SRCS+=	strtod.c
 
 # private interfaces interfacing to libc
 SRCS+=	dtoa.c ldtoa.c hdtoa.c gdtoa.c
+LINTFLAGS.ldtoa.c+=	-X 132
 
-.if !defined(__MINIX)
 # local locking implementation
 SRCS+=	gdtoa_locks.c
-.endif # !defined(__MINIX)
 
 # private interfaces
 SRCS+=	dmisc.c \
@@ -42,3 +45,5 @@ SRCS+=	dmisc.c \
 .if ${MACHINE_ARCH} != "vax"
 SRCS+=	strtord.c
 .endif
+
+LINTFLAGS.hdtoa.c+=	-X 132	# conversion may lose accuracy

@@ -1,13 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.8 2010/05/30 08:28:53 tnozaki Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2023/06/03 09:09:09 lukem Exp $
 
 # sources
 .PATH: ${ARCHDIR}/citrus ${.CURDIR}/citrus
 
-.if !defined(__MINIX)
 MODULE_SHLIB_MAJOR!= . ${NETBSDSRCDIR}/lib/i18n_module/shlib_version ; echo $$major
-.else
-MODULE_SHLIB_MAJOR=1
-.endif # !defined(__MINIX)
 CPPFLAGS.citrus_module.c+=-DI18NMODULE_MAJOR=${MODULE_SHLIB_MAJOR}
 SRCS+=	citrus_bcs.c citrus_bcs_strtol.c citrus_bcs_strtoul.c \
 	citrus_csmapper.c citrus_ctype.c citrus_ctype_fallback.c \
@@ -27,3 +23,7 @@ CPPFLAGS.citrus_lc_monetary.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.citrus_lc_numeric.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.citrus_lc_time.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.citrus_lc_messages.c+=	-I${LIBCDIR}/locale
+
+COPTS.citrus_iconv.c+=		${CC_WNO_FORMAT_TRUNCATION}
+COPTS.citrus_csmapper.c+=	${CC_WNO_FORMAT_TRUNCATION}
+

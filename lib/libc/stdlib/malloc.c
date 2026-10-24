@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.56 2014/09/18 13:58:20 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.60.10.1 2026/06/27 19:17:28 martin Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -11,18 +11,6 @@
  * From FreeBSD: malloc.c,v 1.91 2006/01/12 07:28:20 jasone
  *
  */
-
-#if defined(__minix)
-#include "extern.h"
-#ifdef _LIBSYS
-#include <minix/sysutil.h>
-#include <machine/param.h>
-#include <machine/vmparam.h>
-#define MALLOC_NO_SYSCALLS
-#define wrtwarning(w) printf("libminc malloc warning: %s\n", w)
-#define wrterror(w) panic("libminc malloc error: %s\n", w)
-#endif
-#endif /* defined(__minix) */
 
 /*
  * Defining MALLOC_EXTRA_SANITY will enable extra checks which are related
@@ -92,34 +80,34 @@ void utrace(struct ut *, int);
     static spinlock_t thread_lock	= _SPINLOCK_INITIALIZER;
 #   define _MALLOC_LOCK()		if (__isthreaded) _SPINLOCK(&thread_lock);
 #   define _MALLOC_UNLOCK()		if (__isthreaded) _SPINUNLOCK(&thread_lock);
+#   define _MALLOC_REINIT()		if (__isthreaded) thread_lock = (spinlock_t)_SPINLOCK_INITIALIZER;
 #endif /* __FreeBSD__ */
-
-#if defined(__minix)
-/* #undef these things so that malloc uses the non-internal symbols.
- * This is necessary for VM to be able to define its own versions, and
- * use this malloc.
- */
-#undef mmap
-#undef munmap
-#endif /* defined(__minix) */
 
 #include <sys/types.h>
 #if defined(__NetBSD__)
-#   define malloc_minsize               16U
-#   define HAS_UTRACE
-#   define UTRACE_LABEL "malloc",
-#include <sys/cdefs.h>
-#include "extern.h"
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.56 2014/09/18 13:58:20 christos Exp $");
-#endif /* LIBC_SCCS and not lint */
+# define malloc_minsize               16U
+# ifdef _LIBC
+#  define HAS_UTRACE
+#  define UTRACE_LABEL "malloc",
 int utrace(const char *, void *, size_t);
-
-#include <reentrant.h>
+# endif
+# include <sys/cdefs.h>
+# include "extern.h"
+# if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: malloc.c,v 1.60.10.1 2026/06/27 19:17:28 martin Exp $");
+# endif /* LIBC_SCCS and not lint */
+# include <reentrant.h>
+# ifdef _REENTRANT
 extern int __isthreaded;
 static mutex_t thread_lock = MUTEX_INITIALIZER;
-#define _MALLOC_LOCK()	if (__isthreaded) mutex_lock(&thread_lock);
-#define _MALLOC_UNLOCK()	if (__isthreaded) mutex_unlock(&thread_lock);
+#  define _MALLOC_LOCK()	if (__isthreaded) mutex_lock(&thread_lock);
+#  define _MALLOC_UNLOCK()	if (__isthreaded) mutex_unlock(&thread_lock);
+#  define _MALLOC_REINIT()	if (__isthreaded) mutex_init(&thread_lock, NULL);
+# else
+#  define _MALLOC_LOCK()	
+#  define _MALLOC_UNLOCK()
+#  define _MALLOC_REINIT()
+# endif
 #endif /* __NetBSD__ */
 
 #if defined(__sparc__) && defined(sun)
@@ -223,6 +211,10 @@ static size_t malloc_pagemask;
 #define _MALLOC_UNLOCK()
 #endif
 
+#ifndef _MALLOC_REINIT
+#define _MALLOC_REINIT()
+#endif
+
 #ifndef MMAP_FD
 #define MMAP_FD (-1)
 #endif
@@ -231,13 +223,9 @@ static size_t malloc_pagemask;
 #define INIT_MMAP()
 #endif
 
-#if !defined(__minix)
 #ifndef MADV_FREE
 #define MADV_FREE MADV_DONTNEED
 #endif
-#else
-#undef MADV_FREE
-#endif /* !defined(__minix) */
 
 /* Number of free pages we cache */
 static size_t malloc_cache = 16;
@@ -325,7 +313,6 @@ static void *imalloc(size_t size);
 static void ifree(void *ptr);
 static void *irealloc(void *ptr, size_t size);
 
-#ifndef MALLOC_NO_SYSCALLS
 static void
 wrtmessage(const char *p1, const char *p2, const char *p3, const char *p4)
 {
@@ -358,7 +345,6 @@ wrtwarning(const char *p)
     if (malloc_abort || issetugid() || getuid() == 0 || getgid() == 0)
 	wrterror(p);
 }
-#endif
 
 /*
  * Allocate a number of pages from the OS
@@ -470,22 +456,16 @@ extend_pgdir(size_t idx)
 static void
 malloc_init(void)
 {
-#ifndef MALLOC_NO_SYSCALLS
     const char *p;
     char b[64];
     size_t i;
     ssize_t j;
-#endif
     int serrno = errno;
-#ifndef MALLOC_NO_SYSCALLS
 
     /*
      * Compute page-size related variables.
      */
-    malloc_pagesize = (size_t)sysconf(_SC_PAGESIZE);
-#else
-    malloc_pagesize = PAGE_SIZE;
-#endif
+    malloc_pagesize = getpagesize();
     malloc_pagemask = malloc_pagesize - 1;
     for (malloc_pageshift = 0;
 	 (1UL << malloc_pageshift) != malloc_pagesize;
@@ -498,7 +478,6 @@ malloc_init(void)
     malloc_junk = 1;
 #endif /* MALLOC_EXTRA_SANITY */
 
-#ifndef MALLOC_NO_SYSCALLS
     for (i = 0; i < 3; i++) {
 	if (i == 0) {
 	    j = readlink("/etc/malloc.conf", b, sizeof b - 1);
@@ -506,8 +485,10 @@ malloc_init(void)
 		continue;
 	    b[j] = '\0';
 	    p = b;
+#ifdef _LIBC
 	} else if (i == 1 && issetugid() == 0) {
 	    p = getenv("MALLOC_OPTIONS");
+#endif
 	} else if (i == 1) {
 	    continue;
 	} else {
@@ -519,10 +500,8 @@ malloc_init(void)
 		case '<': malloc_cache   >>= 1; break;
 		case 'a': malloc_abort   = 0; break;
 		case 'A': malloc_abort   = 1; break;
-#if !defined(__minix)
 		case 'h': malloc_hint    = 0; break;
 		case 'H': malloc_hint    = 1; break;
-#endif /* !defined(__minix) */
 		case 'r': malloc_realloc = 0; break;
 		case 'R': malloc_realloc = 1; break;
 		case 'j': malloc_junk    = 0; break;
@@ -544,7 +523,6 @@ malloc_init(void)
 	    }
 	}
     }
-#endif
 
     UTRACE(0, 0, 0);
 
@@ -820,10 +798,8 @@ imalloc(size_t size)
 
     if ((size + malloc_pagesize) < size)	/* Check for overflow */
 	result = NULL;
-#ifndef __minix
     else if ((size + malloc_pagesize) >= (uintptr_t)page_dir)
 	result = NULL;
-#endif /* !__minix */
     else if (size <= malloc_maxsize)
 	result = malloc_bytes(size);
     else
@@ -971,10 +947,8 @@ free_pages(void *ptr, size_t idx, struct pginfo *info)
     if (malloc_junk)
 	memset(ptr, SOME_JUNK, l);
 
-#if !defined(__minix)
     if (malloc_hint)
 	madvise(ptr, l, MADV_FREE);
-#endif /* !defined(__minix) */
 
     tail = (char *)ptr+l;
 
@@ -1328,4 +1302,11 @@ _malloc_postfork(void)
 {
 
 	_MALLOC_UNLOCK();
+}
+
+void
+_malloc_postfork_child(void)
+{
+
+	_MALLOC_REINIT();
 }
