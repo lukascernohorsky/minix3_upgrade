@@ -1,72 +1,216 @@
+# MISSING_SYSCALLS -- volani, ktera MINIX neimplementuje
+#
+# Format: jeden nazev na radek, komentar od '#'. Hvezdicka na konci nazvu
+# znamena prefixovou masku (extattr_* pokryva extattr_set_file,
+# extattr_get_fd, ...). Povolene znaky nazvu: A-Z a-z 0-9 _ a hvezdicka.
+#
+# Aktualizace 2026-10-24 proti NetBSD 11 (syscalls.master rev 1.316,
+# cisla 0 az 506; generator sys/sys/syscall.h 1.329.2.1):
+#   - odstraneno: sa_* (jen COMPAT_60, 336 OBSOL), pmc_* (341/342 OBSOL),
+#     sigstack (jen COMPAT_43, nahrada je sigaltstack)
+#   - prejmenovano: nfs_svc -> nfssvc (155 STD)
+#   - pridano: 23 volani, ktera v NetBSD 11 existuji a v seznamu chybel
+#
+# POZOR: pokud MINIX nektere z techto volani uz implementuje, prislusny
+# radek smaz, jinak verify ohlasi falesny FAIL.
+
+# ---- proces, identita, audit -------------------------------------------------
+# acct 51, ktrace 45, __setlogin 50, sysarch 165
 acct
+ktrace
+__setlogin
+sysarch
+# setpgid 82, setreuid 126, setregid 127, getpgid 207, getsid 286
+setpgid
+setreuid
+setregid
+getpgid
+getsid
+# issetugid 305, utrace 306, semconfig 223, rasctl 343, clone 287 (__clone)
+issetugid
+utrace
+semconfig
+rasctl
+clone
+# nfssvc 155 (drive psano nfs_svc, spravny nazev je nfssvc)
+nfssvc
+# setpgrp: libc alias, dela se pres setpgid
+setpgrp
+
+# ---- pamet --------------------------------------------------------------------
+# mprotect 74, madvise 75, mincore 78, msync 277 (__msync13), vadvise 72
+mprotect
+madvise
+mincore
+msync
+vadvise
+# minherit 273, mlock 203, munlock 204, mlockall 242, munlockall 243
+minherit
+mlock
+munlock
+mlockall
+munlockall
+# mremap 411
+mremap
+# posix_madvise: libc premapovava POSIX_MADV_* na madvise
+posix_madvise
+
+# ---- souborovy system ---------------------------------------------------------
+# undelete 205, lchmod 274, lchown 275, fsync_range 354
+undelete
 lchmod
 lchown
-clone
+fsync_range
+# swapctl 271; swapon dnes jen pres swapctl (85 je pouze compat_12)
+swapctl
+swapon
+# quotactl 473 (__quotactl), setrlimit 195
+quotactl
+setrlimit
+# LFS: 184 lfs_bmapv, 185 lfs_markv, 186 lfs_segclean, 422 __lfs_segwait50
+lfs_*
+# extattr 361-372 (set/get/delete/list x file/fd/link) + extattrctl 360,
+# ktery maska extattr_* nechytne (chybi podtrzitko za extattr)
 extattr_*
+extattrctl
+# file handly: getfh 395, fhopen 396, fhstat 451, fhstatvfs 486
+getfh
 fhopen
 fhstat
 fhstatvfs
-fsync_range
-getfh
-__setlogin
-getpgid
-setrlimit
-getrusage
-getsid
-issetugid /* WARNING: Always returns 0 in this impl. */
-kevent
-kqueue
-ktrace
-lfs_*
-madvise
-mincore
-minherit
-mlock
-mlockall
-munlock
-munlockall
+# uuidgen 355, modctl 246, futimens 472, lpathconf 499
+uuidgen
 modctl
-mprotect
-mq_timedreceive
-mq_timedsend
-mremap
-msgctl
-msgget
-msgrcv
-msgsnd
-msync
-nfs_svc
-pmc_*
-pollts
-posix_fadvise
-posix_madvise
-pselect /* Implementable as select wrapper */
+futimens
+lpathconf
+# preadv 289, pwritev 290, getrusage 445
 preadv
 pwritev
-quotactl
-rasctl
-sa_*
-_sched_*
-semconfig
-setpgid
-setpgrp
-setregid
-setreuid
+getrusage
+
+# ---- sockety ------------------------------------------------------------------
+# getsockopt2 193, paccept 456, recvmmsg 475, sendmmsg 476
+getsockopt2
+paccept
+recvmmsg
+sendmmsg
+
+# ---- signaly ------------------------------------------------------------------
+# sigaltstack 281 (__sigaltstack14), sigqueueinfo 245,
+# sigtimedwait 431 (__sigtimedwait50), pselect 436, pollts 437
 sigaltstack
-sigqueue
 sigqueueinfo
-sigstack
 sigtimedwait
+pselect
+pollts
+# libc wrappery bez vlastniho syscallu: pres sigqueueinfo resp.
+# __sigtimedwait50
+sigqueue
 sigwait
 sigwaitinfo
-swapctl
-swapon
-sysarch
+
+# ---- SysV IPC a POSIX fronty --------------------------------------------------
+# msgget 225, msgsnd 226, msgrcv 227, msgctl 444 (__msgctl50)
+msgget
+msgsnd
+msgrcv
+msgctl
+# mq_timedsend 432, mq_timedreceive 433
+mq_timedsend
+mq_timedreceive
+# semtimedop 506 (NOVE)
+semtimedop
+
+# ---- thready a planovani ------------------------------------------------------
+# _lwp_* 309-325 a 478 (___lwp_park60)
+_lwp_*
+# _sched_* 346-349 a 351
+_sched_*
+
+# ---- cas ----------------------------------------------------------------------
+# timer_create 235, timer_delete 236, timer_settime 446, timer_gettime 447
 timer_create
 timer_delete
-timer_gettime
 timer_settime
-undelete
-utrace
-uuidgen
-vadvise
+timer_gettime
+# clock_nanosleep 477 (NOVE), clock_getcpuclockid2 482 (NOVE)
+clock_nanosleep
+clock_getcpuclockid2
+
+# ---- udalosti, epoll, dvojice deskriptoru --------------------------------------
+# kqueue 344, kevent 501 (__kevent100); kqueue1 455 (NOVE)
+kqueue
+kevent
+kqueue1
+# eventfd 267 (NOVE), epoll 502-504 (NOVE)
+eventfd
+epoll_*
+# pipe2 453 (NOVE), dup3 505 (__dup3100, NOVE)
+pipe2
+dup3
+
+# ---- moderni doplnky NetBSD 10/11 -----------------------------------------------
+# getrandom 91 (NOVE)
+getrandom
+# __futex 166, __futex_set_robust_list 167, __futex_get_robust_list 168 (NOVE)
+__futex*
+# timerfd_create 177, timerfd_settime 178, timerfd_gettime 179 (NOVE)
+timerfd_*
+# posix_spawn 474 (NOVE)
+posix_spawn
+# posix_fadvise 416 (__posix_fadvise50)
+posix_fadvise
+# posix_fallocate 479 (NOVE), fdiscard 480 (NOVE)
+posix_fallocate
+fdiscard
+# wait6 481 (NOVE)
+wait6
+# memfd_create 500 (NOVE)
+memfd_create
+
+# ---- volitelne rodiny ---------------------------------------------------------
+# Odkomentuj jen tehdy, kdyz MINIX dana rodina skutecne nema -- over napr.:
+#   ls lib/libc/sys/ | grep -e xattr -e aio -e acl -e ksem -e mq -e pset
+# Pokud wrapper existuje, radek nech zakomentovany, jinak verify hlasi FAIL.
+#
+# xattr rodina 375-386 nema spolecny prefix, musi byt jednotlive:
+#setxattr
+#lsetxattr
+#fsetxattr
+#getxattr
+#lgetxattr
+#fgetxattr
+#listxattr
+#llistxattr
+#flistxattr
+#removexattr
+#lremovexattr
+#fremovexattr
+#aio_*		# 399-406 a 438
+#__acl_*	# 487-498
+#_ksem_*	# 247-256
+#mq_*		# 257-264 (prekryva i mq_timedsend/mq_timedreceive vyse)
+#pset_*		# 412-414 + _pset_bind 415
+#_pset_bind
+# at-rodina 457-471:
+#linkat
+#renameat
+#mkfifoat
+#mknodat
+#mkdirat
+#faccessat
+#fchmodat
+#fchownat
+#fexecve
+#fstatat
+#utimensat
+#openat
+#readlinkat
+#symlinkat
+#unlinkat
+# jednotlive dalsi:
+#getcontext
+#setcontext	# 307, 308
+#fktrace		# 288
+#sched_yield	# 350
+#fdatasync	# 241
