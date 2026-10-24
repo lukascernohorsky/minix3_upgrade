@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.15 2009/07/22 16:57:14 roy Exp $	*/
+/*	$NetBSD: copywin.c,v 1.22 2024/12/23 02:58:03 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: copywin.c,v 1.15 2009/07/22 16:57:14 roy Exp $");
+__RCSID("$NetBSD: copywin.c,v 1.22 2024/12/23 02:58:03 blymn Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -58,6 +58,14 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin,
 	cchar_t cc;
 	nschar_t *np;
 #endif /* HAVE_WCHAR */
+
+	__CTRACE(__CTRACE_WINDOW,
+	    "copywin %s mode: from (%d,%d) to (%d,%d-%d,%d)\n",
+	    dooverlay ? "overlay" : "overwrite",
+	    sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol);
+
+	if ((srcwin == NULL) || (dstwin == NULL))
+		return ERR;
 
 	/* overwrite() and overlay() can come here with -ve srcwin coords */
 	if (sminrow < 0) {
@@ -94,22 +102,22 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin,
 	if (sminrow + (dmaxrow - dminrow) >= srcwin->maxy)
 		dmaxrow = srcwin->maxy + dminrow - sminrow - 1;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_WINDOW,
 	    "copywin %s mode: from (%d,%d) to (%d,%d-%d,%d)\n",
 	    dooverlay ? "overlay" : "overwrite",
 	    sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol);
-#endif
 
 	for (; dminrow <= dmaxrow; sminrow++, dminrow++) {
 		sp = &srcwin->alines[sminrow]->line[smincol];
 		end = sp + dmaxcol - dmincol;
+	__CTRACE(__CTRACE_WINDOW, "copywin: row %d\n", sminrow);
 		for (dcol = dmincol; sp <= end; dcol++, sp++) {
 			/* XXX: Perhaps this should check for the
 			 * background character
 			 */
 			if ((dooverlay && !isspace(sp->ch)) || !dooverlay) {
 				wmove(dstwin, dminrow, dcol);
+	__CTRACE(__CTRACE_WINDOW, "copywin: dcol = %d\n", dcol);
 #ifndef HAVE_WCHAR
 				__waddch(dstwin, sp);
 #else
@@ -118,8 +126,7 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin,
 				cc.elements = 1;
 				np = sp->nsp;
 				if (np) {
-					/* MINIX: off by one error, has to be strictly less than. */
-					while (np && cc.elements <
+					while (np && cc.elements <=
 					    CURSES_CCHAR_MAX) {
 						cc.vals[cc.elements++] = np->ch;
 						np = np->next;
@@ -130,7 +137,6 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin,
 			}
 		}
 	}
-	__touchwin(dstwin);
+	__touchwin(dstwin, 0);
 	return OK;
 }
-
