@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.120 2015/06/17 00:15:26 christos Exp $	*/
+/*	$NetBSD: puffs.c,v 1.129 2022/04/19 20:32:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.120 2015/06/17 00:15:26 christos Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.129 2022/04/19 20:32:17 rillig Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -43,9 +43,7 @@ __RCSID("$NetBSD: puffs.c,v 1.120 2015/06/17 00:15:26 christos Exp $");
 #include <fcntl.h>
 #include <mntopts.h>
 #include <paths.h>
-#if !defined(__minix)
 #include <pthread.h>
-#endif /* !defined(__minix) */
 #include <puffs.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,15 +60,13 @@ const struct mntopt puffsmopts[] = {
 	MOPT_NULL,
 };
 
-#if !defined(__minix)
 pthread_mutex_t pu_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif /* !defined(__minix) */
 
 #define FILLOP(lower, upper)						\
 do {									\
 	if (pops->puffs_node_##lower)					\
 		opmask[PUFFS_VN_##upper] = 1;				\
-} while (/*CONSTCOND*/0)
+} while (0)
 static void
 fillvnopmask(struct puffs_ops *pops, struct puffs_kargs *pa)
 {
@@ -122,7 +118,6 @@ fillvnopmask(struct puffs_ops *pops, struct puffs_kargs *pa)
 static void
 finalpush(struct puffs_usermount *pu)
 {
-#if !defined(__minix)
 	struct puffs_fctrl_io *fio;
 
 	LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
@@ -131,7 +126,6 @@ finalpush(struct puffs_usermount *pu)
 
 		puffs__framev_output(pu, fio->fctrl, fio);
 	}
-#endif /* !defined(__minix) */
 }
 
 /*ARGSUSED*/
@@ -140,11 +134,7 @@ puffs_kernerr_abort(struct puffs_usermount *pu, uint8_t type,
 	int error, const char *str, puffs_cookie_t cookie)
 {
 
-#if !defined(__minix)
-	warnx("abort: type %d, error %d, cookie %p (%s)",
-#else
-	lpuffs_debug("abort: type %d, error %d, cookie %p (%s)\n",
-#endif /* !defined(__minix) */
+	warnx("%s: type %d, error %d, cookie %p (%s)", __func__,
 	    type, error, cookie, str);
 	abort();
 }
@@ -155,11 +145,10 @@ puffs_kernerr_log(struct puffs_usermount *pu, uint8_t type,
 	int error, const char *str, puffs_cookie_t cookie)
 {
 
-	syslog(LOG_WARNING, "kernel: type %d, error %d, cookie %p (%s)",
+	syslog(LOG_WARNING, "%s: type %d, error %d, cookie %p (%s)", __func__,
 	    type, error, cookie, str);
 }
 
-#if !defined(__minix)
 int
 puffs_getselectable(struct puffs_usermount *pu)
 {
@@ -203,7 +192,6 @@ puffs_setblockingmode(struct puffs_usermount *pu, int mode)
 
 	return rv;
 }
-#endif /* !defined(__minix) */
 
 int
 puffs_getstate(struct puffs_usermount *pu)
@@ -225,10 +213,8 @@ puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 	minsize = 4*psize;
 	if (ss < (size_t)minsize || ss == PUFFS_STACKSIZE_MIN) {
 		if (ss != PUFFS_STACKSIZE_MIN)
-#if !defined(__minix)
 			warnx("%s: adjusting " "stacksize to minimum %ld",
 			    __func__, minsize);
-#endif /* !defined(__minix) */
 		ss = 4*psize;
 	}
  
@@ -242,10 +228,8 @@ puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 	}
 	if (bonus > 1) {
 		stackshift++;
-#if !defined(__minix)
 		warnx("%s: using next power of two: %d", __func__,
 		    1 << stackshift);
-#endif /* !defined(__minix) */
 	}
 
 	pu->pu_cc_stackshift = stackshift;
@@ -281,7 +265,7 @@ puffs_getroot(struct puffs_usermount *pu)
 
 void
 puffs_setrootinfo(struct puffs_usermount *pu, enum vtype vt,
-	vsize_t vsize, dev_t rdev)
+	size_t vsize, dev_t rdev)
 {
 	struct puffs_kargs *pargs = pu->pu_kargp;
 
@@ -291,7 +275,7 @@ puffs_setrootinfo(struct puffs_usermount *pu, enum vtype vt,
 	}
 
 	pargs->pa_root_vtype = vt;
-	pargs->pa_root_vsize = vsize;
+	pargs->pa_root_vsize = (voff_t)vsize;
 	pargs->pa_root_rdev = rdev;
 }
 
@@ -436,7 +420,6 @@ puffs_set_prepost(struct puffs_usermount *pu,
 	pu->pu_oppost = pst;
 }
 
-#if !defined(__minix)
 void
 puffs_setback(struct puffs_cc *pcc, int whatback)
 {
@@ -457,9 +440,12 @@ puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
 {
 	long int n;
 	int parent, value, fd;
+	bool is_beforemount;
 
-	if (pipe(pu->pu_dpipe) == -1)
-		return -1;
+	is_beforemount = (puffs_getstate(pu) < PUFFS_STATE_RUNNING);
+	if (is_beforemount)
+		if (pipe(pu->pu_dpipe) == -1)
+			return -1;
 
 	switch (fork()) {
 	case -1:
@@ -471,18 +457,21 @@ puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
 		parent = 1;
 		break;
 	}
-	pu->pu_state |= PU_PUFFSDAEMON;
+	if (is_beforemount)
+		PU_SETSFLAG(pu, PU_PUFFSDAEMON);
 
 	if (parent) {
-		close(pu->pu_dpipe[1]);
-		n = read(pu->pu_dpipe[0], &value, sizeof(int));
-		if (n == -1)
-			err(1, "puffs_daemon");
-		if (n != sizeof(value))
-			errx(1, "puffs_daemon got %ld bytes", n);
-		if (value) {
-			errno = value;
-			err(1, "puffs_daemon");
+		if (is_beforemount) {
+			close(pu->pu_dpipe[1]);
+			n = read(pu->pu_dpipe[0], &value, sizeof(int));
+			if (n == -1)
+				err(1, "puffs_daemon");
+			if (n != sizeof(value))
+				errx(1, "puffs_daemon got %ld bytes", n);
+			if (value) {
+				errno = value;
+				err(1, "puffs_daemon");
+			}
 		}
 		exit(0);
 	} else {
@@ -506,23 +495,22 @@ puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
 	}
 
  fail:
-	n = write(pu->pu_dpipe[1], &errno, sizeof(int));
-	assert(n == 4);
+	if (is_beforemount) {
+		n = write(pu->pu_dpipe[1], &errno, sizeof(int));
+		assert(n == 4);
+	}
 	return -1;
 }
-#endif /* !defined(__minix) */
 
 static void
 shutdaemon(struct puffs_usermount *pu, int error)
 {
-#if !defined(__minix)
 	ssize_t n;
 
 	n = write(pu->pu_dpipe[1], &error, sizeof(int));
 	assert(n == 4);
 	close(pu->pu_dpipe[0]);
 	close(pu->pu_dpipe[1]);
-#endif /* !defined(__minix) */
 	pu->pu_state &= ~PU_PUFFSDAEMON;
 }
 
@@ -530,14 +518,11 @@ int
 puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	puffs_cookie_t cookie)
 {
-#if !defined(__minix)
 	int rv, fd, sverrno;
 	char *comfd;
-#endif /* !defined(__minix) */
 
 	pu->pu_kargp->pa_root_cookie = cookie;
 
-#if !defined(__minix)
 	/* XXXkludgehere */
 	/* kauth doesn't provide this service any longer */
 	if (geteuid() != 0)
@@ -578,7 +563,7 @@ do {									\
 		rv = -1;						\
 		goto out;						\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 		len = strlen(dir)+1;
 		allwrite(&len, sizeof(len));
 		allwrite(dir, len);
@@ -606,39 +591,29 @@ do {									\
 		dirlen = strlen(dir);
 		if (strncmp(dir, rp, rplen) != 0 ||
 		    strspn(dir + rplen, "/") != dirlen - rplen) {
-			warnx("puffs_mount: \"%s\" is a relative path.", dir);
-			warnx("puffs_mount: using \"%s\" instead.", rp);
+			warnx("%s: `%s' is a %s path.", __func__, dir,
+			    dir[0] != '/' ? "relative" : "non canonical");
+			warnx("%s: using `%s' instead.", __func__, rp);
 		}
 
 		fd = open(_PATH_PUFFS, O_RDWR);
 		if (fd == -1) {
-			warnx("puffs_mount: cannot open %s", _PATH_PUFFS);
+			warnx("%s: cannot open `%s'", __func__, _PATH_PUFFS);
 			rv = -1;
 			goto out;
 		}
 		if (fd <= 2)
-			warnx("puffs_mount: device fd %d (<= 2), sure this is "
-			    "what you want?", fd);
+			warnx("%s: device fd %d (<= 2), sure this is "
+			    "what you want?", __func__, fd);
 
 		pu->pu_kargp->pa_fd = pu->pu_fd = fd;
 		if ((rv = mount(MOUNT_PUFFS, rp, mntflags,
 		    pu->pu_kargp, sizeof(struct puffs_kargs))) == -1)
 			goto out;
 	}
-#else
-	/* Process the already-received mount request. */
-	if (!lpuffs_pump()) {
-		/* Not mounted?  This should never happen.. */
-		free(pu->pu_kargp);
-		pu->pu_kargp = NULL;
-		errno = EINVAL;
-		return -1;
-	}
-#endif /* !defined(__minix) */
 
 	PU_SETSTATE(pu, PUFFS_STATE_RUNNING);
 
-#if !defined(__minix)
  out:
 	if (rv != 0)
 		sverrno = errno;
@@ -647,14 +622,11 @@ do {									\
 	free(pu->pu_kargp);
 	pu->pu_kargp = NULL;
 
-	if (pu->pu_state & PU_PUFFSDAEMON)
+	if (PU_GETSFLAG(pu, PU_PUFFSDAEMON))
 		shutdaemon(pu, sverrno);
 
 	errno = sverrno;
 	return rv;
-#else
-	return 0;
-#endif /* !defined(__minix) */
 }
 
 struct puffs_usermount *
@@ -710,13 +682,11 @@ puffs_init(struct puffs_ops *pops, const char *mntfromname,
 	LIST_INIT(&pu->pu_ccmagazin);
 	TAILQ_INIT(&pu->pu_sched);
 
-#if !defined(__minix)
 	pu->pu_framectrl[PU_FRAMECTRL_FS].rfb = puffs__fsframe_read;
 	pu->pu_framectrl[PU_FRAMECTRL_FS].wfb = puffs__fsframe_write;
 	pu->pu_framectrl[PU_FRAMECTRL_FS].cmpfb = puffs__fsframe_cmp;
 	pu->pu_framectrl[PU_FRAMECTRL_FS].gotfb = puffs__fsframe_gotframe;
 	pu->pu_framectrl[PU_FRAMECTRL_FS].fdnotfn = puffs_framev_unmountonclose;
-#endif /* !defined(__minix) */
 
 	/* defaults for some user-settable translation functions */
 	pu->pu_cmap = NULL; /* identity translation */
@@ -731,11 +701,6 @@ puffs_init(struct puffs_ops *pops, const char *mntfromname,
 
 	PU_SETSTATE(pu, PUFFS_STATE_BEFOREMOUNT);
 
-#if defined(__minix)
-	/* Do the MINIX3-specific side of the initialization. */
-	lpuffs_init(pu);
-#endif /* defined(__minix) */
-
 	return pu;
 
  failfree:
@@ -749,8 +714,8 @@ puffs_init(struct puffs_ops *pops, const char *mntfromname,
 void
 puffs_cancel(struct puffs_usermount *pu, int error)
 {
-
 	assert(puffs_getstate(pu) < PUFFS_STATE_RUNNING);
+	assert(PU_GETSFLAG(pu, PU_PUFFSDAEMON));
 	shutdaemon(pu, error);
 	free(pu);
 }
@@ -759,7 +724,6 @@ puffs_cancel(struct puffs_usermount *pu, int error)
 int
 puffs_exit(struct puffs_usermount *pu, int unused /* strict compat */)
 {
-#if !defined(__minix)
 	struct puffs_framebuf *pb;
 	struct puffs_req *preq;
 	void *winp;
@@ -786,28 +750,11 @@ puffs_exit(struct puffs_usermount *pu, int unused /* strict compat */)
 	preq->preq_id = puffs__nextreq(pu);
 
 	puffs_framev_enqueue_justsend(pu, puffs_getselectable(pu), pb, 1, 0);
-#else
-	struct puffs_node *pn;
-
-	lpuffs_debug("puffs_exit\n");
-
-	while ((pn = LIST_FIRST(&pu->pu_pnodelst)) != NULL)
-		puffs_pn_put(pn);
-
-	while ((pn = LIST_FIRST(&pu->pu_pnode_removed_lst)) != NULL)
-		puffs_pn_put(pn);
-
-	puffs__cc_exit(pu);
-	if (pu->pu_state & PU_HASKQ)
-		close(pu->pu_kq);
-	free(pu);
-#endif /* !defined(__minix) */
 
 	return 0;
 }
 
-#if !defined(__minix)
-/* no sigset_t static intializer */
+/* no sigset_t static initializer */
 static int sigs[NSIG] = { 0, };
 static int sigcatch = 0;
 
@@ -829,7 +776,6 @@ puffs_unmountonsignal(int sig, bool sigignore)
 
 	return 0;
 }
-#endif /* !defined(__minix) */
 
 /*
  * Actual mainloop.  This is called from a context which can block.
@@ -840,19 +786,13 @@ void
 puffs__theloop(struct puffs_cc *pcc)
 {
 	struct puffs_usermount *pu = pcc->pcc_pu;
-#if !defined(__minix)
 	struct puffs_framectrl *pfctrl;
 	struct puffs_fctrl_io *fio;
 	struct kevent *curev;
 	size_t nchanges;
 	int ndone;
-#endif /* !defined(__minix) */
 
-#if !defined(__minix)
 	while (puffs_getstate(pu) != PUFFS_STATE_UNMOUNTED) {
-#else
-	do {
-#endif /* !defined(__minix) */
 
 		/*
 		 * Schedule existing requests.
@@ -865,7 +805,6 @@ puffs__theloop(struct puffs_cc *pcc)
 		if (pu->pu_ml_lfn)
 			pu->pu_ml_lfn(pu);
 
-#if !defined(__minix)
 		/* XXX: can we still do these optimizations? */
 #if 0
 		/*
@@ -916,14 +855,14 @@ puffs__theloop(struct puffs_cc *pcc)
 			if (FIO_EN_WRITE(fio)) {
 				EV_SET(&pu->pu_evs[nchanges], fio->io_fd,
 				    EVFILT_WRITE, EV_ENABLE, 0, 0,
-				    (uintptr_t)fio);
+				    (intptr_t)fio);
 				fio->stat |= FIO_WR;
 				nchanges++;
 			}
 			if (FIO_RM_WRITE(fio)) {
 				EV_SET(&pu->pu_evs[nchanges], fio->io_fd,
 				    EVFILT_WRITE, EV_DISABLE, 0, 0,
-				    (uintptr_t)fio);
+				    (intptr_t)fio);
 				fio->stat &= ~FIO_WR;
 				nchanges++;
 			}
@@ -973,21 +912,23 @@ puffs__theloop(struct puffs_cc *pcc)
 			}
 
 			what = 0;
-			if (curev->filter == EVFILT_READ) {
+			switch (curev->filter) {
+			case EVFILT_READ:
 				puffs__framev_input(pu, pfctrl, fio);
 				what |= PUFFS_FBIO_READ;
-			}
-
-			else if (curev->filter == EVFILT_WRITE) {
+				break;
+			case EVFILT_WRITE:
 				puffs__framev_output(pu, pfctrl, fio);
 				what |= PUFFS_FBIO_WRITE;
-			}
-
-			else if (__predict_false(curev->filter==EVFILT_SIGNAL)){
+				break;
+			case EVFILT_SIGNAL:
 				if ((pu->pu_state & PU_DONEXIT) == 0) {
 					PU_SETSFLAG(pu, PU_DONEXIT);
 					puffs_exit(pu, 0);
 				}
+				break;
+			default:
+				warn("unhandled filter %d", curev->filter);
 			}
 			if (what)
 				puffs__framev_notify(fio, what);
@@ -1001,11 +942,7 @@ puffs__theloop(struct puffs_cc *pcc)
 			LIST_REMOVE(fio, fio_entries);
 			free(fio);
 		}
-#endif /* !defined(__minix) */
 	}
-#if defined(__minix)
-		while (lpuffs_pump());
-#endif /* defined(__minix) */
 
 	if (puffs__cc_restoremain(pu) == -1)
 		warn("cannot restore main context.  impending doom");
@@ -1013,28 +950,19 @@ puffs__theloop(struct puffs_cc *pcc)
 int
 puffs_mainloop(struct puffs_usermount *pu)
 {
-#if !defined(__minix)
 	struct puffs_fctrl_io *fio;
-#endif /* !defined(__minix) */
 	struct puffs_cc *pcc;
-#if !defined(__minix)
 	struct kevent *curev;
 	size_t nevs;
 	int sverrno, i;
-#else
-	int sverrno;
-#endif /* !defined(__minix) */
 
 	assert(puffs_getstate(pu) >= PUFFS_STATE_RUNNING);
 
-#if !defined(__minix)
 	pu->pu_kq = kqueue();
 	if (pu->pu_kq == -1)
 		goto out;
-#endif /* !defined(__minix) */
 	pu->pu_state |= PU_HASKQ;
 
-#if !defined(__minix)
 	puffs_setblockingmode(pu, PUFFSDEV_NONBLOCK);
 	if (puffs__framev_addfd_ctrl(pu, puffs_getselectable(pu),
 	    PUFFS_FBIO_READ | PUFFS_FBIO_WRITE,
@@ -1042,18 +970,20 @@ puffs_mainloop(struct puffs_usermount *pu)
 		goto out;
 
 	nevs = pu->pu_nevs + sigcatch;
-	curev = realloc(pu->pu_evs, nevs * sizeof(struct kevent));
-	if (curev == NULL)
+	if (reallocarr(&pu->pu_evs, nevs, sizeof(struct kevent)) != 0) {
+		errno = ENOMEM;
 		goto out;
-	pu->pu_evs = curev;
+	}
 	pu->pu_nevs = nevs;
+
+	curev = pu->pu_evs;
 
 	LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
 		EV_SET(curev, fio->io_fd, EVFILT_READ, EV_ADD,
-		    0, 0, (uintptr_t)fio);
+		    0, 0, (intptr_t)fio);
 		curev++;
 		EV_SET(curev, fio->io_fd, EVFILT_WRITE, EV_ADD | EV_DISABLE,
-		    0, 0, (uintptr_t)fio);
+		    0, 0, (intptr_t)fio);
 		curev++;
 	}
 	for (i = 0; i < NSIG; i++) {
@@ -1066,7 +996,6 @@ puffs_mainloop(struct puffs_usermount *pu)
 	assert(curev - pu->pu_evs == (ssize_t)pu->pu_nevs);
 	if (kevent(pu->pu_kq, pu->pu_evs, pu->pu_nevs, NULL, 0, NULL) == -1)
 		goto out;
-#endif /* !defined(__minix) */
 
 	pu->pu_state |= PU_INLOOP;
 
