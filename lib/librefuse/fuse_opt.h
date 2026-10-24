@@ -1,4 +1,4 @@
-/*	$NetBSD: fuse_opt.h,v 1.5 2009/04/19 22:25:29 christos Exp $	*/
+/*	$NetBSD: fuse_opt.h,v 1.10 2022/01/22 08:01:50 pho Exp $	*/
 
 /*
  * Copyright (c) 2007 Alistair Crooks.  All rights reserved.
@@ -31,9 +31,11 @@
 #ifndef _FUSE_OPT_H_
 #define _FUSE_OPT_H_
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
-#endif  
+#endif
 
 enum {
 	FUSE_OPT_KEY_OPT = -1,
@@ -42,13 +44,15 @@ enum {
 	FUSE_OPT_KEY_DISCARD = -4
 };
 
+struct fuse_args;
+
 struct fuse_opt {
 	const char	*templ;
 	int32_t		offset;
 	int32_t		value;
 };
 
-#define FUSE_OPT_KEY(templ, key) { templ, -1U, key }
+#define FUSE_OPT_KEY(templ, key) { templ, -1, key }
 #define FUSE_OPT_END { .templ = NULL }
 
 typedef int (*fuse_opt_proc_t)(void *, const char *, int, struct fuse_args *);
@@ -59,12 +63,13 @@ struct fuse_args *fuse_opt_deep_copy_args(int, char **);
 void fuse_opt_free_args(struct fuse_args *);
 int fuse_opt_insert_arg(struct fuse_args *, int, const char *);
 int fuse_opt_add_opt(char **, const char *);
+int fuse_opt_add_opt_escaped(char **, const char *);
 int fuse_opt_parse(struct fuse_args *, void *,
 		   const struct fuse_opt *, fuse_opt_proc_t);
 int fuse_opt_match(const struct fuse_opt *, const char *);
 
 #ifdef __cplusplus
 }
-#endif 
+#endif
 
 #endif /* _FUSE_OPT_H_ */
