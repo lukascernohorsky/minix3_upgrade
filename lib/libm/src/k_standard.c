@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: k_standard.c,v 1.20 2015/09/08 05:23:31 dholland Exp $");
+__RCSID("$NetBSD: k_standard.c,v 1.23 2021/04/12 09:15:52 mrg Exp $");
 #endif
 
 #include "math.h"
@@ -468,8 +468,11 @@ __kernel_standard(double x, double y, int type)
 		exc.name = type < 100 ? "pow" : "powf";
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = zero;
-		else
+		else {
 		  exc.retval = HUGE_VAL;
+		  y *= 0.5;
+		  if(signbit(x)&&rint(y)!=y) exc.retval = -HUGE_VAL;
+		}
 		if (_LIB_VERSION == _POSIX_)
 		  errno = EDOM;
 		else if (!matherr(&exc)) {
@@ -821,6 +824,13 @@ __kernel_standard(double x, double y, int type)
 		      }
 		  errno = EDOM;
 		}
+		break;
+	    default:
+		if (_LIB_VERSION == _SVID_)
+		  exc.retval = -HUGE;
+		else
+		  exc.retval = -HUGE_VAL;
+		errno = EDOM;
 		break;
 	}
 	return exc.retval;

@@ -1,4 +1,4 @@
-/*      $NetBSD: n_lgamma.c,v 1.6 2006/11/24 21:15:54 wiz Exp $ */
+/*      $NetBSD: n_lgamma.c,v 1.8 2024/06/09 14:09:27 riastradh Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -81,7 +81,7 @@ static int endian;
 
 static double small_lgam(double);
 static double large_lgam(double);
-static double neg_lgam(double);
+static double neg_lgam(double, int *);
 static const double one = 1.0;
 int signgam;
 
@@ -137,12 +137,22 @@ int signgam;
 #define pb6	 5.69394463439411649408050664078e-03
 #define pb7	-1.44705562421428915453880392761e-02
 
-__pure double
+__weak_alias(lgammal, lgamma)
+__weak_alias(lgammal_r, lgamma_r)
+
+double
 lgamma(double x)
+{
+
+	return lgamma_r(x, &signgam);
+}
+
+double
+lgamma_r(double x, int *signgamp)
 {
 	double r;
 
-	signgam = 1;
+	*signgamp = 1;
 #if _IEEE
 	endian = ((*(int *) &one)) ? 1 : 0;
 #endif
@@ -160,10 +170,10 @@ lgamma(double x)
 		return (small_lgam(x));
 	else if (x > -1e-16) {
 		if (x < 0)
-			signgam = -1, x = -x;
+			*signgamp = -1, x = -x;
 		return (-log(x));
 	} else
-		return (neg_lgam(x));
+		return (neg_lgam(x, signgamp));
 }
 
 static double
@@ -221,15 +231,15 @@ CONTINUE:
 		t = .5*t*t;
 		z = 1.0;
 		switch (x_int) {
-		case 6:	z  = (y + 5);
-		case 5:	z *= (y + 4);
-		case 4:	z *= (y + 3);
+		case 6:	z  = (y + 5); /* FALLTHROUGH */
+		case 5:	z *= (y + 4); /* FALLTHROUGH */
+		case 4:	z *= (y + 3); /* FALLTHROUGH */
 		case 3:	z *= (y + 2);
 			rr = __log__D(z);
 			rr.b += a0_lo; rr.a += a0_hi;
 			return(((r+rr.b)+t+rr.a));
 		case 2: return(((r+a0_lo)+t)+a0_hi);
-		case 0: r -= log1p(x);
+		case 0: r -= log1p(x); /* FALLTHROUGH */
 		default: rr = __log__D(x);
 			rr.a -= a0_hi; rr.b -= a0_lo;
 			return(((r - rr.b) + t) - rr.a);
@@ -246,9 +256,9 @@ CONTINUE:
 		q = hi*t;
 		z = 1.0;
 		switch (x_int) {
-		case 6:	z  = (y + 5);
-		case 5:	z *= (y + 4);
-		case 4:	z *= (y + 3);
+		case 6:	z  = (y + 5); /* FALLTHROUGH */
+		case 5:	z *= (y + 4); /* FALLTHROUGH */
+		case 4:	z *= (y + 3); /* FALLTHROUGH */
 		case 3:	z *= (y + 2);
 			rr = __log__D(z);
 			r += rr.b; r += q;
@@ -267,7 +277,7 @@ CONTINUE:
 }
 
 static double
-neg_lgam(double x)
+neg_lgam(double x, int *signgamp)
 {
 	int xi;
 	double y, z, zero = 0.0;
@@ -283,7 +293,7 @@ neg_lgam(double x)
 		}
 		y = gamma(x);
 		if (y < 0)
-			y = -y, signgam = -1;
+			y = -y, *signgamp = -1;
 		return (log(y));
 	}
 	z = floor(x + .5);
@@ -295,7 +305,7 @@ neg_lgam(double x)
 	}
 	y = .5*ceil(x);
 	if (y == ceil(y))
-		signgam = -1;
+		*signgamp = -1;
 	x = -x;
 	z = fabs(x + z);	/* 0 < z <= .5 */
 	if (z < .25)

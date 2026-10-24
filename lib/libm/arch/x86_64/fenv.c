@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.6 2013/11/11 00:31:51 joerg Exp $ */
+/* $NetBSD: fenv.c,v 1.11 2024/02/20 03:53:48 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das (at) FreeBSD.ORG>
@@ -27,12 +27,31 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.6 2013/11/11 00:31:51 joerg Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.11 2024/02/20 03:53:48 riastradh Exp $");
+
+#include "namespace.h"
 
 #include <assert.h>
 #include <fenv.h>
 #include <stddef.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(feclearexcept,_feclearexcept)
+__weak_alias(fedisableexcept,_fedisableexcept)
+__weak_alias(feenableexcept,_feenableexcept)
+__weak_alias(fegetenv,_fegetenv)
+__weak_alias(fegetexcept,_fegetexcept)
+__weak_alias(fegetexceptflag,_fegetexceptflag)
+__weak_alias(fegetround,_fegetround)
+__weak_alias(feholdexcept,_feholdexcept)
+__weak_alias(feraiseexcept,_feraiseexcept)
+__weak_alias(fesetenv,_fesetenv)
+__weak_alias(fesetexceptflag,_fesetexceptflag)
+__weak_alias(fesetround,_fesetround)
+__weak_alias(fetestexcept,_fetestexcept)
+__weak_alias(feupdateenv,_feupdateenv)
+#endif
 
 /* Load x87 Control Word */
 #define	__fldcw(__cw)		__asm__ __volatile__ \
@@ -131,7 +150,7 @@ feclearexcept(int excepts)
 	/* Clear the requested floating-point exceptions */
 	fenv.x87.status &= ~ex;
 
-	/* Load the x87 floating-point environent */
+	/* Load the x87 floating-point environment */
 	__fldenv(fenv);
 
 	/* Same for SSE environment */
@@ -220,7 +239,7 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 	/* Set the requested status flags */
 	fenv.x87.status |= *flagp & ex;
 
-	/* Load the x87 floating-point environent */
+	/* Load the x87 floating-point environment */
 	__fldenv(fenv);
 
 	/* Same for SSE environment */
@@ -240,7 +259,6 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 int
 fetestexcept(int excepts)
 {
-	fenv_t fenv;
 	uint32_t mxcsr;
 	uint16_t status;
 	int ex;
@@ -249,17 +267,10 @@ fetestexcept(int excepts)
 
 	ex = excepts & FE_ALL_EXCEPT;
 
-	/* Store the current x87 floating-point environment */
-	memset(&fenv, 0, sizeof(fenv));
-
-	__fnstenv(&fenv);
 	__fnstsw(&status);
-
-	/* Store the MXCSR register state */
-	__stmxcsr(&fenv.mxcsr);
 	__stmxcsr(&mxcsr);
 
-	return ((fenv.x87.status | fenv.mxcsr) & ex);
+	return ((status | mxcsr) & ex);
 }
 
 /*
@@ -350,7 +361,7 @@ fegetenv(fenv_t *envp)
       * exceptions are masked).
       *
       * 8.6 X87 FPU EXCEPTION SYNCHRONIZATION -
-      * Intel(R) 64 and IA-32 Architectures Softare Developer's Manual - Vol 1
+      * Intel(R) 64 and IA-32 Architectures Software Developer's Manual - Vol 1
       *
       */
 	__fldcw(envp->x87.control);
@@ -477,7 +488,7 @@ feupdateenv(const fenv_t *envp)
 }
 
 /*
- * The following functions are extentions to the standard
+ * The following functions are extensions to the standard
  */
 int
 feenableexcept(int mask)

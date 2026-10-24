@@ -26,14 +26,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sin.3	6.7 (Berkeley) 4/19/91
-.\"	$NetBSD: sin.3,v 1.14 2003/08/07 16:44:49 agc Exp $
+.\"	$NetBSD: sin.3,v 1.16 2024/01/26 19:27:30 nros Exp $
 .\"
-.Dd April 19, 1991
+.Dd January 24, 2024
 .Dt SIN 3
 .Os
 .Sh NAME
 .Nm sin ,
-.Nm sinf
+.Nm sinf ,
+.Nm sinl
 .Nd sine function
 .Sh LIBRARY
 .Lb libm
@@ -43,6 +44,8 @@
 .Fn sin "double x"
 .Ft float
 .Fn sinf "float x"
+.Ft long double
+.Fn sinl "long double x"
 .Sh DESCRIPTION
 The
 .Fn sin
@@ -71,3 +74,8 @@ The
 .Fn sin
 function conforms to
 .St -ansiC .
+.Sh HISTORY
+A
+.Fn sin
+function appeared in
+.At v1 .

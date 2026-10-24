@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.c,v 1.2 2015/01/13 11:16:06 martin Exp $	*/
+/*	$NetBSD: fenv.c,v 1.5 2021/09/03 21:54:59 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -24,10 +24,29 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.2 2015/01/13 11:16:06 martin Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.5 2021/09/03 21:54:59 andvar Exp $");
+
+#include "namespace.h"
 
 #include <assert.h>
 #include <fenv.h>
+
+#ifdef __weak_alias
+__weak_alias(feclearexcept,_feclearexcept)
+__weak_alias(fedisableexcept,_fedisableexcept)
+__weak_alias(feenableexcept,_feenableexcept)
+__weak_alias(fegetenv,_fegetenv)
+__weak_alias(fegetexcept,_fegetexcept)
+__weak_alias(fegetexceptflag,_fegetexceptflag)
+__weak_alias(fegetround,_fegetround)
+__weak_alias(feholdexcept,_feholdexcept)
+__weak_alias(feraiseexcept,_feraiseexcept)
+__weak_alias(fesetenv,_fesetenv)
+__weak_alias(fesetexceptflag,_fesetexceptflag)
+__weak_alias(fesetround,_fesetround)
+__weak_alias(fetestexcept,_fetestexcept)
+__weak_alias(feupdateenv,_feupdateenv)
+#endif
 
 /*
  * Convert from exception flags (__BITS(27,32)) to exception enable bits
@@ -47,7 +66,7 @@ readfpsr(void)
 {
 	uint32_t rv;
 
-	__asm__	__volatile__ ("fstws	%%fr0, %0" : "=m"(rv));
+	__asm__	__volatile__ ("fstw	%%fr0, 0(%1)" : "=m" (rv) : "r"(&rv));
 	return rv;
 }
 
@@ -55,7 +74,7 @@ readfpsr(void)
 static inline void
 writefpsr(uint32_t val)
 {
-	__asm__	__volatile__("fldws	%0,%%fr0" : : "m"(val));
+	__asm__	__volatile__("fldw	0(%1),%%fr0" : : "m" (val), "r"(&val));
 }
 
 /*
@@ -314,7 +333,7 @@ feupdateenv(const fenv_t *envp)
 }
 
 /*
- * The following functions are extentions to the standard
+ * The following functions are extensions to the standard
  */
 int
 feenableexcept(int mask)

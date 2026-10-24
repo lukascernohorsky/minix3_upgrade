@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.1 2014/09/19 17:36:25 matt Exp $ */
+/* $NetBSD: fenv.c,v 1.5 2024/05/17 02:11:07 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.1 2014/09/19 17:36:25 matt Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.5 2024/05/17 02:11:07 riastradh Exp $");
+
+#include "namespace.h"
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -41,6 +43,23 @@ __RCSID("$NetBSD: fenv.c,v 1.1 2014/09/19 17:36:25 matt Exp $");
 
 #include <riscv/sysreg.h>
 
+#ifdef __weak_alias
+__weak_alias(feclearexcept,_feclearexcept)
+__weak_alias(fedisableexcept,_fedisableexcept)
+__weak_alias(feenableexcept,_feenableexcept)
+__weak_alias(fegetenv,_fegetenv)
+__weak_alias(fegetexcept,_fegetexcept)
+__weak_alias(fegetexceptflag,_fegetexceptflag)
+__weak_alias(fegetround,_fegetround)
+__weak_alias(feholdexcept,_feholdexcept)
+__weak_alias(feraiseexcept,_feraiseexcept)
+__weak_alias(fesetenv,_fesetenv)
+__weak_alias(fesetexceptflag,_fesetexceptflag)
+__weak_alias(fesetround,_fesetround)
+__weak_alias(fetestexcept,_fetestexcept)
+__weak_alias(feupdateenv,_feupdateenv)
+#endif
+
 /*
  * The following constant represents the default floating-point environment
  * (that is, the one installed at program startup) and has type pointer to
@@ -50,7 +69,7 @@ __RCSID("$NetBSD: fenv.c,v 1.1 2014/09/19 17:36:25 matt Exp $");
  * that manage the floating-point environment, namely fesetenv() and
  * feupdateenv().
  */
-fenv_t __fe_dfl_env = __SHIFTIN(FCSR_FRM_RNE, FCSR_FRM);
+const fenv_t __fe_dfl_env = __SHIFTIN(FCSR_FRM_RNE, FCSR_FRM);
 
 /*
  * The feclearexcept() function clears the supported floating-point exceptions
@@ -61,14 +80,14 @@ feclearexcept(int excepts)
 {
 	_DIAGASSERT((excepts & ~FE_ALL_EXCEPT) == 0);
 
-	int fflags = riscvreg_fcsr_read_fflags();
+	int fflags = fcsr_fflags_read();
 
 	fflags &= ~(excepts & FE_ALL_EXCEPT);
 
-	riscvreg_fcsr_write_fflags(fflags);
+	fcsr_fflags_write(fflags);
 
 	/* Success */
-	return (0);
+	return 0;
 }
 
 /*
@@ -82,10 +101,10 @@ fegetexceptflag(fexcept_t *flagp, int excepts)
 	_DIAGASSERT(flagp != NULL);
 	_DIAGASSERT((excepts & ~FE_ALL_EXCEPT) == 0);
 
-	*flagp = riscvreg_fcsr_read_fflags() & excepts;
+	*flagp = fcsr_fflags_read() & excepts;
 
 	/* Success */
-	return (0);
+	return 0;
 }
 
 /*
@@ -95,22 +114,18 @@ fegetexceptflag(fexcept_t *flagp, int excepts)
  * The standard explicitly allows us to execute an instruction that has the
  * exception as a side effect, but we choose to manipulate the status register
  * directly.
- *
- * The validation of input is being deferred to fesetexceptflag().
  */
 int
 feraiseexcept(int excepts)
 {
-	fexcept_t ex = 0;
 
 	_DIAGASSERT((excepts & ~FE_ALL_EXCEPT) == 0);
 
 	excepts &= FE_ALL_EXCEPT;
-	fesetexceptflag(&ex, excepts);
-	/* XXX exception magic XXX */
+	fcsr_fflags_write(fcsr_fflags_read() | excepts);
 
 	/* Success */
-	return (0);
+	return 0;
 }
 
 /*
@@ -126,14 +141,14 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 
 	excepts &= FE_ALL_EXCEPT;
 
-	int fflags = riscvreg_fcsr_read_fflags();
+	int fflags = fcsr_fflags_read();
 
 	fflags = (fflags & ~excepts) | (*flagp & excepts);
 
-	riscvreg_fcsr_write_fflags(fflags);
+	fcsr_fflags_write(fflags);
 
 	/* Success */
-	return (0);
+	return 0;
 }
 
 /*
@@ -146,13 +161,13 @@ fetestexcept(int excepts)
 {
 	_DIAGASSERT((excepts & ~FE_ALL_EXCEPT) == 0);
 
-	return riscvreg_fcsr_read_fflags() & excepts & FE_ALL_EXCEPT;
+	return fcsr_fflags_read() & excepts & FE_ALL_EXCEPT;
 }
 
 int
 fegetround(void)
 {
-	return riscvreg_fcsr_read_frm();
+	return fcsr_frm_read();
 }
 
 /*
@@ -168,10 +183,10 @@ fesetround(int round)
 		return (-1);
 	}
 
-	riscvreg_fcsr_write_frm(round);
+	fcsr_frm_write(round);
 
 	/* Success */
-	return (0);
+	return 0;
 }
 
 /*
@@ -183,10 +198,10 @@ fegetenv(fenv_t *envp)
 {
 	_DIAGASSERT(envp != NULL);
 
-	*envp = riscvreg_fcsr_read();
+	*envp = fcsr_read();
 
 	/* Success */
-	return (0);
+	return 0;
 }
 
 /*
@@ -200,12 +215,12 @@ feholdexcept(fenv_t *envp)
 {
 	_DIAGASSERT(envp != NULL);
 
-	*envp = riscvreg_fcsr_read();
+	*envp = fcsr_read();
 
-	riscvreg_fcsr_write_fflags(0);
+	fcsr_fflags_write(0);
 
 	/* Success */
-	return (0);
+	return 0;
 }
 
 /*
@@ -229,10 +244,10 @@ fesetenv(const fenv_t *envp)
 		return -1;
 	}
 
-	riscvreg_fcsr_write(env);
+	fcsr_write(env);
 
 	/* Success */
-	return (0);
+	return 0;
 }
 
 /*
@@ -248,17 +263,17 @@ feupdateenv(const fenv_t *envp)
 {
 	_DIAGASSERT(envp != NULL);
 
-	int fflags = riscvreg_fcsr_read_fflags();
+	int fflags = fcsr_fflags_read();
 
 	fesetenv(envp);
 	feraiseexcept(fflags);
 
 	/* Success */
-	return (0);
+	return 0;
 }
 
 /*
- * The following functions are extentions to the standard
+ * The following functions are extensions to the standard
  */
 int
 feenableexcept(int nmask)

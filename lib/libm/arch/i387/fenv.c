@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.6 2013/11/11 00:31:51 joerg Exp $ */
+/* $NetBSD: fenv.c,v 1.10 2021/09/03 21:54:59 andvar Exp $ */
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.6 2013/11/11 00:31:51 joerg Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.10 2021/09/03 21:54:59 andvar Exp $");
+
+#include "namespace.h"
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -35,6 +37,23 @@ __RCSID("$NetBSD: fenv.c,v 1.6 2013/11/11 00:31:51 joerg Exp $");
 #include <fenv.h>
 #include <stddef.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(feclearexcept,_feclearexcept)
+__weak_alias(fedisableexcept,_fedisableexcept)
+__weak_alias(feenableexcept,_feenableexcept)
+__weak_alias(fegetenv,_fegetenv)
+__weak_alias(fegetexcept,_fegetexcept)
+__weak_alias(fegetexceptflag,_fegetexceptflag)
+__weak_alias(fegetround,_fegetround)
+__weak_alias(feholdexcept,_feholdexcept)
+__weak_alias(feraiseexcept,_feraiseexcept)
+__weak_alias(fesetenv,_fesetenv)
+__weak_alias(fesetexceptflag,_fesetexceptflag)
+__weak_alias(fesetround,_fesetround)
+__weak_alias(fetestexcept,_fetestexcept)
+__weak_alias(feupdateenv,_feupdateenv)
+#endif
 
 /* Load x87 Control Word */
 #define	__fldcw(__cw)		__asm__ __volatile__	\
@@ -87,19 +106,18 @@ __RCSID("$NetBSD: fenv.c,v 1.6 2013/11/11 00:31:51 joerg Exp $");
  * consumers of FE_DFL_ENV, during runtime.
  */
 fenv_t __fe_dfl_env = {
-	{
-		__NetBSD_NPXCW__,       /* Control word register */
-		0x0,			/* Unused */
-		0x0000,                 /* Status word register */
-		0x0,			/* Unused */
-		0x0000ffff,             /* Tag word register */
-		0x0,			/* Unused */
-		{
-			0x0000, 0x0000,
-			0x0000, 0xffff
+	.x87 = {
+		.control = __NetBSD_NPXCW__,    /* Control word register */
+		.unused1 = 0,			/* Unused */
+		.status = 0,  		     	/* Status word register */
+		.unused2 = 0,			/* Unused */
+		.tag = 0xffff,          	/* Tag word register */
+		.unused3 = 0,			/* Unused */
+		.others = {
+			0, 0, 0, 0x0000ffff,
 		}
 	},
-	__INITIAL_MXCSR__		/* MXCSR register */
+	.mxcsr = __INITIAL_MXCSR__		/* MXCSR register */
 };
 
 /*
@@ -405,9 +423,8 @@ fesetenv(const fenv_t *envp)
 	__fe_dfl_env.x87.unused1 = env.x87.unused1;
 	__fe_dfl_env.x87.unused2 = env.x87.unused2;
 	__fe_dfl_env.x87.unused3 = env.x87.unused3;
-	memcpy(__fe_dfl_env.x87.others,
-	       env.x87.others,
-	       sizeof(__fe_dfl_env.x87.others) / sizeof(uint32_t));
+	memcpy(__fe_dfl_env.x87.others, env.x87.others,
+	    sizeof(__fe_dfl_env.x87.others));
 
 	__fldenv(envp->x87);
 	if (__HAS_SSE)
@@ -441,9 +458,8 @@ feupdateenv(const fenv_t *envp)
 	__fe_dfl_env.x87.unused1 = env.x87.unused1;
 	__fe_dfl_env.x87.unused2 = env.x87.unused2;
 	__fe_dfl_env.x87.unused3 = env.x87.unused3;
-	memcpy(__fe_dfl_env.x87.others,
-	       env.x87.others,
-	       sizeof(__fe_dfl_env.x87.others) / sizeof(uint32_t));
+	memcpy(__fe_dfl_env.x87.others, env.x87.others,
+	    sizeof(__fe_dfl_env.x87.others));
 
 	__fnstsw(&status);
 	if (__HAS_SSE)
@@ -458,7 +474,7 @@ feupdateenv(const fenv_t *envp)
 }
 
 /*
- * The following functions are extentions to the standard
+ * The following functions are extensions to the standard
  */
 int
 feenableexcept(int mask)

@@ -26,22 +26,25 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
-.\"	$NetBSD: lgamma.3,v 1.22 2012/05/05 17:54:13 christos Exp $
+.\"	$NetBSD: lgamma.3,v 1.24 2024/01/26 19:27:30 nros Exp $
 .\"
-.Dd May 4, 2012
+.Dd January 24, 2024
 .Dt LGAMMA 3
 .Os
 .Sh NAME
 .Nm lgamma ,
 .Nm lgammaf ,
+.Nm lgammal ,
 .Nm lgamma_r ,
 .Nm lgammaf_r ,
+.Nm lgammal_r ,
 .Nm gamma ,
 .Nm gammaf ,
 .Nm gamma_r ,
 .Nm gammaf_r ,
 .Nm tgamma ,
-.Nm tgammaf
+.Nm tgammaf ,
+.Nm tgammal
 .Nd log gamma function
 .Sh LIBRARY
 .Lb libm
@@ -54,10 +57,14 @@
 .Fn lgamma "double x"
 .Ft float
 .Fn lgammaf "float x"
+.Ft long double
+.Fn lgammal "long double x"
 .Ft double
 .Fn lgamma_r "double x" "int *sign"
 .Ft float
 .Fn lgammaf_r "float x" "int *sign"
+.Ft long double
+.Fn lgammal_r "long double x" "int *sign"
 .Ft double
 .Fn gamma "double x"
 .Ft float
@@ -70,14 +77,16 @@
 .Fn tgamma "double x"
 .Ft float
 .Fn tgammaf "float x"
+.Ft long double
+.Fn tgammal "long double x"
 .Sh DESCRIPTION
 .Fn lgamma x
 .if t \{\
 returns ln\||\(*G(x)| where
 .Bd -unfilled -offset indent
-\(*G(x) = \(is\d\s8\z0\s10\u\u\s8\(if\s10\d t\u\s8x\-1\s10\d e\u\s8\-t\s10\d dt	for x \*[Gt] 0 and
+\(*G(x) = \(is\d\s8\z0\s10\u\u\s8\(if\s10\d t\u\s8x\-1\s10\d e\u\s8\-t\s10\d dt	for x > 0 and
 .br
-\(*G(x) = \(*p/(\(*G(1\-x)\|sin(\(*px))	for x \*[Lt] 1.
+\(*G(x) = \(*p/(\(*G(1\-x)\|sin(\(*px))	for x < 1.
 .Ed
 .\}
 .if n \
