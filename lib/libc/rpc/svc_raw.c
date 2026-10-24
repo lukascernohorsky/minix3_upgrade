@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_raw.c,v 1.24 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: svc_raw.c,v 1.26 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)svc_raw.c 1.25 89/01/31 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: svc_raw.c,v 1.24 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: svc_raw.c,v 1.26 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
 
@@ -61,6 +61,8 @@ __RCSID("$NetBSD: svc_raw.c,v 1.24 2013/03/11 20:19:29 tron Exp $");
 #include <assert.h>
 #include <stdlib.h>
 
+#include "rpc_internal.h"
+
 #ifdef __weak_alias
 __weak_alias(svc_raw_create,_svc_raw_create)
 #endif
@@ -78,10 +80,6 @@ static struct svc_raw_private {
 	XDR	xdr_stream;
 	char	verf_body[MAX_AUTH_BYTES];
 } *svc_raw_private;
-
-#ifdef _REENTRANT
-extern mutex_t	svcraw_lock;
-#endif
 
 static enum xprt_stat svc_raw_stat(SVCXPRT *);
 static bool_t svc_raw_recv(SVCXPRT *, struct rpc_msg *);
@@ -113,7 +111,7 @@ svc_raw_create(void)
 		srp->raw_buf = __rpc_rawcombuf; /* Share it with the client */
 		svc_raw_private = srp;
 	}
-	srp->server.xp_fd = FD_SETSIZE;
+	srp->server.xp_fd = -1;
 	srp->server.xp_port = 0;
 	srp->server.xp_p3 = NULL;
 	svc_raw_ops(&srp->server);
@@ -240,9 +238,6 @@ svc_raw_ops(SVCXPRT *xprt)
 {
 	static struct xp_ops ops;
 	static struct xp_ops2 ops2;
-#ifdef _REENTRANT
-	extern mutex_t ops_lock;
-#endif
 
 	_DIAGASSERT(xprt != NULL);
 

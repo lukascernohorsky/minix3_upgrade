@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.4 2008/04/28 20:22:57 martin Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.6 2024/06/29 06:52:34 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 struct _jmp_buf {
 	struct sigcontext jb_sc;
-	register_t jb_regs[6];
+	__register_t jb_regs[6];
 };
 
 void
@@ -56,9 +56,9 @@ __longjmp14(jmp_buf env, int val)
 	if (jb->jb_sc.sc_sp == 0)
 		goto err;
 
-	/* Ensure non-zero return value */
+	/* Return 1 if val is zero */
 	if (val == 0)
-		val = -1;
+		val = 1;
 
 	/* Set _UC_SIGMASK and _UC_CPU */
 	uc.uc_flags = _UC_SIGMASK | _UC_CPU;

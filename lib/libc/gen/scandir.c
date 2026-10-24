@@ -1,4 +1,4 @@
-/*	$NetBSD: scandir.c,v 1.27 2012/03/13 21:13:36 christos Exp $	*/
+/*	$NetBSD: scandir.c,v 1.30 2022/03/12 17:31:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: scandir.c,v 1.27 2012/03/13 21:13:36 christos Exp $");
+__RCSID("$NetBSD: scandir.c,v 1.30 2022/03/12 17:31:39 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,14 +82,19 @@ dirsize(int fd, size_t olen)
 	return olen + nlen;
 }
 
+#ifndef COMPARARG
+#define COMPARARG struct dirent **
+#endif
+
 int
 scandir(const char *dirname, struct dirent ***namelist,
     int (*selectfn)(const struct dirent *),
-    int (*dcomp)(const void *, const void *))
+    int (*dcomp)(const COMPARARG, const COMPARARG))
 {
-	struct dirent *d, *p, **names, **newnames;
+	struct dirent *d, *p, **names;
 	size_t nitems, arraysz;
 	DIR *dirp;
+	int serrno;
 
 	_DIAGASSERT(dirname != NULL);
 	_DIAGASSERT(namelist != NULL);
@@ -100,8 +105,9 @@ scandir(const char *dirname, struct dirent ***namelist,
 	if ((arraysz = dirsize(dirp->dd_fd, 0)) == 0)
 		goto bad;
 
-	names = malloc(arraysz * sizeof(*names));
-	if (names == NULL)
+	names = NULL;
+	errno = reallocarr(&names, arraysz, sizeof(*names));
+	if (errno)
 		goto bad;
 
 	nitems = 0;
@@ -116,10 +122,9 @@ scandir(const char *dirname, struct dirent ***namelist,
 		if (nitems >= arraysz) {
 			if ((arraysz = dirsize(dirp->dd_fd, arraysz)) == 0)
 				goto bad2;
-			newnames = realloc(names, arraysz * sizeof(*names));
-			if (newnames == NULL)
+			errno = reallocarr(&names, arraysz, sizeof(*names));
+			if (errno)
 				goto bad2;
-			names = newnames;
 		}
 
 		/*
@@ -137,16 +142,21 @@ scandir(const char *dirname, struct dirent ***namelist,
 	}
 	(void)closedir(dirp);
 	if (nitems && dcomp != NULL)
-		qsort(names, nitems, sizeof(*names), dcomp);
+		qsort(names, nitems, sizeof(*names),
+		      (int (*)(const void *, const void *))dcomp);
 	*namelist = names;
 	_DIAGASSERT(__type_fit(int, nitems));
 	return (int)nitems;
 
 bad2:
+	serrno = errno;
 	while (nitems-- > 0)
 		free(names[nitems]);
 	free(names);
+	errno = serrno;
 bad:
+	serrno = errno;
 	(void)closedir(dirp);
+	errno = serrno;
 	return -1;
 }

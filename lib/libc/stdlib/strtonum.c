@@ -1,4 +1,4 @@
-/*	$NetBSD: strtonum.c,v 1.4 2015/03/10 12:57:56 christos Exp $	*/
+/*	$NetBSD: strtonum.c,v 1.7.4.1 2026/01/08 10:50:59 martin Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,8 +28,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtonum.c,v 1.4 2015/03/10 12:57:56 christos Exp $");
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: strtonum.c,v 1.7.4.1 2026/01/08 10:50:59 martin Exp $");
+#endif
+
+#include "namespace.h"
 
 #define _OPENBSD_SOURCE
 #include <stdio.h>
@@ -44,21 +52,33 @@ strtonum(const char *nptr, long long minval, long long maxval,
 	int e;
 	long long rv;
 	const char *resp;
+	char *eptr;
 
 	if (errstr == NULL)
 		errstr = &resp;
 
-	rv = (long long)strtoi(nptr, NULL, 10, minval, maxval, &e);
+	if (minval > maxval)
+		goto out;
 
-	if (e == 0) {
+	rv = (long long)strtoi(nptr, &eptr, 10, minval, maxval, &e);
+
+	switch (e) {
+	case 0:
 		*errstr = NULL;
 		return rv;
+	case ECANCELED:
+	case ENOTSUP:
+		goto out;
+	case ERANGE:
+		if (*eptr)
+			goto out;
+		*errstr = rv == maxval ? "too large" : "too small";
+		return 0;
+	default:
+		abort();
 	}
 
-	if (e == ERANGE)
-		*errstr = (rv == maxval ? "too large" : "too small");
-	else
-		*errstr = "invalid";
-
+out:
+	*errstr = "invalid";
 	return 0;
 }

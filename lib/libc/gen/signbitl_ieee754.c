@@ -1,4 +1,4 @@
-/*	$NetBSD: signbitl_ieee754.c,v 1.1 2011/01/17 23:53:03 matt Exp $	*/
+/*	$NetBSD: signbitl_ieee754.c,v 1.3 2025/05/17 19:00:56 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: signbitl_ieee754.c,v 1.3 2025/05/17 19:00:56 andvar Exp $");
 #endif
 
 #include <machine/ieee.h>
@@ -41,7 +41,10 @@ __RCSID("$NetBSD");
 
 /*
  * 7.12.3.6 signbit - determine whether the sign of an argument is negative
- *          IEEE 754 compatible 128-bit extended-precision version
+ *          IEEE 754 compatible 80-bit or 128-bit extended precision.
+ *
+ *          Differences between 128-bit and 80-bit are handled by having a
+ *          different struct ieee_ext.
  */
 int
 __signbitl(long double x)

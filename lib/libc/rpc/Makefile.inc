@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2015/04/15 19:13:47 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.28 2023/06/03 09:09:10 lukem Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/rpc
@@ -12,7 +12,7 @@ SRCS+=	auth_none.c auth_unix.c authunix_prot.c bindresvport.c \
 	pmap_prot2.c pmap_rmt.c rpc_prot.c rpc_commondata.c rpc_callmsg.c \
 	rpc_generic.c rpc_soc.c rpcb_clnt.c rpcb_prot.c rpcb_st_xdr.c \
 	svc.c svc_auth.c svc_dg.c svc_auth_unix.c svc_generic.c svc_raw.c \
-	svc_run.c svc_simple.c svc_vc.c \
+	svc_run.c svc_simple.c svc_vc.c svc_fdset.c \
 	xdr.c xdr_array.c xdr_float.c xdr_mem.c xdr_rec.c xdr_reference.c \
 	xdr_stdio.c xdr_sizeof.c __rpc_getxid.c
 
@@ -38,6 +38,7 @@ MLINKS+=	bindresvport.3 bindresvport_sa.3 \
 		rpc_clnt_auth.3 authnone_create.3 \
 		rpc_clnt_auth.3 authsys_create.3 \
 		rpc_clnt_auth.3 authsys_create_default.3 \
+		rpc_clnt_auth.3 set_rpc_maxgrouplist.3 \
 		rpc_clnt_calls.3 clnt_call.3 \
 		rpc_clnt_calls.3 clnt_perrno.3 \
 		rpc_clnt_calls.3 clnt_perror.3 \
@@ -167,3 +168,13 @@ MLINKS+=	bindresvport.3 bindresvport_sa.3 \
 		xdr.3 xdr_vector.3 \
 		xdr.3 xdr_void.3 \
 		xdr.3 xdr_wrapstring.3
+
+COPTS.clnt_bcast.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.clnt_generic.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.clnt_vc.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.rpcb_clnt.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.xdr_sizeof.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.svc_simple.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.pmap_getmaps.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.rpc_generic.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.getrpcent.c+=	${CC_WNO_STRINGOP_TRUNCATION}

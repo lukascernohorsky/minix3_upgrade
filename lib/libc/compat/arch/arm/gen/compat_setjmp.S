@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_setjmp.S,v 1.4 2013/11/30 20:54:14 joerg Exp $	*/
+/*	$NetBSD: compat_setjmp.S,v 1.5.10.2 2026/04/03 13:42:37 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -46,12 +46,13 @@
  */
 
 ENTRY(setjmp)
-	/* Block all signals and retrieve the old signal mask */
+	/* Retrieve the old signal mask */
 	push	{r0, lr}
 	movs	r0, #0x00000000
 
 	bl	PLT_SYM(_C_LABEL(sigblock))
 	mov	r1, r0
+	pop	{r0, lr}
 
 	/* Store signal mask */
 	str	r1, [r0, #(_JB_SIGMASK * 4)]
@@ -63,11 +64,11 @@ ENTRY(setjmp)
 	adds	r0, r0, #(_JB_REG_R4 * 4)
 #ifdef __thumb__
 #ifdef _ARM_ARCH_7
-        stmia	r0!, {r4-r12}
+	stmia	r0!, {r4-r12}
 	str	sp, [r0, #0]
 	str	lr, [r0, #4]
 #else
-        stmia	r0!, {r4-r7}
+	stmia	r0!, {r4-r7}
 	mov	r2, r8
 	mov	r3, r9
 	stmia	r0!, {r2-r3}
@@ -80,10 +81,10 @@ ENTRY(setjmp)
 	stmia	r0!, {r2-r3}
 #endif
 #else
-        stmia	r0, {r4-lr}
+	stmia	r0, {r4-lr}
 #endif
-        movs	r0, #0
-	pop	{r3, pc}
+	movs	r0, #0
+	RET
 END(setjmp)
 
 ENTRY(longjmp)
@@ -92,44 +93,57 @@ ENTRY(longjmp)
 	cmp	r2, r3
 	bne	botch
 
+	/* Validate sp and lr */
+	ldr	r2, [r0, #(_JB_REG_R13 * 4)]
+
+	/* Validate sp */
+	cmp	r2, #0
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+	cbz	r2, botch
+#else
+	cmp	r2, #0
+	beq	botch
+#endif
+
+	ldr	r3, [r0, #(_JB_REG_R14 * 4)]
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+	cbz	r3, botch
+#else
+	cmp	r3, #0
+	beq	botch
+#endif
+
+	cmp	r3, #0
+
+	mov	sp, r2
+	mov	lr, r3
+
 	/* Fetch signal mask */
 	ldr	r2, [r0, #(_JB_SIGMASK * 4)]
 
 	/* Set signal mask */
-	push	{r0, r1}	/* don't care about lr */
+	push	{r0-r2, lr}
 
 	mov	r0, r2
 	bl	PLT_SYM(_C_LABEL(sigsetmask))
 
-	pop	{r0, r1} 
+	pop	{r0-r2, lr}
 
 	/* Restore integer registers */
 	adds	r0, r0, #(_JB_REG_R4 * 4)
 #if !defined(__thumb__) || defined(_ARM_ARCH_7)
-        ldmia	r0!, {r4-r12}
+	ldmia	r0!, {r4-r12}
 #else
-        ldmia	r0!, {r4-r7}
-        ldmia	r0!, {r2-r3}
+	ldmia	r0!, {r4-r7}
+	ldmia	r0!, {r2-r3}
 	mov	r8, r2
 	mov	r9, r3
-        ldmia	r0!, {r1-r3}
+	ldmia	r0!, {r1-r3}
 	mov	r10, r2
 	mov	r11, r3
-        ldmia	r0!, {r2}
+	ldmia	r0!, {r2}
 	mov	r12, r2
 #endif
-
-	ldmia	r0!, {r2-r3}	/* r2 = sp, r3 = lr */
-
-	/* Validate sp */
-	cmp	r2, #0
-	beq	botch
-	mov	sp, r2
-
-	/* Validate lr */
-	cmp	r3, #0
-	beq	botch
-	mov	lr, r3
 
 	/* Set return value */
 	mov	r0, r1

@@ -1,4 +1,4 @@
-/*	$NetBSD: _env.c,v 1.9 2015/01/20 18:31:25 christos Exp $ */
+/*	$NetBSD: _env.c,v 1.15 2024/01/02 19:27:26 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _env.c,v 1.9 2015/01/20 18:31:25 christos Exp $");
+__RCSID("$NetBSD: _env.c,v 1.15 2024/01/02 19:27:26 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: _env.c,v 1.9 2015/01/20 18:31:25 christos Exp $");
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
+#include "csu-common.h"
 
 #include "env.h"
 #include "local.h"
@@ -72,7 +73,8 @@ static const rb_tree_ops_t env_tree_ops = {
 };
 
 /* The single instance of above tree. */
-static rb_tree_t	env_tree;
+static rb_tree_t	env_tree =
+    RB_TREE_INITIALIZER(env_tree, &env_tree_ops);
 
 /* The allocated environment. */
 static char	**allocated_environ;
@@ -86,15 +88,13 @@ static rwlock_t env_lock = RWLOCK_INITIALIZER;
 #endif
 
 /* Compatibility function. */
-char *__findenv(const char *name, int *offsetp);
+extern char *__findenv(const char *name, int *offsetp);
 
 __warn_references(__findenv,
     "warning: __findenv is an internal obsolete function.")
 
 /* Our initialization function. */
 void __libc_env_init(void);
-
-char **environ;
 
 /*ARGSUSED*/
 static signed int
@@ -257,13 +257,15 @@ __getenvslot(const char *name, size_t l_name, bool allocate)
 
 	/* Search for an existing environment variable of the given name. */
 	num_entries = 0;
-	while (environ[num_entries] != NULL) {
-		if (strncmp(environ[num_entries], name, l_name) == 0 &&
-		    environ[num_entries][l_name] == '=') {
-			/* We found a match. */
-			return num_entries;
+	if (environ != NULL) {
+		while (environ[num_entries] != NULL) {
+			if (strncmp(environ[num_entries], name, l_name) == 0 &&
+			    environ[num_entries][l_name] == '=') {
+				/* We found a match. */
+				return num_entries;
+			}
+			num_entries ++;
 		}
-		num_entries ++;
 	}
 
 	/* No match found, return if we don't want to allocate a new slot. */
@@ -295,17 +297,20 @@ __getenvslot(const char *name, size_t l_name, bool allocate)
 
 	/* Allocate a new environment array. */
 	if (environ == allocated_environ) {
-		new_environ = realloc(environ,
-		    new_size * sizeof(*new_environ));
-		if (new_environ == NULL)
+		new_environ = environ;
+		errno = reallocarr(&new_environ,
+		    new_size, sizeof(*new_environ));
+		if (errno)
 			return -1;
 	} else {
 		free(allocated_environ);
 		allocated_environ = NULL;
 		allocated_environ_size = 0;
 
-		new_environ = malloc(new_size * sizeof(*new_environ));
-		if (new_environ == NULL)
+		new_environ = NULL;
+		errno = reallocarr(&new_environ,
+		    new_size, sizeof(*new_environ));
+		if (errno)
 			return -1;
 		(void)memcpy(new_environ, environ,
 		    num_entries * sizeof(*new_environ));
@@ -397,10 +402,3 @@ __unlockenv(void)
 }
 
 #endif
-
-/* Initialize environment memory RB tree. */
-void __section(".text.startup")
-__libc_env_init(void)
-{
-	rb_tree_init(&env_tree, &env_tree_ops);
-}

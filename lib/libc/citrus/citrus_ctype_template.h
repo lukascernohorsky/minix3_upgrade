@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.36 2013/05/28 16:57:56 joerg Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.40 2022/05/28 22:16:43 andvar Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -90,7 +90,7 @@
  *           wcsrtombs
  *           wcsnrtombs
  *           wctomb
- *     These need to be keeped in the ctype encoding information structure,
+ *     These need to be kept in the ctype encoding information structure,
  *     pointed by "cei".
  *
  *   _ENCODING_INFO :
@@ -103,7 +103,7 @@
  *     It should be expanded to the name of the encoding state structure.
  *     e.g. For EUC encoding, this macro is expanded to _EUCState.
  *     Encoding state structure need to contain the context-dependent states,
- *     which are "unpacked-form" of mbstate_t type and keeped during sequent
+ *     which are "unpacked-form" of mbstate_t type and kept during sequent
  *     calls of mb/wc functions,
  *
  *   _ENCODING_IS_STATE_DEPENDENT :
@@ -118,6 +118,7 @@
  *
  */
 
+#include <stdalign.h>
 
 /* prototypes */
 
@@ -372,6 +373,7 @@ _FUNCNAME(wcsrtombs_priv)(_ENCODING_INFO * __restrict ei, char * __restrict s,
 		err = _FUNCNAME(wcrtomb_priv)(ei, buf, sizeof(buf),
 					      *pwcs0, psenc, &siz);
 		if (siz == (size_t)-1) {
+			*pwcs = pwcs0;
 			*nresult = siz;
 			return (err);
 		}
@@ -484,14 +486,14 @@ do {									\
 			_FUNCNAME(unpack_state)(_CEI_TO_EI(_cei_),	\
 						_pse_, _pspriv_);	\
 		}							\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define _RESTART_END(_func_, _cei_, _pspriv_, _pse_)			\
 	if (_pspriv_ != NULL) {						\
 		_FUNCNAME(pack_state)(_CEI_TO_EI(_cei_), _pspriv_,	\
 				      _pse_);				\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 int
 _FUNCNAME(ctype_getops)(_citrus_ctype_ops_rec_t *ops, size_t lenops,
@@ -504,6 +506,10 @@ _FUNCNAME(ctype_getops)(_citrus_ctype_ops_rec_t *ops, size_t lenops,
 
 	return (0);
 }
+
+/* Ensure alignment matches guarantees from locale/multibyte.h */
+__CTASSERT(alignof(_ENCODING_STATE) <= alignof(int) ||
+           alignof(_ENCODING_STATE) <= alignof(void *));
 
 static int
 _FUNCNAME(ctype_init)(void ** __restrict cl,

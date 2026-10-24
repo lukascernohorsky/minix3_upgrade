@@ -1,4 +1,4 @@
-/* $NetBSD: generic_lc_all.c,v 1.5 2013/04/14 23:30:16 joerg Exp $ */
+/* $NetBSD: generic_lc_all.c,v 1.7 2024/01/20 14:52:48 christos Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,9 +28,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: generic_lc_all.c,v 1.5 2013/04/14 23:30:16 joerg Exp $");
+__RCSID("$NetBSD: generic_lc_all.c,v 1.7 2024/01/20 14:52:48 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <assert.h>
 #include <langinfo.h>
@@ -64,7 +65,7 @@ _generic_LC_ALL_setlocale(const char * __restrict name,
 	if (name != NULL) {
 		strlcpy(&head[0], name, sizeof(head));
 		tokens[1] = &head[0];
-		tail = strchr(tokens[1], '/');
+		tail = __UNCONST(strchr(tokens[1], '/'));
 		if (tail == NULL) {
 			for (i = 2; i < _LC_LAST; ++i)
 				tokens[i] = tokens[1];
@@ -72,13 +73,13 @@ _generic_LC_ALL_setlocale(const char * __restrict name,
 			*tail++ = '\0';
 			for (i = 2; i < _LC_LAST - 1; ++i) {
 				tokens[i] = (const char *)tail;
-				tail = strchr(tokens[i], '/');
+				tail = __UNCONST(strchr(tokens[i], '/'));
 				if (tail == NULL)
 					return NULL;
 				*tail++ = '\0';
 			}
 			tokens[_LC_LAST - 1] = (const char *)tail;
-			tail = strchr(tokens[i], '/');
+			tail = __UNCONST(strchr(tokens[i], '/'));
 			if (tail != NULL)
 				return NULL;
 		}
@@ -114,4 +115,3 @@ _generic_LC_ALL_setlocale(const char * __restrict name,
 		return NULL;
 	return (const char *)&locale->query[0];
 }
-

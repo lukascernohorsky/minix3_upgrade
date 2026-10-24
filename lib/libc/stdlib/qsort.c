@@ -1,5 +1,4 @@
-/*	$NetBSD: qsort.c,v 1.22 2012/05/26 21:47:05 christos Exp $	*/
-
+/*	$NetBSD: qsort.c,v 1.24 2025/03/02 16:35:41 riastradh Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)qsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qsort.c,v 1.22 2012/05/26 21:47:05 christos Exp $");
+__RCSID("$NetBSD: qsort.c,v 1.24 2025/03/02 16:35:41 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,7 +44,8 @@ __RCSID("$NetBSD: qsort.c,v 1.22 2012/05/26 21:47:05 christos Exp $");
 #include <stdlib.h>
 
 static inline char	*med3(char *, char *, char *,
-    int (*)(const void *, const void *));
+			    int (*)(const void *, const void *, void *),
+			    void *);
 static inline void	 swapfunc(char *, char *, size_t, int);
 
 #define min(a, b)	(a) < (b) ? a : b
@@ -71,7 +71,7 @@ static inline void
 swapfunc(char *a, char *b, size_t n, int swaptype)
 {
 
-	if (swaptype <= 1) 
+	if (swaptype <= 1)
 		swapcode(long, a, b, n)
 	else
 		swapcode(char, a, b, n)
@@ -89,20 +89,20 @@ swapfunc(char *a, char *b, size_t n, int swaptype)
 
 static inline char *
 med3(char *a, char *b, char *c,
-    int (*cmp)(const void *, const void *))
+    int (*cmp)(const void *, const void *, void *), void *cookie)
 {
 
-	return cmp(a, b) < 0 ?
-	       (cmp(b, c) < 0 ? b : (cmp(a, c) < 0 ? c : a ))
-              :(cmp(b, c) > 0 ? b : (cmp(a, c) < 0 ? a : c ));
+	return cmp(a, b, cookie) < 0 ?
+	       (cmp(b, c, cookie) < 0 ? b : (cmp(a, c, cookie) < 0 ? c : a ))
+              :(cmp(b, c, cookie) > 0 ? b : (cmp(a, c, cookie) < 0 ? a : c ));
 }
 
 void
-qsort(void *a, size_t n, size_t es,
-    int (*cmp)(const void *, const void *))
+qsort_r(void *a, size_t n, size_t es,
+    int (*cmp)(const void *, const void *, void *), void *cookie)
 {
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
-	size_t d, r;
+	size_t d, r, s;
 	int swaptype, cmp_result;
 
 	_DIAGASSERT(a != NULL || n == 0 || es == 0);
@@ -111,7 +111,8 @@ qsort(void *a, size_t n, size_t es,
 loop:	SWAPINIT(a, es);
 	if (n < 7) {
 		for (pm = (char *) a + es; pm < (char *) a + n * es; pm += es)
-			for (pl = pm; pl > (char *) a && cmp(pl - es, pl) > 0;
+			for (pl = pm;
+			     pl > (char *) a && cmp(pl - es, pl, cookie) > 0;
 			     pl -= es)
 				swap(pl, pl - es);
 		return;
@@ -122,25 +123,25 @@ loop:	SWAPINIT(a, es);
 		pn = (char *) a + (n - 1) * es;
 		if (n > 40) {
 			d = (n / 8) * es;
-			pl = med3(pl, pl + d, pl + 2 * d, cmp);
-			pm = med3(pm - d, pm, pm + d, cmp);
-			pn = med3(pn - 2 * d, pn - d, pn, cmp);
+			pl = med3(pl, pl + d, pl + 2 * d, cmp, cookie);
+			pm = med3(pm - d, pm, pm + d, cmp, cookie);
+			pn = med3(pn - 2 * d, pn - d, pn, cmp, cookie);
 		}
-		pm = med3(pl, pm, pn, cmp);
+		pm = med3(pl, pm, pn, cmp, cookie);
 	}
 	swap(a, pm);
 	pa = pb = (char *) a + es;
 
 	pc = pd = (char *) a + (n - 1) * es;
 	for (;;) {
-		while (pb <= pc && (cmp_result = cmp(pb, a)) <= 0) {
+		while (pb <= pc && (cmp_result = cmp(pb, a, cookie)) <= 0) {
 			if (cmp_result == 0) {
 				swap(pa, pb);
 				pa += es;
 			}
 			pb += es;
 		}
-		while (pb <= pc && (cmp_result = cmp(pc, a)) >= 0) {
+		while (pb <= pc && (cmp_result = cmp(pc, a, cookie)) >= 0) {
 			if (cmp_result == 0) {
 				swap(pc, pd);
 				pd -= es;
@@ -159,13 +160,44 @@ loop:	SWAPINIT(a, es);
 	vecswap(a, pb - r, r);
 	r = min((size_t)(pd - pc), pn - pd - es);
 	vecswap(pb, pn - r, r);
-	if ((r = pb - pa) > es)
-		qsort(a, r / es, es, cmp);
-	if ((r = pd - pc) > es) { 
-		/* Iterate rather than recurse to save stack space */
-		a = pn - r;
-		n = r / es;
-		goto loop;
+	/*
+	 * To save stack space we sort the smaller side of the partition first
+	 * using recursion and eliminate tail recursion for the larger side.
+	 */
+	r = pb - pa;
+	s = pd - pc;
+	if (r < s) {
+		/* Recurse for 1st side, iterate for 2nd side. */
+		if (s > es) {
+			if (r > es)
+				qsort_r(a, r / es, es, cmp, cookie);
+			a = pn - s;
+			n = s / es;
+			goto loop;
+		}
+	} else {
+		/* Recurse for 2nd side, iterate for 1st side. */
+		if (r > es) {
+			if (s > es)
+				qsort_r(pn - s, s / es, es, cmp, cookie);
+			n = r / es;
+			goto loop;
+		}
 	}
-/*		qsort(pn - r, r / es, es, cmp);*/
+}
+
+static int
+cmpnocookie(const void *a, const void *b, void *cookie)
+{
+	int (*cmp)(const void *, const void *) = cookie;
+
+	return cmp(a, b);
+}
+
+void
+qsort(void *a, size_t n, size_t es,
+    int (*cmp)(const void *, const void *))
+{
+
+	qsort_r(a, n, es, cmpnocookie, cmp);
 }

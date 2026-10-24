@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.14 2013/04/19 10:41:53 joerg Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.19 2022/04/19 20:32:15 rillig Exp $ */
 
 /****************************************************************
 
@@ -28,7 +28,7 @@ THIS SOFTWARE.
 
 ****************************************************************/
 
-/* This is a variation on dtoa.c that converts arbitary binary
+/* This is a variation on dtoa.c that converts arbitrary binary
    floating-point formats to and from decimal notation.  It uses
    double-precision arithmetic internally, so there are still
    various #ifdefs that adapt the calculations to the native
@@ -200,6 +200,10 @@ THIS SOFTWARE.
 #include "gd_qnan.h"
 #ifdef Honor_FLT_ROUNDS
 #include <fenv.h>
+__unused __weakref_visible int __libc_fegetround_ref(void)
+  __weak_reference(fegetround);
+#define fegetround()							\
+	(__libc_fegetround_ref ? __libc_fegetround_ref() : FE_TONEAREST)
 #endif
 
 #ifdef DEBUG
@@ -501,12 +505,12 @@ extern mutex_t __gdtoa_locks[2];
 	do {							\
 		if (__isthreaded)				\
 			mutex_lock(&__gdtoa_locks[n]);		\
-	} while (/* CONSTCOND */ 0)
+	} while (0)
 #define FREE_DTOA_LOCK(n)	\
 	do {							\
 		if (__isthreaded)				\
 			mutex_unlock(&__gdtoa_locks[n]);	\
-	} while (/* CONSTCOND */ 0)
+	} while (0)
 #endif
 
 #define Kmax (sizeof(size_t) << 3)
@@ -621,7 +625,7 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  extern Bigint *s2b ANSI((CONST char*, int, int, ULong, size_t));
  extern Bigint *set_ones ANSI((Bigint*, int));
  extern char *strcp ANSI((char*, const char*));
- extern int strtoIg ANSI((CONST char*, char**, FPI*, Long*, Bigint**, int*));
+ extern int strtoIg ANSI((CONST char*, char**, CONST FPI*, Long*, Bigint**, int*));
  extern double strtod ANSI((const char *s00, char **se));
  extern Bigint *sum ANSI((Bigint*, Bigint*));
  extern int trailz ANSI((CONST Bigint*));

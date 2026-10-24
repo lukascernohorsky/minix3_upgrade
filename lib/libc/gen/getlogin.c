@@ -1,4 +1,4 @@
-/*	$NetBSD: getlogin.c,v 1.15 2009/01/11 02:46:27 christos Exp $	*/
+/*	$NetBSD: getlogin.c,v 1.17 2024/01/20 14:52:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 #if 0
 static char sccsid[] = "@(#)getlogin.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getlogin.c,v 1.15 2009/01/11 02:46:27 christos Exp $");
+__RCSID("$NetBSD: getlogin.c,v 1.17 2024/01/20 14:52:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,7 +83,7 @@ __weak_alias(setlogin,_setlogin)
 #endif /* !defined(__minix) */
 #endif
 
-int	__logname_valid;		/* known to setlogin() */
+static int	__logname_valid;		/* known to setlogin() */
 static char logname[MAXLOGNAME + 1];
 
 #ifdef _REENTRANT
@@ -128,7 +128,7 @@ getlogin_r(char *name, size_t namelen)
 	if (len > namelen) {
 		rv = ERANGE;
 	} else {
-		strncpy(name, logname, len);
+		strcpy(name, logname);
 		rv = 0;
 	}
 	mutex_unlock(&logname_mutex);

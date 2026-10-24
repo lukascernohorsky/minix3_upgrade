@@ -1,4 +1,4 @@
-.\"	$NetBSD: dup.2,v 1.30 2013/12/25 02:49:52 wiz Exp $
+.\"	$NetBSD: dup.2,v 1.37 2025/07/17 17:16:07 kre Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)dup.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd December 24, 2013
+.Dd July 8, 2025
 .Dt DUP 2
 .Os
 .Sh NAME
@@ -45,6 +45,8 @@
 .Fn dup "int oldfd"
 .Ft int
 .Fn dup2 "int oldfd" "int newfd"
+.In fcntl.h
+.In unistd.h
 .Ft int
 .Fn dup3 "int oldfd" "int newfd" "int flags"
 .Sh DESCRIPTION
@@ -63,11 +65,11 @@ and
 .Xr lseek 2
 calls all move a single shared seek position.
 Similarly, all object modes, settings, properties, and behavior other
-than the close-on-exec flag are shared between references.
+than the close-on-exec & close-on-fork flags are shared between references.
 This includes the setting of append mode, non-blocking I/O actions,
 asynchronous I/O operations in progress, socket options, and so forth.
-The close-on-exec flag, however, is a property of the descriptor
-rather than the object and can be set independently for each
+The close-on-exec & close-on-fork flags, however, are a property of the
+descriptor rather than the object and can be set independently for each
 reference.
 .Pp
 To get an independent handle with its own seek position and settings,
@@ -77,13 +79,13 @@ call must be issued.
 (This is not generally possible for pipes and sockets.)
 .Pp
 The
-.Nm dup
+.Fn dup
 call chooses the new descriptor: it is the lowest-numbered descriptor
 not currently in use.
 The
-.Nm dup2
+.Fn dup2
 and
-.Nm dup3
+.Fn dup3
 calls allow the caller to choose the new descriptor by passing
 .Fa newfd ,
 which must be within the range of valid descriptors.
@@ -91,7 +93,11 @@ If
 .Fa newfd
 is the same as
 .Fa oldfd ,
-the call has no effect.
+in
+.Fn dup2
+the call has no effect,
+whereas it is an error in
+.Fn dup3 .
 Otherwise, if
 .Fa newfd
 is already in use, it is closed as if
@@ -117,7 +123,14 @@ and can to some extent be adjusted with
 .Pp
 The
 .Fn dup3
-call includs an additional
+call fails and returns
+.Er EINVAL
+if the numeric value in the
+.Ar oldfd
+argument is equal to the one in the
+.Ar newfd
+argument.
+It also includes an additional
 .Fa flags
 argument supporting a subset of the
 .Xr open 2
@@ -125,6 +138,9 @@ flags:
 .Bl -tag -width O_NOSIGPIPE -offset indent
 .It Dv O_CLOEXEC
 Set the close-on-exec flag on
+.Fa newfd .
+.It Dv O_CLOFORK
+Set the close-on-fork flag on
 .Fa newfd .
 .It Dv O_NONBLOCK
 Sets non-blocking I/O.
@@ -135,7 +151,8 @@ when a write is made to a broken pipe.
 Instead, the write will fail with
 .Er EPIPE .
 .El
-As described above, only the close-on-exec flag is
+.Pp
+As described above, only the close-on-exec and close-on-fork flags are
 per-file-descriptor, so passing any of the other
 .Fa flags
 will affect
@@ -152,16 +169,16 @@ In the case of
 .Fn dup
 and
 .Fn dup2
-the close-on-exec flag on the new file descriptor is always left
-unset and all the modes and settings of the underlying object are left
-unchanged.
+the close-on-exec and close-on-fork flags on the new file descriptor are
+always left unset
+and all the modes and settings of the underlying object are left unchanged.
 .Pp
 Functionality similar to
 .Fn dup
 with slightly different semantics is also available via
 .Xr fcntl 2 .
 .Sh RETURN VALUES
-These calls return the new file descriptor value.
+When successful, these calls return the new file descriptor value.
 In the case of
 .Fn dup2
 and
@@ -174,10 +191,10 @@ is set to indicate what happened.
 .Sh EXAMPLES
 A common use for these functions is to set up a pipe as the standard
 input or standard output of a subprocess.
-That is done approximately as follows (error handling omitted for
+That is done approximately as follows (with error handling omitted for
 clarity):
 .Bd -literal -offset indent
-#include \*[Lt]unistd.h\*[Gt]
+#include <unistd.h>
 
 int fds[2];
 pid_t pid;
@@ -207,11 +224,15 @@ and
 .Fa newfd
 is not in the range of valid file descriptors.
 .It Bq Er EINVAL
-.Fa flags
-contained an invalid value.
-Only
+In the
 .Fn dup3
-can generate this error.
+call either the
+.Fa flags
+argument contained an invalid value or the
+.Ar oldfd
+argument is equal to the
+.Ar newfd
+argument.
 .It Bq Er EMFILE
 Too many descriptors are active.
 Only
@@ -236,6 +257,10 @@ and
 .Fn dup2
 functions conform to
 .St -p1003.1-90 .
+The
+.Fn dup3
+function conforms to
+.St -p1003.1-2024 .
 .Sh HISTORY
 The
 .Fn dup3

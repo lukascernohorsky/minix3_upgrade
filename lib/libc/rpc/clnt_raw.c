@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.32 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.34 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.32 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.34 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
 
@@ -62,13 +62,11 @@ __RCSID("$NetBSD: clnt_raw.c,v 1.32 2013/03/11 20:19:29 tron Exp $");
 #include <rpc/rpc.h>
 #include <rpc/raw.h>
 
+#include "rpc_internal.h"
+
 #ifdef __weak_alias
 __weak_alias(clntraw_create,_clntraw_create)
 __weak_alias(clnt_raw_create,_clnt_raw_create)
-#endif
-
-#ifdef _REENTRANT
-extern mutex_t clntraw_lock;
 #endif
 
 #define MCALL_MSG_SIZE 24
@@ -102,13 +100,13 @@ static struct clnt_ops *clnt_raw_ops(void);
 CLIENT *
 clnt_raw_create(rpcprog_t prog, rpcvers_t vers)
 {
-	struct clntraw_private *clp = clntraw_private;
+	struct clntraw_private *clp;
 	struct rpc_msg call_msg;
-	XDR *xdrs = &clp->xdr_stream;
-	CLIENT	*client = &clp->client_object;
+	XDR *xdrs;
+	CLIENT *client;
 
 	mutex_lock(&clntraw_lock);
-	if (clp == NULL) {
+	if ((clp = clntraw_private) == NULL) {
 		clp = calloc((size_t)1, sizeof (*clp));
 		if (clp == NULL)
 			goto out;
@@ -120,6 +118,10 @@ clnt_raw_create(rpcprog_t prog, rpcvers_t vers)
 		clp->_raw_buf = __rpc_rawcombuf;
 		clntraw_private = clp;
 	}
+
+	xdrs = &clp->xdr_stream;
+	client = &clp->client_object;
+
 	/*
 	 * pre-serialize the static part of the call msg and stash it away
 	 */
@@ -193,7 +195,7 @@ call_again:
 	 * We have to call server input routine here because this is
 	 * all going on in one process. Yuk.
 	 */
-	svc_getreq_common(FD_SETSIZE);
+	svc_getreq_common(-1);
 
 	/*
 	 * get results
@@ -295,9 +297,6 @@ static struct clnt_ops *
 clnt_raw_ops(void)
 {
 	static struct clnt_ops ops;
-#ifdef _REENTRANT
-	extern mutex_t  ops_lock;
-#endif
 
 	/* VARIABLES PROTECTED BY ops_lock: ops */
 

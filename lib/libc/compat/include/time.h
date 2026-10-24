@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.3 2010/12/16 18:38:06 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.5 2024/01/20 14:52:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -49,10 +49,12 @@ __BEGIN_DECLS
 #if (_XOPEN_SOURCE - 0) >= 4 || defined(_NETBSD_SOURCE)
 char *strptime(const char * __restrict, const char * __restrict,
     struct tm * __restrict);
-#if 0
-#if defined(_NETBSD_SOURCE)
+#ifdef __TIMEZONE_FUNCTION__
 char *timezone(int, int);
-#endif /* _NETBSD_SOURCE */
+char *_tztab(int, int);
+#else
+extern int	daylight;
+extern long	timezone __RENAME(__timezone13);
 #endif
 
 #endif /* !_ANSI_SOURCE */
@@ -102,5 +104,6 @@ int32_t posix2time_z(const timezone_t, int32_t);
 timezone_t tzalloc(const char *);
 void tzfree(const timezone_t);
 const char *tzgetname(const timezone_t, int);
+long tzgetgmtoff(const timezone_t, int);
 
 #endif /* !_COMPAT_TIME_H_ */

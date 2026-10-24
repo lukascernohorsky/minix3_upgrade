@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.h,v 1.6 2013/08/18 20:03:48 joerg Exp $	*/
+/*	$NetBSD: multibyte.h,v 1.8 2024/06/07 13:53:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -29,6 +29,8 @@
 #ifndef _MULTIBYTE_H_
 #define _MULTIBYTE_H_
 
+#include <stdalign.h>
+
 /* mbstate_t private */
 
 #ifdef _BSD_MBSTATE_T_
@@ -38,8 +40,13 @@ typedef	_BSD_MBSTATE_T_	mbstate_t;
 
 typedef struct _RuneStatePriv {
 	_RuneLocale	*__runelocale;
-	char		__private __attribute__((__aligned__));
+	char		__private[];
 } _RuneStatePriv;
+
+__CTASSERT(alignof(struct _RuneStatePriv) >= alignof(void *));
+__CTASSERT(sizeof(_RuneStatePriv) % alignof(void *) == 0);
+__CTASSERT(alignof(struct _RuneStatePriv) >= alignof(int));
+__CTASSERT(sizeof(_RuneStatePriv) % alignof(int) == 0);
 
 typedef union _RuneState {
 	mbstate_t		__pad;
@@ -50,10 +57,10 @@ typedef union _RuneState {
 #define _PRIVSIZE	(sizeof(mbstate_t)-offsetof(_RuneStatePriv, __private))
 
 #define _RUNE_LOCALE(loc) \
-    ((_RuneLocale *)((loc)->part_impl[(size_t)LC_CTYPE]))
+    ((_RuneLocale *)((loc)->part_impl[LC_CTYPE]))
 
 #define _CITRUS_CTYPE(loc) \
-    (((_RuneLocale *)((loc)->part_impl[(size_t)LC_CTYPE]))->rl_citrus_ctype)
+    (((_RuneLocale *)((loc)->part_impl[LC_CTYPE]))->rl_citrus_ctype)
 
 /* */
 
@@ -91,7 +98,7 @@ _ps_to_private(mbstate_t *ps)
 {
 	if (ps == NULL)
 		return NULL;
-	return (void *)&_ps_to_runestate(ps)->rs_private;
+	return _ps_to_runestate(ps)->rs_private;
 }
 
 static __inline void const *
@@ -99,7 +106,7 @@ _ps_to_private_const(mbstate_t const *ps)
 {
 	if (ps == NULL)
 		return NULL;
-	return (void const *)&_ps_to_runestate_const(ps)->rs_private;
+	return _ps_to_runestate_const(ps)->rs_private;
 }
 
 static __inline void

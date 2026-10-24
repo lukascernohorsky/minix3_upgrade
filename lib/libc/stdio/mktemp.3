@@ -1,4 +1,4 @@
-.\"	$NetBSD: mktemp.3,v 1.30 2014/06/19 09:30:33 wiz Exp $
+.\"	$NetBSD: mktemp.3,v 1.35.2.1 2025/08/08 14:26:06 martin Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mktemp.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 18, 2014
+.Dd November 2, 2024
 .Dt MKTEMP 3
 .Os
 .Sh NAME
@@ -66,34 +66,27 @@ to create a file name.
 This file name is unique and suitable for use
 by the application.
 The template may be any file name with some number of
-.So Li X
-.Sc Ns s
-appended
-to it, for example
+.Sq Li X
+characters appended to it, for example
 .Pa /tmp/temp.XXXXXX .
 The trailing
-.So Li X
-.Sc Ns s
-are replaced with the current process number and/or a
-unique letter combination.
-The number of unique file names
+.Sq Li X
+characters in the template are replaced with a unique letter and number
+combination.
 .Fn mktemp
 can return depends on the number of
-.So Li X
-.Sc Ns s
-provided.
+.Sq Li X
+characters provided.
 Although the
 .Nx
 implementation of the functions will accept any number of trailing
-.So Li X
-.Sc Ns s ,
-for portability reasons one should use only six.
+.Sq Li X
+characters, for portability reasons one should use only six.
 Using six
-.So Li X
-.Sc Ns s
-will result in
+.Sq Li X
+characters will result in
 .Fn mktemp
-testing roughly 26 ** 6 (308915776) combinations.
+testing roughly 62 ** 6 (56800235584) combinations.
 .Pp
 The
 .Fn mkstemp
@@ -116,9 +109,10 @@ The permitted flags are
 .Dv O_DIRECT ,
 .Dv O_SHLOCK ,
 .Dv O_EXLOCK ,
-.Dv O_SYNC
+.Dv O_SYNC ,
+.Dv O_CLOEXEC
 and
-.Dv O_CLOEXEC .
+.Dv O_CLOFORK .
 .Pp
 The
 .Fn mkstemps
@@ -311,13 +305,16 @@ It was however removed from the specification in the
 revision.
 The
 .Fn mkstemp
-and
+function conforms to
+.St -p1003.1-2004 .
+The
 .Fn mkdtemp
-functions conform to
-.St -p1003.1-2004
-and
-.St -p1003.1-2008 ,
-respectively.
+function conforms to
+.St -p1003.1-2008 .
+The
+.Fn mkostemp
+function conforms to
+.St -p1003.1-2024 .
 .Sh HISTORY
 A
 .Fn mktemp
@@ -379,10 +376,6 @@ For this reason,
 .Xr ld 1
 will output a warning message whenever it links code that uses
 .Fn mktemp .
-.Pp
-The
-.Fn mkdtemp
-function is nonstandard and should not be used if portability is required.
 .Sh SECURITY CONSIDERATIONS
 The use of
 .Fn mktemp

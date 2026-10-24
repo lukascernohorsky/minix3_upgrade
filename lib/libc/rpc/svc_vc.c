@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.30 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.37 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.30 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.37 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: svc_vc.c,v 1.30 2013/03/11 20:19:29 tron Exp $");
  * svc_vc.c, Server side for Connection Oriented based RPC. 
  *
  * Actually implements two flavors of transporter -
- * a tcp rendezvouser (a listner and connection establisher)
+ * a tcp rendezvouser (a listener and connection establisher)
  * and a record/tcp stream.
  */
 
@@ -76,10 +76,6 @@ __RCSID("$NetBSD: svc_vc.c,v 1.30 2013/03/11 20:19:29 tron Exp $");
 #ifdef __weak_alias
 __weak_alias(svc_fd_create,_svc_fd_create)
 __weak_alias(svc_vc_create,_svc_vc_create)
-#endif
-
-#ifdef _REENTRANT
-extern rwlock_t svc_fd_lock;
 #endif
 
 static SVCXPRT *makefd_xprt(int, u_int, u_int);
@@ -178,8 +174,8 @@ svc_vc_create(int fd, u_int sendsize, u_int recvsize)
 	 * We want to be able to check credentials on local sockets.
 	 */
 	if (sslocal.ss_family == AF_LOCAL)
-		if (setsockopt(fd, 0, LOCAL_CREDS, &one, (socklen_t)sizeof one)
-		    == -1)
+		if (setsockopt(fd, SOL_LOCAL, LOCAL_CREDS, &one,
+		    (socklen_t)sizeof one) == -1)
 			goto cleanup_svc_vc_create;
 
 	xprt->xp_ltaddr.maxlen = xprt->xp_ltaddr.len = sslocal.ss_len;
@@ -312,7 +308,6 @@ rendezvous_request(SVCXPRT *xprt, struct rpc_msg *msg)
 	socklen_t len;
 	struct __rpc_sockinfo si;
 	SVCXPRT *newxprt;
-	fd_set cleanfds;
 
 	_DIAGASSERT(xprt != NULL);
 	_DIAGASSERT(msg != NULL);
@@ -329,8 +324,7 @@ again:
 		 * running out.
 		 */
 		if (errno == EMFILE || errno == ENFILE) {
-			cleanfds = *get_fdset();
-			if (__svc_clean_idle(&cleanfds, 0, FALSE))
+			if (__svc_clean_idle(NULL, 0, FALSE))
 				goto again;
 		}
 		return FALSE;
@@ -705,9 +699,6 @@ svc_vc_ops(SVCXPRT *xprt)
 {
 	static struct xp_ops ops;
 	static struct xp_ops2 ops2;
-#ifdef _REENTRANT
-	extern mutex_t ops_lock;
-#endif
 
 /* VARIABLES PROTECTED BY ops_lock: ops, ops2 */
 
@@ -731,9 +722,7 @@ svc_vc_rendezvous_ops(SVCXPRT *xprt)
 {
 	static struct xp_ops ops;
 	static struct xp_ops2 ops2;
-#ifdef _REENTRANT
-	extern mutex_t ops_lock;
-#endif
+
 	mutex_lock(&ops_lock);
 	if (ops.xp_recv == NULL) {
 		ops.xp_recv = rendezvous_request;
@@ -758,9 +747,10 @@ svc_vc_rendezvous_ops(SVCXPRT *xprt)
  * cleaned. If timeout is 0, the least active connection is picked.
  */
 bool_t
-__svc_clean_idle(fd_set *fds, int timeout, bool_t cleanblock)
+/*ARGSUSED1*/
+__svc_clean_idle(fd_set *fds __unused, int timeout, bool_t cleanblock)
 {
-	int i, ncleaned;
+	int i, ncleaned, *fdmax;
 	SVCXPRT *xprt, *least_active;
 	struct timeval tv, tdiff, tmax;
 	struct cf_conn *cd;
@@ -769,28 +759,40 @@ __svc_clean_idle(fd_set *fds, int timeout, bool_t cleanblock)
 	tmax.tv_sec = tmax.tv_usec = 0;
 	least_active = NULL;
 	rwlock_wrlock(&svc_fd_lock);
-	for (i = ncleaned = 0; i <= svc_maxfd; i++) {
-		if (FD_ISSET(i, fds)) {
-			xprt = __svc_xports[i];
-			if (xprt == NULL || xprt->xp_ops == NULL ||
-			    xprt->xp_ops->xp_recv != svc_vc_recv)
-				continue;
-			cd = (struct cf_conn *)xprt->xp_p1;
-			if (!cleanblock && !cd->nonblock)
-				continue;
-			if (timeout == 0) {
-				timersub(&tv, &cd->last_recv_time, &tdiff);
-				if (timercmp(&tdiff, &tmax, >)) {
-					tmax = tdiff;
-					least_active = xprt;
-				}
-				continue;
+	fdmax = svc_fdset_getmax();
+	if (fdmax == NULL)
+		return FALSE;
+	for (i = ncleaned = 0; i <= *fdmax; i++) {
+		switch (svc_fdset_isset(i)) {
+		case 0:
+		case -1:
+			continue;
+		default:
+			break;
+		}
+
+		xprt = __svc_xports[i];
+		if (xprt == NULL || xprt->xp_ops == NULL ||
+		    xprt->xp_ops->xp_recv != svc_vc_recv)
+			continue;
+
+		cd = (struct cf_conn *)xprt->xp_p1;
+		if (!cleanblock && !cd->nonblock)
+			continue;
+
+		if (timeout == 0) {
+			timersub(&tv, &cd->last_recv_time, &tdiff);
+			if (timercmp(&tdiff, &tmax, >)) {
+				tmax = tdiff;
+				least_active = xprt;
 			}
-			if (tv.tv_sec - cd->last_recv_time.tv_sec > timeout) {
-				__xprt_unregister_unlocked(xprt);
-				__svc_vc_dodestroy(xprt);
-				ncleaned++;
-			}
+			continue;
+		}
+
+		if (tv.tv_sec - cd->last_recv_time.tv_sec > timeout) {
+			__xprt_unregister_unlocked(xprt);
+			__svc_vc_dodestroy(xprt);
+			ncleaned++;
 		}
 	}
 	if (timeout == 0 && least_active != NULL) {

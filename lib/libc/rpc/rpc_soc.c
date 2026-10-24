@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_soc.c,v 1.19 2014/05/28 14:45:57 christos Exp $	*/
+/*	$NetBSD: rpc_soc.c,v 1.24 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -45,7 +45,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_soc.c 1.41 89/05/02 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpc_soc.c,v 1.19 2014/05/28 14:45:57 christos Exp $");
+__RCSID("$NetBSD: rpc_soc.c,v 1.24 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
 
@@ -94,10 +94,6 @@ __weak_alias(svcraw_create,_svcraw_create)
 __weak_alias(callrpc,_callrpc)
 __weak_alias(registerrpc,_registerrpc)
 __weak_alias(clnt_broadcast,_clnt_broadcast)
-#endif
-
-#ifdef _REENTRANT
-extern mutex_t	rpcsoc_lock;
 #endif
 
 static CLIENT *clnt_com_create(struct sockaddr_in *, rpcprog_t, rpcvers_t,
@@ -255,17 +251,33 @@ svc_com_create(int fd, u_int sendsize, u_int recvsize, const char *netid)
 	memset(&sccsin, 0, sizeof sccsin);
 	sccsin.sin_family = AF_INET;
 	(void)bindresvport(fd, &sccsin);
-	listen(fd, SOMAXCONN);
+
+	switch (nconf->nc_semantics) {
+	case NC_TPI_COTS:
+	case NC_TPI_COTS_ORD:
+		if (listen(fd, SOMAXCONN) == -1) {
+			(void) syslog(LOG_ERR,
+			    "svc%s_create: listen(2) failed: %s",
+			    netid, strerror(errno));
+			(void) freenetconfigent(nconf);
+			goto out;
+		}
+		break;
+	default:
+		break;
+	}
+
 	svc = svc_tli_create(fd, nconf, NULL, sendsize, recvsize);
 	(void) freenetconfigent(nconf);
-	if (svc == NULL) {
-		if (madefd)
-			(void) close(fd);
-		return (NULL);
-	}
+	if (svc == NULL)
+		goto out;
 	port = (((struct sockaddr_in *)svc->xp_ltaddr.buf)->sin_port);
 	svc->xp_port = ntohs(port);
-	return (svc);
+	return svc;
+out:
+	if (madefd)
+		(void) close(fd);
+	return NULL;
 }
 
 SVCXPRT *

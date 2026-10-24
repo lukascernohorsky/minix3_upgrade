@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.4 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.7 2024/05/04 14:48:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -29,14 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "assym.h"
+
 #include <machine/asm.h>
-/* XXX fredette - this is awful */
-#define _LOCORE
 #include <machine/frame.h>
-#undef _LOCORE
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: _setjmp.S,v 1.4 2008/04/28 20:22:56 martin Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.7 2024/05/04 14:48:28 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -52,20 +51,20 @@
 
 ENTRY(_setjmp,0)
 	/* A sigcontext is at the beginning of our jmp_buf. */
-	stw	%r0, 0(%arg0)		; no onstack
-	stw	%r0, 4(%arg0)		; unused word (old style signal mask)
-	stw	%sp, 8(%arg0)		; sc.sc_sp = %sp
-	stw	%r0, 16(%arg0)		; sc.sc_ap = NULL
+	stw	%r0, _SC_ONSTACK(%arg0)		; no onstack
+	stw	%r0, _SC_MASK13(%arg0)		; unused word (old style signal mask)
+	stw	%sp, _SC_REGS_SP(%arg0)		; sc.sc_sp = %sp
+	stw	%r0, _SC_REGS_AP(%arg0)		; sc.sc_ap = NULL
 	mfsp	%sr0, %r1
-	stw	%r1, 20(%arg0)		; sc.sc_pcsqh = %sr0
-	stw	%rp, 24(%arg0)		; sc.sc_pcoqh = %rp
-	stw	%r1, 28(%arg0)		; sc.sc_pcsqh = %sr0
+	stw	%r1, _SC_REGS_PCSQH(%arg0)	; sc.sc_pcsqh = %sr0
+	stw	%rp, _SC_REGS_PCOQH(%arg0)	; sc.sc_pcoqh = %rp
+	stw	%r1, _SC_REGS_PCSQT(%arg0)	; sc.sc_pcsqh = %sr0
 	ldo	4(%rp), %r1
-	stw	%r1, 32(%arg0)		; sc.sc_pcoqt = %rp + 4
-	stw	%r0, 36(%arg0)		; set sc.sc_ps
+	stw	%r1, _SC_REGS_PCOQT(%arg0)	; sc.sc_pcoqt = %rp + 4
+	stw	%r0, _SC_REGS_PS(%arg0)		; set sc.sc_ps
 
 	/* We store all callee-saved registers after the sigcontext. */
-	ldo	56(%arg0), %r1
+	ldo	SIZEOF_SIGCONTEXT(%arg0), %r1
 	stwm	%r3, 4(%r1)
 	stwm	%r4, 4(%r1)
 	stwm	%r5, 4(%r1)
@@ -85,17 +84,17 @@ ENTRY(_setjmp,0)
 
 	/* Return 0. */
 	bv	%r0(%rp)
-	copy	%r0, %ret0
+	 copy	%r0, %ret0
 EXIT(_setjmp)
 
 ENTRY(_longjmp,0)
-	ldw	8(%arg0), %r1		; ensure non-zero SP
+	ldw	_SC_REGS_SP(%arg0), %r1	; ensure non-zero SP
 	combt,=,n	%r0, %r1, botch	; oops!
 	add,<>	%r0, %arg1, %ret0	; ensure return value non-zero
 	ldi	1, %ret0
 
 	/* restore callee-saved registers */
-	ldo	56(%arg0), %r1
+	ldo	SIZEOF_SIGCONTEXT(%arg0), %r1
 	ldwm	4(%r1), %r3
 	ldwm	4(%r1), %r4
 	ldwm	4(%r1), %r5
@@ -114,15 +113,15 @@ ENTRY(_longjmp,0)
 	ldwm	4(%r1), %r18
 
 	/* restore the rest */
-	ldw	8(%arg0), %sp
-	ldw	24(%arg0), %rp
+	ldw	_SC_REGS_SP(%arg0), %sp
+	ldw	_SC_REGS_PCOQH(%arg0), %rp
 	bv	%r0(%rp)
-	nop
+	 nop
 botch:
 	bl	longjmperror, %rp
-	nop
+	 nop
 	bl	abort, %rp
-	nop
+	 nop
 EXIT(_longjmp)
 
 	.end

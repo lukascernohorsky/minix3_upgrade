@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigaltstack.2,v 1.24 2014/09/27 12:11:13 njoly Exp $
+.\"	$NetBSD: sigaltstack.2,v 1.26 2021/11/01 05:29:35 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)sigaltstack.2	8.2 (Berkeley) 5/1/95
 .\"
-.Dd March 2, 2012
+.Dd October 31, 2021
 .Dt SIGALTSTACK 2
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Sh SYNOPSIS
 .In signal.h
 .Bd -literal
-typedef struct sigaltstack {
+typedef struct {
 	void   *ss_sp;
 	size_t	ss_size;
 	int     ss_flags;
@@ -110,7 +110,7 @@ if ((sigstk.ss_sp = malloc(SIGSTKSZ)) == NULL)
 	/* error return */
 sigstk.ss_size = SIGSTKSZ;
 sigstk.ss_flags = 0;
-if (sigaltstack(\*[Am]sigstk,0) \*[Lt] 0)
+if (sigaltstack(&sigstk,0) < 0)
 	perror("sigaltstack");
 .Ed
 .Pp

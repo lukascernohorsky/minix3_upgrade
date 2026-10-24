@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.15 2008/08/26 21:18:38 joerg Exp $	*/
+/*	$NetBSD: hash.h,v 1.17 2020/02/21 22:04:06 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -123,6 +123,11 @@ typedef struct htab	 {		/* Memory resident data structure */
  * Constants
  */
 #define	MAX_BSIZE		65536		/* 2^16 */
+/*
+ * Make it fit in uint16_t; a better way would be to store size - 1, but
+ * then we'd need to bump the version.
+ */
+#define HASH_BSIZE(hp)	((hp)->BSIZE == MAX_BSIZE ? MAX_BSIZE - 1 : (hp)->BSIZE)
 #define MIN_BUFFERS		6
 #define MINHDRSIZE		512
 #define DEF_BUFSIZE		65536		/* 64 K */
@@ -151,9 +156,9 @@ typedef struct htab	 {		/* Memory resident data structure */
 #define BITS_PER_MAP	32
 
 /* Given the address of the beginning of a big map, clear/set the nth bit */
-#define CLRBIT(A, N)	((A)[(N)/BITS_PER_MAP] &= ~(1<<((N)%BITS_PER_MAP)))
-#define SETBIT(A, N)	((A)[(N)/BITS_PER_MAP] |= (1<<((N)%BITS_PER_MAP)))
-#define ISSET(A, N)	((A)[(N)/BITS_PER_MAP] & (1<<((N)%BITS_PER_MAP)))
+#define CLRBIT(A, N)	((A)[(N)/BITS_PER_MAP] &= ~(1U<<((N)%BITS_PER_MAP)))
+#define SETBIT(A, N)	((A)[(N)/BITS_PER_MAP] |= (1U<<((N)%BITS_PER_MAP)))
+#define ISSET(A, N)	((A)[(N)/BITS_PER_MAP] & (1U<<((N)%BITS_PER_MAP)))
 
 /* Overflow management */
 /*

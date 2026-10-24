@@ -1,4 +1,4 @@
-/*	$NetBSD: randomid.c,v 1.13 2009/01/11 02:46:27 christos Exp $	*/
+/*	$NetBSD: randomid.c,v 1.16 2022/05/15 20:37:50 andvar Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -76,14 +76,14 @@
  * The transaction id is determined by:
  * id[n] = seed xor (g^X[n] mod n)
  *
- * Effectivly the id is restricted to the lower (bits - 1) bits, thus
+ * Effectively the id is restricted to the lower (bits - 1) bits, thus
  * yielding two different cycles by toggling the msb on and off.
  * This avoids reuse issues caused by reseeding.
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: randomid.c,v 1.13 2009/01/11 02:46:27 christos Exp $");
+__RCSID("$NetBSD: randomid.c,v 1.16 2022/05/15 20:37:50 andvar Exp $");
 #endif
 
 #include "namespace.h"
@@ -122,7 +122,7 @@ struct randomid_ctx {
 #define ru_m		ru_conf->rc_m
 #define ru_pfacts	ru_conf->rc_pfacts
 #define ru_skip		ru_conf->rc_skip
-	long ru_out;		/* Time after wich will be reseeded */
+	long ru_out;		/* Time after which will be reseeded */
 	u_int32_t ru_counter;
 	u_int32_t ru_msb;
 
@@ -200,7 +200,7 @@ pmod(u_int32_t gen, u_int32_t expo, u_int32_t mod)
 }
 
 /*
- * Initalizes the seed and chooses a suitable generator. Also toggles
+ * Initializes the seed and chooses a suitable generator. Also toggles
  * the msb flag. The msb flag is used to generate two distinct
  * cycles of random numbers and thus avoiding reuse of ids.
  *

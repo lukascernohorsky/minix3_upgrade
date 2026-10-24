@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.6 2011/09/20 08:42:29 joerg Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.9 2025/04/27 16:15:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,15 +31,17 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.6 2011/09/20 08:42:29 joerg Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.9 2025/04/27 16:15:40 riastradh Exp $");
 #endif
 
-#include <stddef.h>
-#include <inttypes.h>
-#include <ucontext.h>
-#include "extern.h"
+#include <sys/param.h>
 
+#include <inttypes.h>
 #include <stdarg.h>
+#include <stddef.h>
+#include <ucontext.h>
+
+#include "extern.h"
 
 void __resumecontext(void) __dead;
 
@@ -51,12 +53,14 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	unsigned long *sp;
 	va_list ap;
 
-	/* Compute and align stack pointer. */
+	/* Compute stack pointer. */
 	sp = (unsigned long *)
-	    (((uintptr_t)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size) & ~0x7);
+	    ((uintptr_t)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size);
 	/* Allocate necessary stack space for arguments exceeding a0-5. */
 	if (argc > 6)
 		sp -= (argc - 6);
+	/* Align stack pointer. */
+	sp = (unsigned long *)((uintptr_t)sp & ~STACK_ALIGNBYTES);
 	gr[_REG_SP] = (__greg_t)sp;
 	/* Arrange for return via the trampoline code. */
 	gr[_REG_RA] = (__greg_t)__resumecontext;

@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.56 2014/09/24 13:18:52 christos Exp $	*/
+/*	$NetBSD: getcap.c,v 1.58 2023/09/21 13:46:12 shm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,11 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.56 2014/09/24 13:18:52 christos Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.58 2023/09/21 13:46:12 shm Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef SMALL
+#ifndef LIBHACK
 #include "namespace.h"
 #endif
 #include <sys/types.h>
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: getcap.c,v 1.56 2014/09/24 13:18:52 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#if defined(__weak_alias) && !defined(SMALL)
+#if defined(__weak_alias) && !defined(LIBHACK)
 __weak_alias(cgetcap,_cgetcap)
 __weak_alias(cgetclose,_cgetclose)
 __weak_alias(cgetent,_cgetent)
@@ -502,8 +502,10 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 			break;
 	}
 
-	if (!foundit)
+	if (!foundit) {
+		free(record);
 		return -1;
+	}
 
 	/*
 	 * Got the capability record, but now we have to expand all tc=name

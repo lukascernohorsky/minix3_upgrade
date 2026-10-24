@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.26 2015/01/20 18:31:25 christos Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.29 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -38,7 +38,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.26 2015/01/20 18:31:25 christos Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.29 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
  
@@ -119,9 +119,9 @@ struct ct_data {
  *      This machinery implements per-fd locks for MT-safety.  It is not
  *      sufficient to do per-CLIENT handle locks for MT-safety because a
  *      user may create more than one CLIENT handle with the same fd behind
- *      it.  Therfore, we allocate an array of flags (vc_fd_locks), protected
+ *      it.  Therefore, we allocate an array of flags (vc_fd_locks), protected
  *      by the clnt_fd_lock mutex, and an array (vc_cv) of condition variables
- *      similarly protected.  Vc_fd_lock[fd] == 1 => a call is activte on some
+ *      similarly protected.  Vc_fd_lock[fd] == 1 => a call is active on some
  *      CLIENT handle created for that fd.
  *      The current implementation holds locks across the entire RPC and reply.
  *      Yes, this is silly, and as soon as this code is proven to work, this
@@ -130,7 +130,6 @@ struct ct_data {
 #ifdef _REENTRANT
 static int      *vc_fd_locks;
 #define __rpc_lock_value __isthreaded;
-extern mutex_t  clnt_fd_lock;
 static cond_t   *vc_cv;
 #define release_fd_lock(fd, mask) {             \
 	mutex_lock(&clnt_fd_lock);      \
@@ -616,7 +615,7 @@ clnt_vc_control(
 		/*
 		 * This RELIES on the information that, in the call body,
 		 * the version number field is the fifth field from the
-		 * begining of the RPC header. MUST be changed if the
+		 * beginning of the RPC header. MUST be changed if the
 		 * call_struct is changed
 		 */
 		ntohlp(info, ct->ct_u.ct_mcallc + 4 * BYTES_PER_XDR_UNIT);
@@ -630,7 +629,7 @@ clnt_vc_control(
 		/*
 		 * This RELIES on the information that, in the call body,
 		 * the program number field is the fourth field from the
-		 * begining of the RPC header. MUST be changed if the
+		 * beginning of the RPC header. MUST be changed if the
 		 * call_struct is changed
 		 */
 		ntohlp(info, ct->ct_u.ct_mcallc + 3 * BYTES_PER_XDR_UNIT);
@@ -758,7 +757,6 @@ clnt_vc_ops(void)
 {
 	static struct clnt_ops ops;
 #ifdef _REENTRANT
-	extern mutex_t  ops_lock;
 	sigset_t mask;
 #endif
 	sigset_t newmask;

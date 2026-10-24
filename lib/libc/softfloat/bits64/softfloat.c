@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.13 2013/11/22 17:04:24 martin Exp $ */
+/* $NetBSD: softfloat.c,v 1.15 2024/02/27 15:14:15 christos Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.13 2013/11/22 17:04:24 martin Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.15 2024/02/27 15:14:15 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -661,7 +661,7 @@ static floatx80
 {
     int8 roundingMode;
     flag roundNearestEven, increment, isTiny;
-    int64 roundIncrement, roundMask, roundBits;
+    uint64 roundIncrement, roundMask, roundBits;
 
     roundingMode = float_rounding_mode;
     roundNearestEven = ( roundingMode == float_round_nearest_even );
@@ -3938,7 +3938,7 @@ according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 */
 floatx80 floatx80_rem( floatx80 a, floatx80 b )
 {
-    flag aSign, bSign, zSign;
+    flag aSign, zSign;
     int32 aExp, bExp, expDiff;
     bits64 aSig0, aSig1, bSig;
     bits64 q, term0, term1, alternateASig0, alternateASig1;
@@ -3949,7 +3949,7 @@ floatx80 floatx80_rem( floatx80 a, floatx80 b )
     aSign = extractFloatx80Sign( a );
     bSig = extractFloatx80Frac( b );
     bExp = extractFloatx80Exp( b );
-    bSign = extractFloatx80Sign( b );
+
     if ( aExp == 0x7FFF ) {
         if (    (bits64) ( aSig0<<1 )
              || ( ( bExp == 0x7FFF ) && (bits64) ( bSig<<1 ) ) ) {
@@ -5261,7 +5261,7 @@ float128 float128_sqrt( float128 a )
         if ( ( aSig0 | aSig1 ) == 0 ) return packFloat128( 0, 0, 0, 0 );
         normalizeFloat128Subnormal( aSig0, aSig1, &aExp, &aSig0, &aSig1 );
     }
-    zExp = (int32) ( (aExp - 0x3FFF) >> 1) + 0x3FFE;
+    zExp = (int32) ( (bits32)(aExp - 0x3FFF) >> 1) + 0x3FFE;
     aSig0 |= LIT64( 0x0001000000000000 );
     zSig0 = estimateSqrt32((int16)aExp, (bits32)(aSig0>>17));
     shortShift128Left( aSig0, aSig1, 13 - ( aExp & 1 ), &aSig0, &aSig1 );

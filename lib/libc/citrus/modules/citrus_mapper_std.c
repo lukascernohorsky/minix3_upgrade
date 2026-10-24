@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper_std.c,v 1.10 2011/11/19 18:48:39 tnozaki Exp $	*/
+/*	$NetBSD: citrus_mapper_std.c,v 1.13 2025/02/26 04:49:46 andvar Exp $	*/
 
 /*-
  * Copyright (c)2003, 2006 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper_std.c,v 1.10 2011/11/19 18:48:39 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_mapper_std.c,v 1.13 2025/02/26 04:49:46 andvar Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -170,7 +170,7 @@ rowcol_parse_variable_compat(struct _citrus_mapper_std_rowcol *rc,
 	rc->rc_dst_invalid = be32toh(rcx->rcx_dst_invalid);
 	rc->rc_dst_unit_bits = be32toh(rcx->rcx_dst_unit_bits);
 	m = be32toh(rcx->rcx_src_col_bits);
-	n = 1 << (m - 1);
+	n = 1U << (m - 1);
 	n |= n - 1;
 	rc->rc_src_rowcol_bits = m;
 	rc->rc_src_rowcol_mask = n;
@@ -216,7 +216,7 @@ rowcol_parse_variable(struct _citrus_mapper_std_rowcol *rc,
 	rc->rc_dst_unit_bits = be32toh(rcx->rcx_dst_unit_bits);
 
 	m = be32toh(rcx->rcx_src_rowcol_bits);
-	n = 1 << (m - 1);
+	n = 1U << (m - 1);
 	n |= n - 1;
 	rc->rc_src_rowcol_bits = m;
 	rc->rc_src_rowcol_mask = n;
@@ -322,7 +322,7 @@ rowcol_init(struct _citrus_mapper_std *ms)
 		rc->rc_dst_ilseq = be32toh(eix->eix_dst_ilseq);
 	}
 
-	/* calcurate expected table size */
+	/* calculate expected table size */
 	i = rc->rc_src_rowcol_len;
 	lz = &rc->rc_src_rowcol[--i];
 	table_size = lz->width;

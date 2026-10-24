@@ -1,4 +1,4 @@
-/*	$NetBSD: reallocarray.c,v 1.5 2015/07/26 02:22:33 kamil Exp $	*/
+/*	$NetBSD: reallocarray.c,v 1.12 2022/10/28 09:43:59 wiz Exp $	*/
 /*	$OpenBSD: reallocarray.c,v 1.1 2014/05/08 21:43:49 deraadt Exp $	*/
 
 /*-
@@ -30,8 +30,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif /* HAVE_NBTOOL_CONFIG_H */
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reallocarray.c,v 1.5 2015/07/26 02:22:33 kamil Exp $");
+__RCSID("$NetBSD: reallocarray.c,v 1.12 2022/10/28 09:43:59 wiz Exp $");
+
+#include "namespace.h"
 
 #define _OPENBSD_SOURCE
 #include <errno.h>
@@ -40,13 +46,18 @@ __RCSID("$NetBSD: reallocarray.c,v 1.5 2015/07/26 02:22:33 kamil Exp $");
 void *
 reallocarray(void *optr, size_t nmemb, size_t size)
 {
+	int e;
+
 	if (nmemb == 0 || size == 0)
 		return realloc(optr, 0);
 
-	int e = reallocarr(&optr, nmemb, size);
-
+	e = reallocarr(&optr, nmemb, size);
 	if (e == 0)
 		return optr;
-	errno = e;
+	if (e == EOVERFLOW)
+		errno = ENOMEM;
+	else
+		errno = e;
+
 	return NULL;
 }

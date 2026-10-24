@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.36 2015/03/26 11:31:57 justin Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.41 2024/03/22 19:45:22 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.36 2015/03/26 11:31:57 justin Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.41 2024/03/22 19:45:22 andvar Exp $");
 #endif
 #endif
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: xdr_rec.c,v 1.36 2015/03/26 11:31:57 justin Exp $");
  */
 
 #include "namespace.h"
+#include "reentrant.h"
 
 #include <sys/types.h>
 
@@ -121,7 +122,7 @@ static const struct  xdr_ops xdrrec_ops = {
  * meet the needs of xdr and rpc based on tcp.
  */
 
-#define LAST_FRAG ((uint32_t)(1 << 31))
+#define LAST_FRAG ((uint32_t)(1U << 31))
 
 typedef struct rec_strm {
 	char *tcp_handle;
@@ -132,7 +133,7 @@ typedef struct rec_strm {
 	char *out_base;	/* output buffer (points to frag header) */
 	char *out_finger;	/* next output position */
 	char *out_boundry;	/* data cannot up to this address */
-	uint32_t *frag_header;	/* beginning of curren fragment */
+	uint32_t *frag_header;	/* beginning of current fragment */
 	bool_t frag_sent;	/* true if buffer sent in middle of record */
 	/*
 	 * in-coming bits
@@ -241,7 +242,7 @@ xdrrec_create(
 
 
 /*
- * The reoutines defined below are the xdr ops which will go into the
+ * The routines defined below are the xdr ops which will go into the
  * xdr handle filled in by xdrrec_create.
  */
 
@@ -479,7 +480,7 @@ xdrrec_skiprecord(XDR *xdrs)
 }
 
 /*
- * Look ahead fuction.
+ * Look ahead function.
  * Returns TRUE iff there is no more input in the buffer 
  * after consuming the rest of the current record.
  */
@@ -502,9 +503,9 @@ xdrrec_eof(XDR *xdrs)
 
 /*
  * The client must tell the package when an end-of-record has occurred.
- * The second paraemters tells whether the record should be flushed to the
+ * The second parameters tells whether the record should be flushed to the
  * (output) tcp stream.  (This let's the package support batched or
- * pipelined procedure calls.)  TRUE => immmediate flush to tcp connection.
+ * pipelined procedure calls.)  TRUE => immediate flush to tcp connection.
  */
 bool_t
 xdrrec_endofrecord(XDR *xdrs, int sendnow)

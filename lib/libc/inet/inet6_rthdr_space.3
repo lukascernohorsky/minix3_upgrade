@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet6_rthdr_space.3,v 1.2 2010/03/22 19:30:54 joerg Exp $
+.\"	$NetBSD: inet6_rthdr_space.3,v 1.4 2022/12/04 01:29:32 uwe Exp $
 .\"	$KAME: inet6_rthdr_space.3,v 1.8 2000/05/17 14:30:15 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -73,7 +73,7 @@ return #bytes required for ancillary data
 .It Fn inet6_rthdr_init
 initialize ancillary data for Routing header
 .It Fn inet6_rthdr_add
-add IPv6 address \*[Am] flags to Routing header
+add IPv6 address & flags to Routing header
 .It Fn inet6_rthdr_lasthop
 specify the flags for the final hop
 .El
@@ -267,7 +267,7 @@ to maintain consistency with the terminology and figures in RFC 2460.
 .Sh EXAMPLES
 RFC 2292 gives comprehensive examples in chapter 8.
 .\"
-.Sh DIAGNOSTICS
+.Sh RETURN VALUES
 .Fn inet6_rthdr_space
 returns 0 on errors.
 .Pp

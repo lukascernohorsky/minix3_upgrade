@@ -1,4 +1,4 @@
-/* $NetBSD: dtoa.c,v 1.10 2012/05/16 17:48:59 alnsn Exp $ */
+/* $NetBSD: dtoa.c,v 1.12 2024/01/20 14:52:46 christos Exp $ */
 
 /****************************************************************
 
@@ -366,7 +366,7 @@ dtoa
 			}
 		else if (( jj1 = -k )!=0) {
 			dval(&d) *= tens[jj1 & 0xf];
-			for(j = jj1 >> 4; j; j >>= 1, i++)
+			for(j = (unsigned int)jj1 >> 4; j; j = (unsigned int)j >> 1, i++)
 				if (j & 1) {
 					ieps++;
 					dval(&d) *= bigtens[i];
@@ -787,6 +787,8 @@ dtoa
 	  }
 #endif
 	b = lshift(b, 1);
+	if (b == NULL)
+		return NULL;
 	j = cmp(b, S);
 #ifdef ROUND_BIASED
 	if (j >= 0)

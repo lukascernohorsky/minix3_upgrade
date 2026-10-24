@@ -1,4 +1,4 @@
-/*	$NetBSD: utimens.c,v 1.1 2012/11/03 19:39:21 christos Exp $	*/
+/*	$NetBSD: utimens.c,v 1.3 2023/08/01 07:04:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,23 +31,22 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utimens.c,v 1.1 2012/11/03 19:39:21 christos Exp $");
+__RCSID("$NetBSD: utimens.c,v 1.3 2023/08/01 07:04:15 mrg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
-#define _INCOMPLETE_XOPEN_C063
 #include <fcntl.h>
 #include <sys/stat.h>
 
 int
-utimens(const char *path, const struct timespec *times)
+utimens(const char *path, const struct timespec times[2])
 {
 	return utimensat(AT_FDCWD, path, times, 0);
 }
 
 int
-lutimens(const char *path, const struct timespec *times)
+lutimens(const char *path, const struct timespec times[2])
 {
 	return utimensat(AT_FDCWD, path, times, AT_SYMLINK_NOFOLLOW);
 }

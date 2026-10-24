@@ -29,10 +29,9 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: fpsetmask.c,v 1.1 2015/07/07 21:40:19 matt Exp $");
+__RCSID("$NetBSD: fpsetmask.c,v 1.3 2024/06/07 20:50:13 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/bitops.h>
 
 #include "namespace.h"
@@ -41,7 +40,7 @@ __RCSID("$NetBSD: fpsetmask.c,v 1.1 2015/07/07 21:40:19 matt Exp $");
 
 #include <aarch64/armreg.h>
 
-__weak_alias(fpsetmask,_fpsetmask);
+__weak_alias(fpsetmask,_fpsetmask)
 
 fp_except_t
 fpsetmask(fp_except_t mask)

@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.81 2012/09/08 15:15:06 dholland Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.84 2024/01/20 14:52:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.81 2012/09/08 15:15:06 dholland Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.84 2024/01/20 14:52:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -111,13 +111,13 @@ __RCSID("$NetBSD: getpwent.c,v 1.81 2012/09/08 15:15:06 dholland Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include "pw_private.h"
 
 #ifdef HESIOD
 #include <hesiod.h>
 #endif
 
 #ifdef YP
-#include <machine/param.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
@@ -272,7 +272,7 @@ _pw_getkey(DB *db, DBT *key,
 			 * THE DECODING BELOW MUST MATCH THAT IN pwd_mkdb.
 			 */
 	t = buffer;
-#define MACRO(a)	do { a } while (/*CONSTCOND*/0)
+#define MACRO(a)	do { a } while (0)
 #define	EXPAND(e)	MACRO(e = t; while ((*t++ = *p++));)
 #define	SCALAR(v)	MACRO(memmove(&(v), p, sizeof v); p += sizeof v;)
 	EXPAND(pw->pw_name);

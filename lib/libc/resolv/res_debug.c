@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.14 2015/02/24 17:56:20 christos Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.18 2023/08/09 07:01:09 riastradh Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -97,7 +97,7 @@
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_debug.c,v 1.19 2009/02/26 11:20:20 tbox Exp";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.14 2015/02/24 17:56:20 christos Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.18 2023/08/09 07:01:09 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -125,12 +125,6 @@ __RCSID("$NetBSD: res_debug.c,v 1.14 2015/02/24 17:56:20 christos Exp $");
 #include <time.h>
 
 #include "port_after.h"
-
-#ifdef SPRINTF_CHAR
-# define SPRINTF(x) strlen(sprintf/**/x)
-#else
-# define SPRINTF(x) sprintf x
-#endif
 
 extern const char *_res_opcodes[];
 extern const char *_res_sectioncodes[];
@@ -515,7 +509,7 @@ const struct res_sym __p_type_syms[] = {
 	{ns_t_naptr,	"NAPTR",	"naptr"},
 	{ns_t_kx,	"KX",		"key exchange"},
 	{ns_t_cert,	"CERT",		"certificate"},
-	{ns_t_a6,	"A",		"IPv6 address (experminental)"},
+	{ns_t_a6,	"A",		"IPv6 address (experimental)"},
 	{ns_t_dname,	"DNAME",	"non-terminal redirection"},
 	{ns_t_opt,	"OPT",		"opt"},
 	{ns_t_apl,	"apl",		"apl"},
@@ -686,7 +680,7 @@ p_option(u_long option) {
 	case RES_DEBUG:		return "debug";
 	case RES_AAONLY:	return "aaonly(unimpl)";
 	case RES_USEVC:		return "usevc";
-	case RES_PRIMARY:	return "primry(unimpl)";
+	case RES_PRIMARY:	return "primary(unimpl)";
 	case RES_IGNTC:		return "igntc";
 	case RES_RECURSE:	return "recurs";
 	case RES_DEFNAMES:	return "defnam";
@@ -1182,16 +1176,20 @@ p_secstodate (u_long secs) {
 	struct tm *mytime;
 #ifdef HAVE_TIME_R
 	struct tm res;
-	
+
 	mytime = gmtime_r(&myclock, &res);
 #else
 	mytime = gmtime(&myclock);
 #endif
 	mytime->tm_year += 1900;
 	mytime->tm_mon += 1;
-	sprintf(output, "%04d%02d%02d%02d%02d%02d",
+	if ((size_t)snprintf(output, sizeof p_secstodate_output,
+		"%04d%02d%02d%02d%02d%02d",
 		mytime->tm_year, mytime->tm_mon, mytime->tm_mday,
-		mytime->tm_hour, mytime->tm_min, mytime->tm_sec);
+		mytime->tm_hour, mytime->tm_min, mytime->tm_sec) >
+	    sizeof p_secstodate_output) {
+		output[sizeof(p_secstodate_output) - 1] = 0;
+	}
 	return (output);
 }
 

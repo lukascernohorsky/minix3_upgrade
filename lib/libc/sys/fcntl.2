@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.41 2013/12/28 20:03:22 dholland Exp $
+.\"	$NetBSD: fcntl.2,v 1.51 2025/07/17 17:16:07 kre Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd January 23, 2012
+.Dd July 8, 2025
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -76,38 +76,57 @@ Same file status flags (i.e., both file descriptors
 share the same file status flags).
 .It
 The close-on-exec flag associated with the new file descriptor
-is cleared to remain open across
+is cleared to allow the file descriptor to remain open across
 .Xr execve 2
+system calls.
+.It
+The close-on-fork flag
+.Dv FD_CLOFORK
+associated with the new file descriptor is cleared,
+so the file descriptor will remain open across
+.Xr fork 2
 system calls.
 .El
 .It Dv F_DUPFD_CLOEXEC
 Same as
 .Dv F_DUPFD ,
 but sets the close-on-exec property on the file descriptor created.
+.It Dv F_DUPFD_CLOFORK
+Same as
+.Dv F_DUPFD ,
+but sets the close-on-fork property on the file descriptor created.
+.It Dv F_DUPFD_CLOBOTH
+Same as
+.Dv F_DUPFD ,
+but sets both the close-on-exec and close-on-fork properties on the file
+descriptor created.
 .It Dv F_GETFD
-Get the close-on-exec flag associated with the file descriptor
+Get the flags associated with the file descriptor
 .Fa fd
-as
-.Dv FD_CLOEXEC .
+.Fa ( arg
+is ignored).
 If the returned value ANDed with
 .Dv FD_CLOEXEC
 is 0,
 the file will remain open across
 .Fn exec ,
 otherwise the file will be closed upon execution of
-.Fn exec
-.Fa ( arg
-is ignored).
+.Fn exec .
+If the returned value ANDed with
+.Dv FD_CLOFORK
+is not 0,
+the file will be closed upon execution of the
+.Fn fork
+family of system calls.
 .It Dv F_SETFD
-Set the close-on-exec flag associated with
-.Fa fd
-to
-.Fa arg ,
-where
+Set flags associated with
+.Fa fd .
+The available flags, passed as
 .Fa arg
-is either 0 or
-.Dv FD_CLOEXEC ,
-as described above.
+(treated as an integer), are
+.Dv FD_CLOEXEC
+and
+.Dv FD_CLOFORK .
 .It Dv F_GETFL
 Get descriptor status flags, as described below
 .Fa ( arg
@@ -143,17 +162,52 @@ The argument
 is interpreted as an int.
 .It Dv F_CLOSEM
 Close all file descriptors greater than or equal to
-.Ar fd .
+.Fa fd ,
+.Fa ( arg
+is ignored).
 .It Dv F_MAXFD
 Return the maximum file descriptor number currently open by the process.
+.Fa ( arg
+is ignored).
 .It Dv F_GETNOSIGPIPE
-Return if the
+Return 1 if the
 .Dv O_NOSIGPIPE
-flag is set in the file descriptor.
+flag is set in the file descriptor, otherwise 0
+.Fa ( arg
+is ignored).
 .It Dv F_SETNOSIGPIPE
-Set or clear the
+If
+.Fa arg
+is 0, clear the
 .Dv O_NOSIGPIPE
-in the file descriptor.
+status in the file descriptor, otherwise set it.
+.It Dv F_GETPATH
+Place a pathname corresponding to
+.Fa fd
+in the buffer pointed to by
+.Fa arg .
+.Fa arg
+should be pointing to a buffer of at least
+.Dv MAXPATHLEN
+bytes.
+.It Dv F_ADD_SEALS
+Add seals specified in
+.Fa arg
+to
+.Fa fd
+to restrict possible operations on
+.Fa fd
+as described below.
+Like flags, multiple seals can be specified at once.
+Additionally, specifying seals that are already associated with
+.Fa fd
+is a no-op.
+.It Dv F_GET_SEALS
+Get the seals currently associated with
+.Fa fd
+as described below
+.Fa ( arg
+is ignored).
 .El
 .Pp
 The set of valid flags for the
@@ -316,21 +370,89 @@ or an
 request fails or blocks respectively when another process has existing
 locks on bytes in the specified region and the type of any of those
 locks conflicts with the type specified in the request.
+.Pp
+Possible seals are:
+.Bl -tag -width F_SEAL_FUTURE_WRITE
+.It Dv F_SEAL_SEAL
+Prevent any further seals from being added to
+.Fa fd .
+.It Dv F_SEAL_SHRINK
+Prevent the size of
+.Fa fd
+from decreasing.
+.It Dv F_SEAL_GROW
+Prevent the size of
+.Fa fd
+from increasing.
+.It Dv F_SEAL_WRITE
+Prevent any write operations to
+.Fa fd .
+.Dv F_SEAL_WRITE
+cannot be applied if
+.Fa fd
+has any memory mappings.
+.It Dv F_SEAL_FUTURE_WRITE
+Like
+.Dv F_SEAL_WRITE
+but allow any current memory mappings of
+.Fa fd
+to remain open, including those with
+.Dv PROT_WRITE .
+.El
+.Sh NOTES
+For
+.Dv F_GETPATH :
+.Bl -bullet -compact
+.It
+For vnodes, functionality is implemented using the reverse
+.Xr namei 9
+cache.
+The implications of this are
+.Bl -bullet -compact
+.It
+For hard links where the file descriptor can resolve to multiple pathnames,
+the first entry found in the cache is returned.
+.It
+.Dv F_GETPATH
+may fail if the corresponding entry has been evicted from the LRU
+.Xr namei 9
+cache and return
+.Er ENOENT .
+.El
+.It
+For a file descriptor created by
+.Xr memfd_create 2 ,
+the name provided at
+.Fa fd
+creation, with the prefix
+.Dq memfd:
+is used.
+.It
+Other types of file descriptors are not handled, as well as symbolic
+links since there is currently no way to obtain a file descriptor
+pointing to a symbolic link.
+.El
 .Sh RETURN VALUES
 Upon successful completion, the value returned depends on
 .Fa cmd
 as follows:
-.Bl -tag -width F_GETOWNX -offset indent
+.Bl -tag -width F_GET_SEALS -offset indent
 .It Dv F_DUPFD
 A new file descriptor.
 .It Dv F_GETFD
-Value of flag (only the low-order bit is defined).
+Value of flag (one or both of the bits
+.Dv FD_CLOEXEC
+and
+.Dv FD_CLOFORK ) .
 .It Dv F_GETFL
 Value of flags.
 .It Dv F_GETOWN
 Value of file descriptor owner.
 .It Dv F_MAXFD
 Value of the highest file descriptor open by the process.
+.It Dv F_GET_SEALS
+Value of the seals currently associated with
+.Fa fd .
 .It other
 Value other than \-1.
 .El
@@ -390,6 +512,12 @@ error.
 .Fn fcntl
 will fail if:
 .Bl -tag -width Er
+.It Bq Er EACCES
+The argument
+.Fa cmd
+is
+.Dv F_GETPATH
+and read or search permission was denied for a component of the pathname.
 .It Bq Er EAGAIN
 The argument
 .Fa arg
@@ -437,6 +565,18 @@ is an exclusive lock
 and
 .Fa fildes
 is not a valid file descriptor open for writing.
+.It Bq Er EBUSY
+The argument
+.Fa cmd
+is
+.Dv F_ADD_SEALS ,
+.Fa arg
+contains
+.Dv F_SEAL_WRITE
+and
+.Fa fd
+is currently mapped by
+.Xr mmap 2 .
 .It Bq Er EDEADLK
 The argument
 .Fa cmd
@@ -476,6 +616,24 @@ and the data to which
 points is not valid, or
 .Fa fildes
 refers to a file that does not support locking.
+.Pp
+The argument
+.Fa cmd
+is
+.Dv F_ADD_SEALS
+or
+.Dv F_GET_SEALS
+and
+.Fa fd
+does not support seals.
+.Pp
+The argument
+.Fa cmd
+is
+.Dv F_ADD_SEALS
+and
+.Fa arg
+contains set bits for unsupported seals.
 .It Bq Er EMFILE
 The argument
 .Fa cmd
@@ -492,6 +650,12 @@ is
 .Dv F_DUPFD
 and system-wide the maximum allowed number of file descriptors are
 currently open.
+.It Bq Er ENOENT
+The argument
+.Fa cmd
+is
+.Dv F_GETPATH
+and a component of the pathname no longer exists.
 .It Bq Er ENOLCK
 The argument
 .Fa cmd
@@ -501,6 +665,41 @@ or
 .Dv F_SETLKW ,
 and satisfying the lock or unlock request would result in the
 number of locked regions in the system exceeding a system-imposed limit.
+.It Bq Er ENOMEM
+The argument
+.Fa cmd
+is
+.Dv F_GETPATH
+and insufficient memory is available.
+.Pp
+The argument
+.Fa cmd
+is
+.Dv F_GETLK ,
+.Dv F_SETLK ,
+or
+.Dv F_SETLKW ,
+and the file lock limit for the current unprivileged user
+has been reached.
+It can be modified using the
+.Li kern.maxfiles
+.Xr sysctl 7 .
+.It Bq Er EPERM
+The argument
+.Fa cmd
+is
+.Dv F_ADD_SEALS
+and
+.Fa fd
+already has
+.Dv F_SEAL_SEAL .
+.It Bq Er ERANGE
+The argument
+.Fa cmd
+is
+.Dv F_GETPATH
+and the resulting path would be greater than
+.Dv MAXPATHLEN .
 .It Bq Er ESRCH
 .Fa cmd
 is
@@ -525,3 +724,7 @@ The
 .Fn fcntl
 function call appeared in
 .Bx 4.2 .
+The
+.Dv F_DUPFD_CLOBOTH
+operation first appeared in
+.Nx 11.0 .
