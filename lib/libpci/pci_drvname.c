@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_drvname.c,v 1.1 2014/07/25 01:38:26 mrg Exp $	*/
+/*	$NetBSD: pci_drvname.c,v 1.3 2021/12/11 19:24:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 2014 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pci_drvname.c,v 1.1 2014/07/25 01:38:26 mrg Exp $");
+__RCSID("$NetBSD: pci_drvname.c,v 1.3 2021/12/11 19:24:19 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -54,6 +52,30 @@ pci_drvname(int fd, u_int device, u_int func, char *name, size_t len)
 	drvname.function = func;
 
 	rv = ioctl(fd, PCI_IOC_DRVNAME, &drvname);
+	if (rv == -1)
+		return -1;
+
+	strlcpy(name, drvname.name, len);
+	return 0;
+}
+
+/*
+ * pci_drvnameonbus:
+ *
+ *	What's the driver name for a PCI device on any PCI bus?
+ */
+int
+pci_drvnameonbus(int fd, u_int bus, u_int device, u_int func, char *name,
+		 size_t len)
+{
+	struct pciio_drvnameonbus drvname;
+	int rv;
+
+	drvname.bus = bus;
+	drvname.device = device;
+	drvname.function = func;
+
+	rv = ioctl(fd, PCI_IOC_DRVNAMEONBUS, &drvname);
 	if (rv == -1)
 		return -1;
 
