@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.c,v 1.17 2011/07/28 20:50:55 christos Exp $	*/
+/*	$NetBSD: sig.c,v 1.29 2025/06/14 13:43:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sig.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sig.c,v 1.17 2011/07/28 20:50:55 christos Exp $");
+__RCSID("$NetBSD: sig.c,v 1.29 2025/06/14 13:43:50 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -46,31 +46,35 @@ __RCSID("$NetBSD: sig.c,v 1.17 2011/07/28 20:50:55 christos Exp $");
  *	  our policy is to trap all signals, set a good state
  *	  and pass the ball to our caller.
  */
-#include "el.h"
+#include <errno.h>
 #include <stdlib.h>
 
-private EditLine *sel = NULL;
+#include "el.h"
+#include "common.h"
 
-private const int sighdl[] = {
+static EditLine *sel = NULL;
+
+static const int sighdl[] = {
 #define	_DO(a)	(a),
 	ALLSIGS
 #undef	_DO
 	- 1
 };
 
-private void sig_handler(int);
+static void sig_handler(int);
 
 /* sig_handler():
  *	This is the handler called for all signals
  *	XXX: we cannot pass any data so we just store the old editline
  *	state in a private variable
  */
-private void
+static void
 sig_handler(int signo)
 {
-	int i;
+	int i, save_errno;
 	sigset_t nset, oset;
 
+	save_errno = errno;
 	(void) sigemptyset(&nset);
 	(void) sigaddset(&nset, signo);
 	(void) sigprocmask(SIG_BLOCK, &nset, &oset);
@@ -103,14 +107,15 @@ sig_handler(int signo)
 	sel->el_signal->sig_action[i].sa_flags = 0;
 	sigemptyset(&sel->el_signal->sig_action[i].sa_mask);
 	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
-	(void) kill(0, signo);
+	(void) raise(signo);
+	errno = save_errno;
 }
 
 
 /* sig_init():
  *	Initialize all signal stuff
  */
-protected int
+libedit_private int
 sig_init(EditLine *el)
 {
 	size_t i;
@@ -142,7 +147,7 @@ sig_init(EditLine *el)
 /* sig_end():
  *	Clear all signal stuff
  */
-protected void
+libedit_private void
 sig_end(EditLine *el)
 {
 
@@ -154,7 +159,7 @@ sig_end(EditLine *el)
 /* sig_set():
  *	set all the signal handlers
  */
-protected void
+libedit_private void
 sig_set(EditLine *el)
 {
 	size_t i;
@@ -162,9 +167,10 @@ sig_set(EditLine *el)
 	struct sigaction osa, nsa;
 
 	nsa.sa_handler = sig_handler;
-	nsa.sa_flags = 0;
+	nsa.sa_flags = SA_ONSTACK;
 	sigemptyset(&nsa.sa_mask);
 
+	sel = el;
 	(void) sigprocmask(SIG_BLOCK, &el->el_signal->sig_set, &oset);
 
 	for (i = 0; sighdl[i] != -1; i++) {
@@ -173,7 +179,6 @@ sig_set(EditLine *el)
 		    osa.sa_handler != sig_handler)
 			el->el_signal->sig_action[i] = osa;
 	}
-	sel = el;
 	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
 }
 
@@ -181,7 +186,7 @@ sig_set(EditLine *el)
 /* sig_clr():
  *	clear all the signal handlers
  */
-protected void
+libedit_private void
 sig_clr(EditLine *el)
 {
 	size_t i;
@@ -194,7 +199,5 @@ sig_clr(EditLine *el)
 			(void)sigaction(sighdl[i],
 			    &el->el_signal->sig_action[i], NULL);
 
-	sel = NULL;		/* we are going to die if the handler is
-				 * called */
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 }

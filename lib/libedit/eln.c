@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.19 2015/05/18 15:07:04 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.38 2024/05/17 02:59:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -34,35 +27,38 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.19 2015/05/18 15:07:04 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.38 2024/05/17 02:59:08 christos Exp $");
 #endif /* not lint && not SCCSID */
 
-#include "histedit.h"
-#include "el.h"
-#include "read.h"
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-public int
+#include "el.h"
+
+int
 el_getc(EditLine *el, char *cp)
 {
 	int num_read;
 	wchar_t wc = 0;
 
-	if (!(el->el_flags & CHARSET_IS_UTF8))
-		el->el_flags |= IGNORE_EXTCHARS;
-	num_read = el_wgetc (el, &wc);
-	if (!(el->el_flags & CHARSET_IS_UTF8))
-		el->el_flags &= ~IGNORE_EXTCHARS;
-
-	if (num_read > 0)
-		*cp = (char)wc;
-	return num_read;
+	num_read = el_wgetc(el, &wc);
+	*cp = '\0';
+	if (num_read <= 0)
+		return num_read;
+	num_read = wctob(wc);
+	if (num_read == EOF) {
+		errno = ERANGE;
+		return -1;
+	} else {
+		*cp = (char)num_read;
+		return 1;
+	}
 }
 
 
-public void
+void
 el_push(EditLine *el, const char *str)
 {
 	/* Using multibyte->wide string decoding works fine under single-byte
@@ -71,44 +67,41 @@ el_push(EditLine *el, const char *str)
 }
 
 
-public const char *
+const char *
 el_gets(EditLine *el, int *nread)
 {
 	const wchar_t *tmp;
 
-	if (!(el->el_flags & CHARSET_IS_UTF8))
-		el->el_flags |= IGNORE_EXTCHARS;
 	tmp = el_wgets(el, nread);
 	if (tmp != NULL) {
+	    int i;
 	    size_t nwread = 0;
-	    for (int i = 0; i < *nread; i++)
+
+	    for (i = 0; i < *nread; i++)
 		nwread += ct_enc_width(tmp[i]);
 	    *nread = (int)nwread;
 	}
-	if (!(el->el_flags & CHARSET_IS_UTF8))
-		el->el_flags &= ~IGNORE_EXTCHARS;
 	return ct_encode_string(tmp, &el->el_lgcyconv);
 }
 
 
-public int
+int
 el_parse(EditLine *el, int argc, const char *argv[])
 {
 	int ret;
 	const wchar_t **wargv;
 
-	wargv = (const wchar_t **)
-	    ct_decode_argv(argc, argv, &el->el_lgcyconv);
+	wargv = (void *)ct_decode_argv(argc, argv, &el->el_lgcyconv);
 	if (!wargv)
 		return -1;
 	ret = el_wparse(el, argc, wargv);
-	ct_free_argv(wargv);
+	el_free(wargv);
 
 	return ret;
 }
 
 
-public int
+int
 el_set(EditLine *el, int op, ...)
 {
 	va_list ap;
@@ -160,6 +153,7 @@ el_set(EditLine *el, int op, ...)
 
 	case EL_SIGNAL:         /* int */
 	case EL_EDITMODE:
+	case EL_SAFEREAD:
 	case EL_UNBUFFERED:
 	case EL_PREP_TERM:
 		ret = el_wset(el, op, va_arg(ap, int));
@@ -177,8 +171,7 @@ el_set(EditLine *el, int op, ...)
 			if ((argv[i] = va_arg(ap, const char *)) == NULL)
 			    break;
 		argv[0] = argv[i] = NULL;
-		wargv = (const wchar_t **)
-		    ct_decode_argv(i + 1, argv, &el->el_lgcyconv);
+		wargv = (void *)ct_decode_argv(i + 1, argv, &el->el_lgcyconv);
 		if (!wargv) {
 		    ret = -1;
 		    goto out;
@@ -190,29 +183,29 @@ el_set(EditLine *el, int op, ...)
 		 */
 		switch (op) {
 		case EL_BIND:
-			wargv[0] = STR("bind");
+			wargv[0] = L"bind";
 			ret = map_bind(el, i, wargv);
 			break;
 		case EL_TELLTC:
-			wargv[0] = STR("telltc");
+			wargv[0] = L"telltc";
 			ret = terminal_telltc(el, i, wargv);
 			break;
 		case EL_SETTC:
-			wargv[0] = STR("settc");
+			wargv[0] = L"settc";
 			ret = terminal_settc(el, i, wargv);
 			break;
 		case EL_ECHOTC:
-			wargv[0] = STR("echotc");
+			wargv[0] = L"echotc";
 			ret = terminal_echotc(el, i, wargv);
 			break;
 		case EL_SETTY:
-			wargv[0] = STR("setty");
+			wargv[0] = L"setty";
 			ret = tty_stty(el, i, wargv);
 			break;
 		default:
 			ret = -1;
 		}
-		ct_free_argv(wargv);
+		el_free(wargv);
 		break;
 	}
 
@@ -231,10 +224,10 @@ el_set(EditLine *el, int op, ...)
 		    ret = -1;
 		    goto out;
 		}
-		// XXX: The two strdup's leak
-		ret = map_addfunc(el, Strdup(wargv[0]), Strdup(wargv[1]),
+		/* XXX: The two strdup's leak */
+		ret = map_addfunc(el, wcsdup(wargv[0]), wcsdup(wargv[1]),
 		    func);
-		ct_free_argv(wargv);
+		el_free(wargv);
 		break;
 	}
 	case EL_HIST: {           /* hist_fun_t, const char * */
@@ -245,10 +238,8 @@ el_set(EditLine *el, int op, ...)
 		break;
 	}
 
-	/* XXX: do we need to change el_rfunc_t? */
 	case EL_GETCFN:         /* el_rfunc_t */
 		ret = el_wset(el, op, va_arg(ap, el_rfunc_t));
-		el->el_flags |= NARROW_READ;
 		break;
 
 	case EL_CLIENTDATA:     /* void * */
@@ -280,7 +271,7 @@ out:
 }
 
 
-public int
+int
 el_get(EditLine *el, int op, ...)
 {
 	va_list ap;
@@ -325,24 +316,22 @@ el_get(EditLine *el, int op, ...)
 
 	case EL_SIGNAL:         /* int * */
 	case EL_EDITMODE:
+	case EL_SAFEREAD:
 	case EL_UNBUFFERED:
 	case EL_PREP_TERM:
 		ret = el_wget(el, op, va_arg(ap, int *));
 		break;
 
 	case EL_GETTC: {
-		char *argv[20];
+		char *argv[3];
 		static char gettc[] = "gettc";
-		int i;
-		for (i = 1; i < (int)__arraycount(argv); ++i)
-			if ((argv[i] = va_arg(ap, char *)) == NULL)
-				break;
 		argv[0] = gettc;
-		ret = terminal_gettc(el, i, argv);
+		argv[1] = va_arg(ap, char *);
+		argv[2] = va_arg(ap, void *);
+		ret = terminal_gettc(el, 3, argv);
 		break;
 	}
 
-	/* XXX: do we need to change el_rfunc_t? */
 	case EL_GETCFN:         /* el_rfunc_t */
 		ret = el_wget(el, op, va_arg(ap, el_rfunc_t *));
 		break;
@@ -374,8 +363,12 @@ el_line(EditLine *el)
 	const LineInfoW *winfo = el_wline(el);
 	LineInfo *info = &el->el_lgcylinfo;
 	size_t offset;
-	const Char *p;
+	const wchar_t *p;
 
+	if (el->el_flags & FROM_ELLINE)
+		return info;
+
+	el->el_flags |= FROM_ELLINE;
 	info->buffer   = ct_encode_string(winfo->buffer, &el->el_lgcyconv);
 
 	offset = 0;
@@ -388,6 +381,10 @@ el_line(EditLine *el)
 		offset += ct_enc_width(*p);
 	info->lastchar = info->buffer + offset;
 
+	if (el->el_chared.c_resizefun)  
+		(*el->el_chared.c_resizefun)(el, el->el_chared.c_resizearg);
+	el->el_flags &= ~FROM_ELLINE;
+
 	return info;
 }
 
@@ -396,4 +393,10 @@ int
 el_insertstr(EditLine *el, const char *str)
 {
 	return el_winsertstr(el, ct_decode_string(str, &el->el_lgcyconv));
+}
+
+int
+el_replacestr(EditLine *el, const char *str)
+{
+	return el_wreplacestr(el, ct_decode_string(str, &el->el_lgcyconv));
 }

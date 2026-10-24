@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.17 2011/09/28 14:08:04 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.29 2023/04/25 17:51:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #include <sys/cdefs.h>
 #endif
 
-#if !defined(__attribute__) && (defined(__cplusplus) || !defined(__GNUC__)  || __GNUC__ == 2 && __GNUC_MINOR__ < 8)
+#if !defined(__attribute__) && !defined(__lint__) && (defined(__cplusplus) || !defined(__GNUC__)  || __GNUC__ == 2 && __GNUC_MINOR__ < 8) 
 # define __attribute__(A)
 #endif
 
@@ -57,72 +57,19 @@
 #  define __END_DECLS
 # endif
 #endif
- 
-#ifndef public
-# define public		/* Externally visible functions/variables */
-#endif
 
-#ifndef private
-# define private	static	/* Always hidden internals */
-#endif
-
-#ifndef protected
-# define protected	/* Redefined from elsewhere to "static" */
-			/* When we want to hide everything	*/
-#endif
+/* If your compiler does not support this, define it to be empty. */
+#define libedit_private __attribute__((__visibility__("hidden")))
 
 #ifndef __arraycount
 # define __arraycount(a) (sizeof(a) / sizeof(*(a)))
-#endif
-
-#include <stdio.h>
-
-#ifndef HAVE_STRLCAT
-#define	strlcat libedit_strlcat
-size_t	strlcat(char *dst, const char *src, size_t size);
-#endif
-
-#ifndef HAVE_STRLCPY
-#define	strlcpy libedit_strlcpy
-size_t	strlcpy(char *dst, const char *src, size_t size);
-#endif
-
-#ifndef HAVE_FGETLN
-#define	fgetln libedit_fgetln
-char	*fgetln(FILE *fp, size_t *len);
-#endif
-
-#ifndef HAVE_WCSDUP
-#include <wchar.h>
-wchar_t *wcsdup(const wchar_t *);
-#endif
-
-#ifndef _DIAGASSERT
-#define _DIAGASSERT(x)
 #endif
 
 #ifndef __RCSID
 #define __RCSID(x)
 #endif
 
-#ifndef HAVE_U_INT32_T
-typedef unsigned int	u_int32_t;
-#endif
-
-#ifndef SIZE_T_MAX
-#define SIZE_T_MAX	((size_t)-1)
-#endif
-
 #define	REGEX		/* Use POSIX.2 regular expression functions */
 #undef	REGEXP		/* Use UNIX V8 regular expression functions */
-
-#if defined(__sun)
-extern int tgetent(char *, const char *);
-extern int tgetflag(char *);
-extern int tgetnum(char *);
-extern int tputs(const char *, int, int (*)(int));
-extern char* tgoto(const char*, int, int);
-extern char* tgetstr(char*, char**);
-#endif
 
 #endif /* _h_sys */

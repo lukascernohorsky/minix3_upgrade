@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.h,v 1.9 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: filecomplete.h,v 1.15 2023/04/25 17:51:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,11 +34,21 @@
 int fn_complete(EditLine *,
     char *(*)(const char *, int),
     char **(*)(const char *, int, int),
-    const Char *, const Char *, const char *(*)(const char *), size_t,
+    const wchar_t *, const wchar_t *, const char *(*)(const char *), size_t,
     int *, int *, int *, int *);
+int fn_complete2(EditLine *,
+    char *(*)(const char *, int),
+    char **(*)(const char *, int, int),
+    const wchar_t *, const wchar_t *, const char *(*)(const char *), size_t,
+    int *, int *, int *, int *, unsigned int);
+#define FN_QUOTE_MATCH 1U		/* Quote the returned match */
 
-void fn_display_match_list(EditLine *, char **, size_t, size_t);
+void fn_display_match_list(EditLine *, char **, size_t, size_t,
+	const char *(*)(const char *));
 char *fn_tilde_expand(const char *);
 char *fn_filename_completion_function(const char *, int);
+
+/* XXX: readline */
+char **completion_matches(const char *, char *(*)(const char *, int));
 
 #endif

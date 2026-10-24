@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.53 2014/06/18 18:12:28 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.62 2023/02/03 22:01:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -113,6 +113,7 @@ int		 el_parse(EditLine *, int, const char **);
 int		 el_set(EditLine *, int, ...);
 int		 el_get(EditLine *, int, ...);
 unsigned char	_el_fn_complete(EditLine *, int);
+unsigned char	_el_fn_sh_complete(EditLine *, int);
 
 /*
  * el_set/el_get parameters
@@ -128,7 +129,7 @@ unsigned char	_el_fn_complete(EditLine *, int);
  * For operations that support set or set/get, the argument types listed are for
  * the "set" operation. For "get", each listed type must be a pointer.
  * E.g. EL_EDITMODE takes an int when set, but an int* when get.
- * 
+ *
  * Operations that only support "get" have the correct argument types listed.
  */
 #define	EL_PROMPT	0	/* , prompt_func);		      set/get */
@@ -141,7 +142,7 @@ unsigned char	_el_fn_complete(EditLine *, int);
 #define	EL_ECHOTC	7	/* , const Char *, ..., NULL);        set     */
 #define	EL_SETTY	8	/* , const Char *, ..., NULL);        set     */
 #define	EL_ADDFN	9	/* , const Char *, const Char,        set     */
-				/*   el_func_t);		 	      */
+				/*   el_func_t);			      */
 #define	EL_HIST		10	/* , hist_fun_t, const void *);	      set     */
 #define	EL_EDITMODE	11	/* , int);			      set/get */
 #define	EL_RPROMPT	12	/* , prompt_func);		      set/get */
@@ -157,6 +158,7 @@ unsigned char	_el_fn_complete(EditLine *, int);
 #define	EL_RPROMPT_ESC	22	/* , prompt_func, Char);	      set/get */
 #define	EL_RESIZE	23	/* , el_zfunc_t, void *);	      set     */
 #define	EL_ALIAS_TEXT	24	/* , el_afunc_t, void *);	      set     */
+#define	EL_SAFEREAD	25	/* , int);			      set/get */
 
 #define	EL_BUILTIN_GETCFN	(NULL)
 
@@ -178,7 +180,8 @@ void		 el_resize(EditLine *);
 const LineInfo	*el_line(EditLine *);
 int		 el_insertstr(EditLine *, const char *);
 void		 el_deletestr(EditLine *, int);
-
+int		 el_replacestr(EditLine *, const char *);
+int		 el_deletestr1(EditLine *, int, int);
 
 /*
  * ==== History ====
@@ -226,6 +229,7 @@ int		history(History *, HistEvent *, int, ...);
 #define	H_DELDATA	24	/* , int, histdata_t *);*/
 #define	H_REPLACE	25	/* , const char *, histdata_t);	*/
 #define	H_SAVE_FP	26	/* , FILE *);		*/
+#define	H_NSAVE_FP	27	/* , size_t, FILE *);	*/
 
 
 
@@ -249,19 +253,8 @@ int		 tok_str(Tokenizer *, const char *,
 /*
  * Begin Wide Character Support
  */
-#ifdef __linux__
-/* Apparently we need _GNU_SOURCE defined to get access to wcsdup on Linux */
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#endif
-
 #include <wchar.h>
 #include <wctype.h>
-
-/*
- * Wide character versions
- */
 
 /*
  * ==== Editing ====
@@ -271,6 +264,8 @@ typedef struct lineinfow {
 	const wchar_t	*cursor;
 	const wchar_t	*lastchar;
 } LineInfoW;
+
+typedef int	(*el_rfunc_t)(EditLine *, wchar_t *);
 
 const wchar_t	*el_wgets(EditLine *, int *);
 int		 el_wgetc(EditLine *, wchar_t *);
@@ -285,6 +280,7 @@ int		 el_cursor(EditLine *, int);
 const LineInfoW	*el_wline(EditLine *);
 int		 el_winsertstr(EditLine *, const wchar_t *);
 #define          el_wdeletestr  el_deletestr
+int		 el_wreplacestr(EditLine *, const wchar_t *);
 
 /*
  * ==== History ====
