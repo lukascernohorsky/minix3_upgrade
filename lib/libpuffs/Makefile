@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2012/03/21 05:37:43 matt Exp $
+#	$NetBSD: Makefile,v 1.30 2023/09/05 00:12:14 mrg Exp $
 #
 
 .include <bsd.own.mk>
@@ -17,6 +17,12 @@ MAN=		puffs.3 puffs_cc.3 puffs_cred.3 puffs_flush.3		\
 INCS=		puffs.h
 INCSDIR=	/usr/include
 LINTFLAGS+=-S -w
+LINTFLAGS+=	-X 351		# extern declaration outside header
+LINTFLAGS+=	-X 352		# nested extern declaration
+
+# XXXGCC12 - accesses struct puffs_cc* via stack pointers, returns the
+# address to caller
+COPTS.callcontext.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 12:? -Wno-dangling-pointer :}
 
 .if defined(__MINIX)
 .PATH:		${NETBSDSRCDIR}/minix/lib/libpuffs

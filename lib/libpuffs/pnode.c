@@ -213,4 +213,3 @@ puffs_newinfo_setcnttl(struct puffs_newinfo *pni, struct timespec *cn_ttl)
 	pni->pni_cn_ttl->tv_sec = cn_ttl->tv_sec;
 	pni->pni_cn_ttl->tv_nsec = cn_ttl->tv_nsec;
 }
-

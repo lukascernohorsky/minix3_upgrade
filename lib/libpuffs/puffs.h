@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.126 2014/10/31 13:56:04 manu Exp $	*/
+/*	$NetBSD: puffs.h,v 1.130 2021/12/03 17:12:17 pho Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -167,7 +167,8 @@ extern const struct mntopt puffsmopts[]; /* puffs.c */
 /* callbacks for operations */
 struct puffs_ops {
 	int (*puffs_fs_unmount)(struct puffs_usermount *, int);
-	int (*puffs_fs_statvfs)(struct puffs_usermount *, struct statvfs *);
+	int (*puffs_fs_statvfs)(struct puffs_usermount *,
+	    struct puffs_statvfs *);
 	int (*puffs_fs_sync)(struct puffs_usermount *, int,
 	    const struct puffs_cred *);
 	int (*puffs_fs_fhtonode)(struct puffs_usermount *, void *, size_t,
@@ -227,7 +228,7 @@ struct puffs_ops {
 	int (*puffs_node_inactive)(struct puffs_usermount *, puffs_cookie_t);
 	int (*puffs_node_print)(struct puffs_usermount *, puffs_cookie_t);
 	int (*puffs_node_pathconf)(struct puffs_usermount *,
-	    puffs_cookie_t, int, register_t *);
+	    puffs_cookie_t, int, __register_t *);
 	int (*puffs_node_advlock)(struct puffs_usermount *,
 	    puffs_cookie_t, void *, int, struct flock *, int);
 	int (*puffs_node_read)(struct puffs_usermount *, puffs_cookie_t,
@@ -321,7 +322,7 @@ enum {
 #define PUFFSOP_PROTOS(fsname)						\
 	int fsname##_fs_unmount(struct puffs_usermount *, int);		\
 	int fsname##_fs_statvfs(struct puffs_usermount *,		\
-	    struct statvfs *);						\
+	    struct puffs_statvfs *);					\
 	int fsname##_fs_sync(struct puffs_usermount *, int,		\
 	    const struct puffs_cred *cred);				\
 	int fsname##_fs_fhtonode(struct puffs_usermount *, void *,	\
@@ -389,7 +390,7 @@ enum {
 	int fsname##_node_print(struct puffs_usermount *,		\
 	    puffs_cookie_t);						\
 	int fsname##_node_pathconf(struct puffs_usermount *,		\
-	    puffs_cookie_t, int, register_t *);				\
+	    puffs_cookie_t, int, __register_t *);				\
 	int fsname##_node_advlock(struct puffs_usermount *,		\
 	    puffs_cookie_t, void *, int, struct flock *, int);		\
 	int fsname##_node_read(struct puffs_usermount *, puffs_cookie_t,\
@@ -425,9 +426,9 @@ enum {
 	int fsname##_node_open2(struct puffs_usermount *,		\
 	    puffs_cookie_t, int, const struct puffs_cred *, int *);	\
 	int fsname##_node_fallocate(struct puffs_usermount *,		\
-	    puffs_cookie_t, int, off_t, off_t);				\
+	    puffs_cookie_t, off_t, off_t);				\
 	int fsname##_node_fdiscard(struct puffs_usermount *,		\
-	    puffs_cookie_t, int, off_t, off_t);
+	    puffs_cookie_t, off_t, off_t);
 
 
 #define PUFFSOP_INIT(ops)						\
@@ -507,7 +508,7 @@ void			puffs_setroot(struct puffs_usermount *,
 				      struct puffs_node *);
 struct puffs_node 	*puffs_getroot(struct puffs_usermount *);
 void			puffs_setrootinfo(struct puffs_usermount *,
-					  enum vtype, vsize_t, dev_t); 
+					  enum vtype, size_t, dev_t); 
 
 void			*puffs_getspecific(struct puffs_usermount *);
 void			puffs_setspecific(struct puffs_usermount *, void *);
@@ -564,8 +565,8 @@ int			puffs_dispatch_exec(struct puffs_cc *,
  * generic/dummy routines applicable for some file systems
  */
 int  puffs_fsnop_unmount(struct puffs_usermount *, int);
-int  puffs_fsnop_statvfs(struct puffs_usermount *, struct statvfs *);
-void puffs_zerostatvfs(struct statvfs *);
+int  puffs_fsnop_statvfs(struct puffs_usermount *, struct puffs_statvfs *);
+void puffs_zerostatvfs(struct puffs_statvfs *);
 int  puffs_fsnop_sync(struct puffs_usermount *, int waitfor,
 		      const struct puffs_cred *);
 

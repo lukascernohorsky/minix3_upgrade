@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.61 2015/02/16 10:48:34 wiz Exp $
+.\"	$NetBSD: puffs.3,v 1.67 2022/01/22 07:35:26 pho Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 15, 2015
+.Dd April 10, 2016
 .Dt PUFFS 3
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@
 .Fn puffs_setroot "struct puffs_usermount *pu" "struct puffs_node *node"
 .Ft void
 .Fo puffs_setrootinfo
-.Fa "struct puffs_usermount *pu" "enum vtype vt" "vsize_t vsize" "dev_t rdev"
+.Fa "struct puffs_usermount *pu" "enum vtype vt" "size_t vsize" "dev_t rdev"
 .Fc
 .Ft struct puffs_node *
 .Fn puffs_getroot "struct puffs_usermount *pu"
@@ -107,7 +107,7 @@ takes execution context away from the caller and automatically handles
 all requests by using the callbacks.
 By using
 .Xr puffs_framebuf 3
-in conjuction with
+in conjunction with
 .Fn puffs_mainloop ,
 it is possible to handle I/O to and from file descriptors.
 This is suited e.g. for distributed file servers.
@@ -165,7 +165,7 @@ This can be retrieved by
 Flags for
 .Nm
 can be given via
-.Fa pflags .
+.Fa flags .
 Currently the following flags are supported:
 .Bl -tag -width "XPUFFS_KFLAG_LOOKUP_FULLPNBUF"
 .It Dv PUFFS_KFLAG_NOCACHE_NAME
@@ -209,7 +209,7 @@ This flag affects only the parameter
 .Fn puffs_node_lookup .
 If this flag is not given, only the next pathname component under
 lookup is found from
-.Ar pcn-\*[Gt]pcn_name .
+.Ar pcn->pcn_name .
 If this flag is given, the full path the kernel was
 asked to resolve can be found from there.
 .It Dv PUFFS_FLAG_BUILDPATH
@@ -455,11 +455,13 @@ is called
 .It Fn puffs_daemon pu nochdir noclose
 Detach from the console like
 .Fn daemon 3 .
-This call synchronizes with
+If it is called before
+.Fn puffs_mount ,
+this call synchronizes with
 .Fn puffs_mount
 and the foreground process does not exit before the file system mount
 call has returned from the kernel.
-Since this routine internally calls fork, it has to be called
+Since this routine internally calls fork, it is highly recommended to call it
 .Em before
 .Fn puffs_mount .
 .It Fn puffs_mainloop pu flags
