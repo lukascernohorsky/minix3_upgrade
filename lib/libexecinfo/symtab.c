@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.3 2013/09/03 08:44:45 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.10 2023/08/23 12:24:59 rin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,12 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: symtab.c,v 1.3 2013/09/03 08:44:45 christos Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.10 2023/08/23 12:24:59 rin Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <err.h>
 #include <dlfcn.h>
 
@@ -47,8 +48,14 @@ __RCSID("$NetBSD: symtab.c,v 1.3 2013/09/03 08:44:45 christos Exp $");
 #define ELF_ST_TYPE(x)          (((unsigned int)x) & 0xf)
 #endif
 
-
+#include "symbol.h"
 #include "symtab.h"
+
+#ifdef SYMTAB_DEBUG
+#define DPRINTF(fmt, ...)	fprintf(stderr, "%s: " fmt "\n", __func__, __VA_ARGS__)
+#else
+#define DPRINTF(fmt, ...)
+#endif
 
 struct symbol {
 	char *st_name;
@@ -59,6 +66,7 @@ struct symbol {
 struct symtab {
 	size_t nsymbols;
 	struct symbol *symbols;
+	bool ispie;
 };
 
 static int
@@ -86,6 +94,7 @@ symtab_create(int fd, int bind, int type)
 	Elf *elf;
 	symtab_t *st;
 	Elf_Scn *scn = NULL;
+	GElf_Ehdr ehdr;
 
 	if (elf_version(EV_CURRENT) == EV_NONE) {
 		warnx("Elf Library is out of date.");
@@ -103,6 +112,13 @@ symtab_create(int fd, int bind, int type)
 		elf_end(elf);
 		return NULL;
 	}
+	if (gelf_getehdr(elf, &ehdr) == NULL) {
+		warnx("Error getting ELF Ehdr");
+		elf_end(elf);
+		return NULL;
+	}
+
+	st->ispie = ehdr.e_type == ET_DYN;
 
 	while ((scn = elf_nextscn(elf, scn)) != NULL) {
 		GElf_Shdr shdr;
@@ -125,7 +141,12 @@ symtab_create(int fd, int bind, int type)
 
 		for (size_t i = 0; i < ns; i++) {
 			GElf_Sym sym;
-                        gelf_getsym(edata, (int)i, &sym);
+			gelf_getsym(edata, (int)i, &sym);
+
+			DPRINTF("%s@%#jx=%d,%d",
+			    elf_strptr(elf, shdr.sh_link, sym.st_name),
+			    (uintmax_t)sym.st_value, ELF_ST_BIND(sym.st_info),
+			    ELF_ST_TYPE(sym.st_info));
 
 			if (bind != -1 &&
 			    (unsigned)bind != ELF_ST_BIND(sym.st_info))
@@ -144,7 +165,7 @@ symtab_create(int fd, int bind, int type)
 				goto out;
 			}
 			s++;
-                }
+		}
 		st->nsymbols = s - st->symbols;
 		if (st->nsymbols == 0) {
 			warnx("No symbols found");
@@ -161,7 +182,7 @@ out:
 	return NULL;
 }
 
-	
+
 int
 symtab_find(const symtab_t *st, const void *p, Dl_info *dli)
 {
@@ -170,7 +191,14 @@ symtab_find(const symtab_t *st, const void *p, Dl_info *dli)
 	size_t hi = ns;
 	size_t lo = 0;
 	size_t mid = ns / 2;
-	uintptr_t dd, sd, me = (uintptr_t)p;
+	uintptr_t fbase = st->ispie ? (uintptr_t)dli->dli_fbase : 0;
+	uintptr_t dd, sd, me = (uintptr_t)p - fbase;
+	uintptr_t sa = SYMBOL_CANONICALIZE(dli->dli_saddr);
+	uintptr_t ad = sa - fbase;
+
+	DPRINTF("[fbase=%#jx, saddr=%p, sa=%#jx, me=%#jx ad=%#jx]",
+	    (uintmax_t)fbase, dli->dli_saddr, (uintmax_t)sa,
+	    (uintmax_t)me, (uintmax_t)ad);
 
 	for (;;) {
 		if (s[mid].st_value < me)
@@ -185,11 +213,16 @@ symtab_find(const symtab_t *st, const void *p, Dl_info *dli)
 		}
 		mid = (hi + lo) / 2;
 	}
-	dd = me - (uintptr_t)dli->dli_saddr;
+	dd = me - ad;
 	sd = me - s[mid].st_value;
 	if (dd > sd) {
 		dli->dli_saddr = (void *)s[mid].st_value;
 		dli->dli_sname = s[mid].st_name;
+		DPRINTF("me=%#jx -> [%#jx, %s]", (uintmax_t)me, (uintmax_t)sd,
+		    dli->dli_sname);
+	} else {
+		DPRINTF("%#jx -> [%#jx, ***]", (uintmax_t)me, (uintmax_t)sd);
 	}
+
 	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: unwind.c,v 1.2 2014/03/24 21:26:01 joerg Exp $	*/
+/*	$NetBSD: unwind.c,v 1.5 2020/07/26 15:53:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-#include "unwind.h"
+#include <unwind.h>
 #include "execinfo.h"
 
 struct tracer_context {
@@ -52,6 +52,8 @@ tracer(struct _Unwind_Context *ctx, void *arg)
 	}
 	if (t->n < t->len)
 		t->arr[t->n++] = (void *)_Unwind_GetIP(ctx);
+	else
+		return _URC_FOREIGN_EXCEPTION_CAUGHT;
 	return 0;
 }
 
@@ -65,7 +67,9 @@ backtrace(void **arr, size_t len)
 	ctx.n = (size_t)~0;
 
 	_Unwind_Backtrace(tracer, &ctx);
-	if (ctx.n != (size_t)~0 && ctx.n > 0)
+	if (ctx.n == (size_t)~0)
+		ctx.n = 0;
+	else if (ctx.n > 0)
 		ctx.arr[--ctx.n] = NULL;	/* Skip frame below __start */
 
 	return ctx.n;
