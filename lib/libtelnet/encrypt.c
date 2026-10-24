@@ -1,4 +1,4 @@
-/*	$NetBSD: encrypt.c,v 1.17 2012/03/21 05:33:27 matt Exp $	*/
+/*	$NetBSD: encrypt.c,v 1.20 2024/10/29 13:10:06 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)encrypt.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: encrypt.c,v 1.17 2012/03/21 05:33:27 matt Exp $");
+__RCSID("$NetBSD: encrypt.c,v 1.20 2024/10/29 13:10:06 kre Exp $");
 #endif /* not lint */
 
 /*
@@ -79,7 +79,7 @@ __RCSID("$NetBSD: encrypt.c,v 1.17 2012/03/21 05:33:27 matt Exp $");
 void	(*encrypt_output)(unsigned char *, int);
 int	(*decrypt_input)(int);
 
-int encrypt_debug_mode = 0;
+static int encrypt_debug_mode = 0;
 static int decrypt_mode = 0;
 static int encrypt_mode = 0;
 static int encrypt_verbose = 0;
@@ -192,7 +192,7 @@ encrypt_init(const char *name, int server)
 	str_suplen = 4;
 
 	while (ep->type) {
-		if (encrypt_debug_mode)
+		if (encrypt_debug())
 			printf(">>>%s: I will support %s\r\n",
 				Name, ENCTYPE_NAME(ep->type));
 		i_support_encrypt |= typemask(ep->type);
@@ -226,11 +226,11 @@ EncryptEnable(char *type, char *mode)
 	if (isprefix(type, "help") || isprefix(type, "?")) {
 		printf("Usage: encrypt enable <type> [input|output]\n");
 		encrypt_list_types();
-		return(0);
+		return 0;
 	}
 	if (EncryptType(type, mode))
-		return(EncryptStart(mode));
-	return(0);
+		return EncryptStart(mode, NULL);
+	return 0;
 }
 
 int
@@ -250,13 +250,13 @@ EncryptDisable(char *type, char *mode)
 	} else {
 		if ((mode == 0) || (isprefix(mode, "input") ? 1 : 0)) {
 			if (decrypt_mode == ep->type)
-				EncryptStopInput();
+				EncryptStopInput(NULL, NULL);
 			i_wont_support_decrypt |= typemask(ep->type);
 			ret = 1;
 		}
 		if ((mode == 0) || (isprefix(mode, "output"))) {
 			if (encrypt_mode == ep->type)
-				EncryptStopOutput();
+				EncryptStopOutput(NULL, NULL);
 			i_wont_support_encrypt |= typemask(ep->type);
 			ret = 1;
 		}
@@ -298,28 +298,28 @@ EncryptType(char *type, char *mode)
 }
 
 int
-EncryptStart(char *mode)
+EncryptStart(char *mode, char *unused __unused)
 {
 	register int ret = 0;
 	if (mode) {
 		if (isprefix(mode, "input"))
-			return(EncryptStartInput());
+			return EncryptStartInput(NULL, NULL);
 		if (isprefix(mode, "output"))
-			return(EncryptStartOutput());
+			return EncryptStartOutput(NULL, NULL);
 		if (isprefix(mode, "help") || isprefix(mode, "?")) {
 			printf("Usage: encrypt start [input|output]\n");
-			return(0);
+			return 0;
 		}
 		printf("%s: invalid encryption mode 'encrypt start ?' for help\n", mode);
-		return(0);
+		return 0;
 	}
-	ret += EncryptStartInput();
-	ret += EncryptStartOutput();
-	return(ret);
+	ret += EncryptStartInput(NULL, NULL);
+	ret += EncryptStartOutput(NULL, NULL);
+	return ret;
 }
 
 int
-EncryptStartInput(void)
+EncryptStartInput(char *unused1 __unused, char *unused2 __unused)
 {
 	if (decrypt_mode) {
 		encrypt_send_request_start();
@@ -330,7 +330,7 @@ EncryptStartInput(void)
 }
 
 int
-EncryptStartOutput(void)
+EncryptStartOutput(char *unused1 __unused, char *unused2 __unused)
 {
 	if (encrypt_mode) {
 		encrypt_start_output(encrypt_mode);
@@ -341,38 +341,38 @@ EncryptStartOutput(void)
 }
 
 int
-EncryptStop(char *mode)
+EncryptStop(char *mode, char *unused __unused)
 {
 	int ret = 0;
 	if (mode) {
 		if (isprefix(mode, "input"))
-			return(EncryptStopInput());
+			return EncryptStopInput(NULL, NULL);
 		if (isprefix(mode, "output"))
-			return(EncryptStopOutput());
+			return EncryptStopOutput(NULL, NULL);
 		if (isprefix(mode, "help") || isprefix(mode, "?")) {
 			printf("Usage: encrypt stop [input|output]\n");
-			return(0);
+			return 0;
 		}
 		printf("%s: invalid encryption mode 'encrypt stop ?' for help\n", mode);
-		return(0);
+		return 0;
 	}
-	ret += EncryptStopInput();
-	ret += EncryptStopOutput();
-	return(ret);
+	ret += EncryptStopInput(NULL, NULL);
+	ret += EncryptStopOutput(NULL, NULL);
+	return ret;
 }
 
 int
-EncryptStopInput(void)
+EncryptStopInput(char *unused1 __unused, char *unused2 __unused)
 {
 	encrypt_send_request_end();
-	return(1);
+	return 1;
 }
 
 int
-EncryptStopOutput(void)
+EncryptStopOutput(char *unused1 __unused, char *unused2 __unused)
 {
 	encrypt_send_end();
-	return(1);
+	return 1;
 }
 
 void
@@ -387,7 +387,7 @@ encrypt_display(void)
 }
 
 int
-EncryptStatus(void)
+EncryptStatus(char *unused1 __unused, char *unused2 __unused)
 {
 	if (encrypt_output)
 		printf("Currently encrypting output with %s\r\n",
@@ -414,7 +414,7 @@ encrypt_send_support(void)
 	if (str_suplen) {
 		/*
 		 * If the user has requested that decryption start
-		 * immediatly, then send a "REQUEST START" before
+		 * immediately, then send a "REQUEST START" before
 		 * we negotiate the type.
 		 */
 		if (!Server && autodecrypt)
@@ -483,7 +483,7 @@ encrypt_support(unsigned char *typelist, int cnt)
 
 	while (cnt-- > 0) {
 		type = *typelist++;
-		if (encrypt_debug_mode)
+		if (encrypt_debug())
 			printf(">>>%s: He is supporting %s (%d)\r\n",
 				Name,
 				ENCTYPE_NAME(type), type);
@@ -499,7 +499,7 @@ encrypt_support(unsigned char *typelist, int cnt)
 		if (!ep)
 			return;
 		type = ep->start ? (*ep->start)(DIR_ENCRYPT, Server) : 0;
-		if (encrypt_debug_mode)
+		if (encrypt_debug())
 			printf(">>>%s: (*ep->start)() returned %d\r\n",
 					Name, type);
 		if (type < 0)
@@ -522,7 +522,7 @@ encrypt_is(unsigned char *data, int cnt)
 	if (type < ENCTYPE_CNT)
 		remote_supports_encrypt |= typemask(type);
 	if (!(ep = finddecryption(type))) {
-		if (encrypt_debug_mode)
+		if (encrypt_debug())
 			printf(">>>%s: Can't find type %s (%d) for initial negotiation\r\n",
 				Name,
 				ENCTYPE_NAME_OK(type)
@@ -531,7 +531,7 @@ encrypt_is(unsigned char *data, int cnt)
 		return;
 	}
 	if (!ep->is) {
-		if (encrypt_debug_mode)
+		if (encrypt_debug())
 			printf(">>>%s: No initial negotiation needed for type %s (%d)\r\n",
 				Name,
 				ENCTYPE_NAME_OK(type)
@@ -540,7 +540,7 @@ encrypt_is(unsigned char *data, int cnt)
 		ret = 0;
 	} else {
 		ret = (*ep->is)(data, cnt);
-		if (encrypt_debug_mode)
+		if (encrypt_debug())
 			printf("(*ep->is)(%p, %d) returned %s(%d)\n", data, cnt,
 				(ret < 0) ? "FAIL " :
 				(ret == 0) ? "SUCCESS " : "MORE_TO_DO ", ret);
@@ -564,7 +564,7 @@ encrypt_reply(unsigned char *data, int cnt)
 		return;
 	type = *data++;
 	if (!(ep = findencryption(type))) {
-		if (encrypt_debug_mode)
+		if (encrypt_debug())
 			printf(">>>%s: Can't find type %s (%d) for initial negotiation\r\n",
 				Name,
 				ENCTYPE_NAME_OK(type)
@@ -573,7 +573,7 @@ encrypt_reply(unsigned char *data, int cnt)
 		return;
 	}
 	if (!ep->reply) {
-		if (encrypt_debug_mode)
+		if (encrypt_debug())
 			printf(">>>%s: No initial negotiation needed for type %s (%d)\r\n",
 				Name,
 				ENCTYPE_NAME_OK(type)
@@ -582,13 +582,13 @@ encrypt_reply(unsigned char *data, int cnt)
 		ret = 0;
 	} else {
 		ret = (*ep->reply)(data, cnt);
-		if (encrypt_debug_mode)
+		if (encrypt_debug())
 			printf("(*ep->reply)(%p, %d) returned %s(%d)\n",
 				data, cnt,
 				(ret < 0) ? "FAIL " :
 				(ret == 0) ? "SUCCESS " : "MORE_TO_DO ", ret);
 	}
-	if (encrypt_debug_mode)
+	if (encrypt_debug())
 		printf(">>>%s: encrypt_reply returned %d\n", Name, ret);
 	if (ret < 0) {
 		autoencrypt = 0;
@@ -624,7 +624,7 @@ encrypt_start(unsigned char *data, int cnt)
 		if (encrypt_verbose)
 			printf("[ Input is now decrypted with type %s ]\r\n",
 				ENCTYPE_NAME(decrypt_mode));
-		if (encrypt_debug_mode)
+		if (encrypt_debug())
 			printf(">>>%s: Start to decrypt input with type %s\r\n",
 				Name, ENCTYPE_NAME(decrypt_mode));
 	} else {
@@ -665,7 +665,7 @@ void
 encrypt_end(void)
 {
 	decrypt_input = 0;
-	if (encrypt_debug_mode)
+	if (encrypt_debug())
 		printf(">>>%s: Input is back to clear text\r\n", Name);
 	if (encrypt_verbose)
 		printf("[ Input is now clear text ]\r\n");
@@ -803,7 +803,7 @@ encrypt_start_output(int type)
 	register int i;
 
 	if (!(ep = findencryption(type))) {
-		if (encrypt_debug_mode) {
+		if (encrypt_debug()) {
 			printf(">>>%s: Can't encrypt with type %s (%d)\r\n",
 				Name,
 				ENCTYPE_NAME_OK(type)
@@ -814,7 +814,7 @@ encrypt_start_output(int type)
 	}
 	if (ep->start) {
 		i = (*ep->start)(DIR_ENCRYPT, Server);
-		if (encrypt_debug_mode) {
+		if (encrypt_debug()) {
 			printf(">>>%s: Encrypt start: %s (%d) %s\r\n",
 				Name,
 				(i < 0) ? "failed" :
@@ -843,7 +843,7 @@ encrypt_start_output(int type)
 	 */
 	encrypt_output = ep->output;
 	encrypt_mode = type;
-	if (encrypt_debug_mode)
+	if (encrypt_debug())
 		printf(">>>%s: Started to encrypt output with type %s\r\n",
 			Name, ENCTYPE_NAME(type));
 	if (encrypt_verbose)
@@ -866,7 +866,7 @@ encrypt_send_end(void)
 	 * netflush...
 	 */
 	encrypt_output = 0;
-	if (encrypt_debug_mode)
+	if (encrypt_debug())
 		printf(">>>%s: Output is back to clear text\r\n", Name);
 	if (encrypt_verbose)
 		printf("[ Output is now clear text ]\r\n");
@@ -888,7 +888,7 @@ encrypt_send_request_start(void)
 	*p++ = SE;
 	telnet_net_write(str_start, p - str_start);
 	printsub('>', &str_start[2], p - &str_start[2]);
-	if (encrypt_debug_mode)
+	if (encrypt_debug())
 		printf(">>>%s: Request input to be encrypted\r\n", Name);
 }
 
@@ -899,14 +899,14 @@ encrypt_send_request_end(void)
 	telnet_net_write(str_end, sizeof(str_end));
 	printsub('>', &str_end[2], sizeof(str_end) - 2);
 
-	if (encrypt_debug_mode)
+	if (encrypt_debug())
 		printf(">>>%s: Request input to be clear text\r\n", Name);
 }
 
 void
 encrypt_wait(void)
 {
-	if (encrypt_debug_mode)
+	if (encrypt_debug())
 		printf(">>>%s: in encrypt_wait\r\n", Name);
 	if (!havesessionkey || !(I_SUPPORT_ENCRYPT & remote_supports_decrypt))
 		return;
@@ -915,10 +915,10 @@ encrypt_wait(void)
 			return;
 }
 
-void
-encrypt_debug(int mode)
+int
+encrypt_debug(void)
 {
-	encrypt_debug_mode = mode;
+	return encrypt_debug_mode;
 }
 
 void

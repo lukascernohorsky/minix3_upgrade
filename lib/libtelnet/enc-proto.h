@@ -1,4 +1,4 @@
-/*	$NetBSD: enc-proto.h,v 1.9 2012/01/09 15:25:33 christos Exp $	*/
+/*	$NetBSD: enc-proto.h,v 1.11 2024/10/29 13:10:06 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,18 +61,19 @@ void encrypt_list_types(void);
 int EncryptEnable(char *, char *);
 int EncryptDisable(char *, char *);
 int EncryptType(char *, char *);
-int EncryptStart(char *);
-int EncryptStartInput(void);
-int EncryptStartOutput(void);
-int EncryptStop(char *);
-int EncryptStopInput(void);
-int EncryptStopOutput(void);
-int EncryptStatus(void);
+int EncryptStart(char *, char *);
+int EncryptStartInput(char *, char *);
+int EncryptStartOutput(char *, char *);
+int EncryptStop(char *, char *);
+int EncryptStopInput(char *, char *);
+int EncryptStopOutput(char *, char *);
+int EncryptStatus(char *, char *);
 void encrypt_send_support(void);
 int EncryptDebug(int);
 int EncryptVerbose(int);
 int EncryptAutoEnc(int);
 int EncryptAutoDec(int);
+int encrypt_debug(void);
 void encrypt_support(unsigned char *, int);
 void encrypt_is(unsigned char *, int);
 void encrypt_reply(unsigned char *, int);
@@ -93,7 +94,6 @@ void encrypt_send_end(void);
 void encrypt_send_request_start(void);
 void encrypt_send_request_end(void);
 void encrypt_wait(void);
-void encrypt_debug(int);
 void encrypt_gen_printsub(unsigned char *, int, unsigned char *, int );
 void encrypt_printsub(unsigned char *, int, unsigned char *, int );
 
