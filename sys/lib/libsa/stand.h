@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.79 2014/08/10 07:40:49 isaki Exp $	*/
+/*	$NetBSD: stand.h,v 1.87 2022/04/30 09:24:05 rin Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -64,6 +64,7 @@
 #ifndef _LIBSA_STAND_H_
 #define	_LIBSA_STAND_H_
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/stat.h>
@@ -71,13 +72,9 @@
 #include "saioctl.h"
 #include "saerrno.h"
 
-#ifndef NULL
-#define	NULL	0
-#endif
-
 #ifdef LIBSA_RENAME_PRINTF
 #define getchar		libsa_getchar
-#define gets		libsa_gets
+#define kgets		libsa_kgets
 #define printf		libsa_printf
 #define putchar		libsa_putchar
 #define vprintf		libsa_vprintf
@@ -96,17 +93,9 @@ struct open_file;
 	extern __compactcall int	__CONCAT(fs,_stat)(struct open_file *, struct stat *)
 
 #if defined(LIBSA_ENABLE_LS_OP)
-#  if defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP
-#define FS_DEF(fs) \
-	FS_DEF_BASE(fs);\
-	extern __compactcall void	__CONCAT(fs,_ls)(struct open_file *, const char *); \
-	extern __compactcall void	__CONCAT(fs,_load_mods)(struct open_file *, const char *, \
-								void (*)(char *), char *)
-#  else
 #define FS_DEF(fs) \
 	FS_DEF_BASE(fs);\
 	extern __compactcall void	__CONCAT(fs,_ls)(struct open_file *, const char *)
-#  endif /* defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP */
 #else
 #define FS_DEF(fs) FS_DEF_BASE(fs)
 #endif
@@ -128,10 +117,6 @@ struct fs_ops {
 	__compactcall int	(*stat)(struct open_file *, struct stat *);
 #if defined(LIBSA_ENABLE_LS_OP)
 	__compactcall void	(*ls)(struct open_file *, const char *);
-# if defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP
-	__compactcall void	(*load_mods)(struct open_file *, const char *,
-		void (*)(char *), char *);
-# endif /* defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP */
 #endif
 };
 
@@ -139,17 +124,6 @@ extern struct fs_ops file_system[];
 extern int nfsys;
 
 #if defined(LIBSA_ENABLE_LS_OP)
-# if defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP
-#define FS_OPS(fs) { \
-	__CONCAT(fs,_open), \
-	__CONCAT(fs,_close), \
-	__CONCAT(fs,_read), \
-	__CONCAT(fs,_write), \
-	__CONCAT(fs,_seek), \
-	__CONCAT(fs,_stat), \
-	__CONCAT(fs,_ls), \
-	__CONCAT(fs,_load_mods) }
-# else
 #define FS_OPS(fs) { \
 	__CONCAT(fs,_open), \
 	__CONCAT(fs,_close), \
@@ -158,7 +132,6 @@ extern int nfsys;
 	__CONCAT(fs,_seek), \
 	__CONCAT(fs,_stat), \
 	__CONCAT(fs,_ls) }
-# endif /* defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP */
 #else
 #define FS_OPS(fs) { \
 	__CONCAT(fs,_open), \
@@ -177,9 +150,6 @@ extern int nfsys;
 #define	FS_STAT(fs)		((fs)->stat)
 #if defined(LIBSA_ENABLE_LS_OP)
 #define	FS_LS(fs)		((fs)->ls)
-#if  defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP)
-#define	FS_LOAD_MODS(fs)	((fs)->load_mods)
-#endif /* defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP) */
 #endif
 
 #else
@@ -192,9 +162,6 @@ extern int nfsys;
 #define	FS_STAT(fs)		___CONCAT(LIBSA_SINGLE_FILESYSTEM,_stat)
 #if defined(LIBSA_ENABLE_LS_OP)
 #define	FS_LS(fs)		___CONCAT(LIBSA_SINGLE_FILESYSTEM,_ls)
-#if  defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP)
-#define	FS_LOAD_MODS(fs)	___CONCAT(LIBSA_SINGLE_FILESYSTEM,_load_mods)
-#endif /* defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP) */
 #endif
 
 FS_DEF(LIBSA_SINGLE_FILESYSTEM);
@@ -276,7 +243,6 @@ void	*alloc(size_t) __compactcall;
 void	dealloc(void *, size_t) __compactcall;
 struct	disklabel;
 char	*getdisklabel(const char *, struct disklabel *);
-int	dkcksum(const struct disklabel *);
 
 void	printf(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
@@ -287,7 +253,7 @@ void	vprintf(const char *, va_list)
 int	vsnprintf(char *, size_t, const char *, va_list)
     __attribute__((__format__(__printf__, 3, 0)));
 void	twiddle(void);
-void	gets(char *);
+void	kgets(char *, size_t);
 int	getfile(char *prompt, int mode);
 char	*strerror(int);
 __dead void	exit(int);
@@ -310,9 +276,6 @@ int	stat(const char *, struct stat *);
 int	fstat(int, struct stat *);
 #if defined(LIBSA_ENABLE_LS_OP)
 void	ls(const char *);
-#if defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP
-void	load_mods(const char *, void (*)(char *));
-#endif /* defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP */
 #endif
 
 typedef int cmp_t(const void *, const void *);
@@ -353,5 +316,27 @@ void	bcopy(const void *, void *, size_t);
 void	bzero(void *, size_t);
 
 int	atoi(const char *);
+
+#if !defined(SA_HARDCODED_SECSIZE)
+#define	GETSECSIZE(f)	getsecsize(f)
+static inline u_int
+getsecsize(struct open_file *f)
+{
+	int rc;
+	u_int secsize = 0;
+
+	rc = DEV_IOCTL(f->f_dev)(f, SAIOSECSIZE, &secsize);
+	if (rc != 0 || secsize == 0)
+		secsize = DEV_BSIZE;
+
+	return secsize;
+}
+#else
+/*
+ * For some archs, divdi3 and friends are required to support variable
+ * sector sizes. Shave them off by making secsize compile-time constant.
+ */
+#define	GETSECSIZE(f)	DEV_BSIZE
+#endif
 
 #endif /* _LIBSA_STAND_H_ */
