@@ -1,4 +1,4 @@
-/* $NetBSD: tparm.c,v 1.15 2013/06/07 13:16:18 roy Exp $ */
+/* $NetBSD: tparm.c,v 1.19 2021/08/27 18:40:28 rillig Exp $ */
 
 /*
  * Copyright (c) 2009, 2011, 2013 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.15 2013/06/07 13:16:18 roy Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.19 2021/08/27 18:40:28 rillig Exp $");
 #include <sys/param.h>
 
 #include <assert.h>
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: tparm.c,v 1.15 2013/06/07 13:16:18 roy Exp $");
 #include <term.h>
 
 #define LONG_STR_MAX ((CHAR_BIT * sizeof(long)) / 3)
-#define BUFINC 128	/* Size to increament the terminal buffer by */
+#define BUFINC 128	/* Size to increment the terminal buffer by */
 
 #define VA_LONG_LONG	1
 #define VA_CHAR_INT	2
@@ -122,17 +122,21 @@ ochar(TERMINAL *term, int c)
 }
 
 static size_t
-onum(TERMINAL *term, const char *fmt, int num, unsigned int len)
+onum(TERMINAL *term, const char *fmt, int num, size_t len)
 {
-	size_t l;
+	int l;
+	size_t r;
 
 	if (len < LONG_STR_MAX)
 		len = LONG_STR_MAX;
 	if (checkbuf(term, len + 2) == NULL)
 		return 0;
-	l = sprintf(term->_buf + term->_bufpos, fmt, num);
-	term->_bufpos += l;
-	return l;
+	l = snprintf(term->_buf + term->_bufpos, len + 2, fmt, num);
+	if (l == -1)
+		return 0;
+	r = (size_t)l;
+	term->_bufpos += r;
+	return r;
 }
 
 /*
@@ -153,7 +157,7 @@ _ti_parm_analyse(const char *str, int *piss, int piss_len)
 			continue;
 		c = *str++;
 		switch (c) {
-			case 'l': /* FALLTHROUGH */
+			case 'l':
 			case 's':
 				if (lpop > 0) {
 					if (lpop <= piss_len)
@@ -187,10 +191,10 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
 	char c, fmt[64], *fp, *ostr;
 	long val, val2;
 	long dnums[26]; /* dynamic variables a-z, not preserved */
-	size_t l, max;
+	size_t l, max, width, precision, olen;
 	TPSTACK stack;
 	TPVAR params[TPARM_MAX];
-	unsigned int done, dot, minus, width, precision, olen;
+	unsigned int done, dot, minus;
 	int piss[TPARM_MAX]; /* Parameter IS String - piss ;) */
 
 	if (str == NULL)
@@ -222,7 +226,7 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
 	}
 
 	memset(&piss, 0, sizeof(piss));
-	max = _ti_parm_analyse(str, piss, TPARM_MAX);
+	max = (size_t)_ti_parm_analyse(str, piss, TPARM_MAX);
 
 	/* Put our parameters into variables */
 	memset(&params, 0, sizeof(params));
@@ -231,7 +235,7 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
 			if (va_type == VA_LONG_LONG) {
 				/* This only works if char * fits into a long
 				 * on this platform. */
-				if (sizeof(char *) <= sizeof(long)/*CONSTCOND*/)
+				if (sizeof(char *) <= sizeof(long))
 					params[l].string =
 					    (char *)va_arg(parms, long);
 				else {
@@ -261,24 +265,25 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
 		/* Handle formatting. */
 		fp = fmt;
 		*fp++ = '%';
-		done = dot = minus = width = precision = 0;
+		done = dot = minus = 0;
+		width = precision = 0;
 		val = 0;
 		while (done == 0 && (size_t)(fp - fmt) < sizeof(fmt)) {
 			switch (c) {
-			case 'c': /* FALLTHROUGH */
+			case 'c':
 			case 's':
 				*fp++ = c;
 				done = 1;
 				break;
-			case 'd': /* FALLTHROUGH */
-			case 'o': /* FALLTHROUGH */
-			case 'x': /* FALLTHROUGH */
-			case 'X': /* FALLTHROUGH */
+			case 'd':
+			case 'o':
+			case 'x':
+			case 'X':
 				*fp++ = 'l';
 				*fp++ = c;
 				done = 1;
 				break;
-			case '#': /* FALLTHROUGH */
+			case '#':
 			case ' ':
 				*fp++ = c;
 				break;
@@ -286,7 +291,7 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
 				*fp++ = c;
 				if (dot == 0) {
 					dot = 1;
-					width = val;
+					width = (size_t)val;
 				} else
 					done = 2;
 				val = 0;
@@ -320,9 +325,9 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
 			olen = 0;
 		} else {
 			if (dot == 0)
-				width = val;
+				width = (size_t)val;
 			else
-				precision = val;
+				precision = (size_t)val;
 			olen = MAX(width, precision);
 		}
 		*fp++ = '\0';
@@ -337,14 +342,17 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
 		case 's':
 			pop(NULL, &ostr, &stack);
 			if (ostr != NULL) {
+				int r;
+
 				l = strlen(ostr);
 				if (l < (size_t)olen)
 					l = olen;
 				if (checkbuf(term, (size_t)(l + 1)) == NULL)
 					return NULL;
-				l = sprintf(term->_buf + term->_bufpos,
+				r = snprintf(term->_buf + term->_bufpos, l + 1,
 				    fmt, ostr);
-				term->_bufpos += l;
+				if (r != -1)
+					term->_bufpos += (size_t)r;
 			}
 			break;
 		case 'l':
@@ -360,9 +368,9 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
 			push((long)l, NULL, &stack);
 #endif
 			break;
-		case 'd': /* FALLTHROUGH */
-		case 'o': /* FALLTHROUGH */
-		case 'x': /* FALLTHROUGH */
+		case 'd':
+		case 'o':
+		case 'x':
 		case 'X':
 			pop(&val, NULL, &stack);
 			if (onum(term, fmt, (int)val, olen) == 0)
@@ -371,7 +379,7 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
 		case 'p':
 			if (*str < '1' || *str > '9')
 				break;
-			l = *str++ - '1';
+			l = (size_t)(*str++ - '1');
 			if (push(params[l].num, params[l].string, &stack))
 				return NULL;
 			break;
@@ -417,18 +425,18 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
 			if (*str == '}')
 				str++;
 			break;
-		case '+': /* FALLTHROUGH */
-		case '-': /* FALLTHROUGH */
-		case '*': /* FALLTHROUGH */
-		case '/': /* FALLTHROUGH */
-		case 'm': /* FALLTHROUGH */
-		case 'A': /* FALLTHROUGH */
-		case 'O': /* FALLTHROUGH */
-		case '&': /* FALLTHROUGH */
-		case '|': /* FALLTHROUGH */
-		case '^': /* FALLTHROUGH */
-		case '=': /* FALLTHROUGH */
-		case '<': /* FALLTHROUGH */
+		case '+':
+		case '-':
+		case '*':
+		case '/':
+		case 'm':
+		case 'A':
+		case 'O':
+		case '&':
+		case '|':
+		case '^':
+		case '=':
+		case '<':
 		case '>':
 			pop(&val, NULL, &stack);
 			pop(&val2, NULL, &stack);

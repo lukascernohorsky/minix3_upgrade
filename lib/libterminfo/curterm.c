@@ -1,4 +1,4 @@
-/* $NetBSD: curterm.c,v 1.10 2013/11/18 20:51:03 joerg Exp $ */
+/* $NetBSD: curterm.c,v 1.14 2020/05/30 16:03:58 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: curterm.c,v 1.10 2013/11/18 20:51:03 joerg Exp $");
+__RCSID("$NetBSD: curterm.c,v 1.14 2020/05/30 16:03:58 roy Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -70,7 +70,7 @@ _ti_setospeed(TERMINAL *term)
 		os = cfgetospeed(&termios);
 		for (i = 0; i < __arraycount(bauds); i++)
 			if (bauds[i] == os) {
-				term->_ospeed = i;
+				term->_ospeed = (short)i;
 				break;
 			}
 	}
@@ -99,21 +99,21 @@ set_curterm(TERMINAL *nterm)
 
 		p = ttytype;
 		l = sizeof(ttytype);
-		if ((n = strlcpy(p, nterm->name, l)) == strlen(p)) {
+		if ((n = strlcpy(p, nterm->name, l)) < l) {
 			p += n;
 			l -= n;
 			*p++ = '|';
 			l--;
-			if (nterm->_alias  &&
-				(n = strlcpy(p, nterm->_alias, l)) == strlen(p))
+			if (nterm->_alias != NULL &&
+			    (n = strlcpy(p, nterm->_alias, l)) < l)
 			{
 				p += n;
 				l -= n;
 				*p++ = '|';
 				l--;
 			}
-			if (nterm->desc  &&
-				(n = strlcpy(p, nterm->desc, l)) == strlen(p))
+			if (nterm->desc != NULL &&
+			    (n = strlcpy(p, nterm->desc, l)) < l)
 			{
 				p += n;
 				l -= n;
@@ -139,7 +139,10 @@ del_curterm(TERMINAL *oterm)
 	free(oterm->nums);
 	free(oterm->flags);
 	free(oterm->_userdefs);
+	free(oterm->_buf);
 	free(oterm);
+	if (oterm == cur_term)
+		cur_term = NULL;
 	return OK;
 }
 

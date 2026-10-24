@@ -1,7 +1,7 @@
-/* $NetBSD: term.h,v 1.16 2013/06/07 13:16:18 roy Exp $ */
+/* $NetBSD: term.h,v 1.26 2022/05/11 14:58:00 andvar Exp $ */
 
 /*
- * Copyright (c) 2009, 2010, 2011, 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2011, 2013, 2020 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -313,13 +313,13 @@ enum TINUMS {
  * dot_vert_spacing: Spacing of pins vertically in pins per inch
  * init_tabs: Tabs initially every #1 spaces
  * label_height: Number of rows in each label
- * label_width: Numbre of columns in each label
+ * label_width: Number of columns in each label
  * lines: Number of lines on a screen or a page
  * lines_of_memory: Lines of memory of > lines; 0 means varies
  * max_attributes: Maximum combined video attributes terminal can display
  * magic_cookie_glitch: Number of blank characters left by smso or rmso
  * max_colors: Maximum number of colours on the screen
- * max_micro_address: Maximum value in micro_..._addresss
+ * max_micro_address: Maximum value in micro_..._address
  * max_micro_jump: Maximum value in parm_..._micro
  * max_pairs: Maximum number of colour-pairs on the screen
  * maximum_windows: Maximum number of definable windows
@@ -1057,7 +1057,7 @@ enum TISTRS{
 #define t_pkey_local(t)			(t)->strs[TICODE_pfloc]
 #define t_pkey_plab(t)			(t)->strs[TICODE_pfxl]
 #define t_pkey_xmit(t)			(t)->strs[TICODE_pfx]
-#define t_pkey_norm(t)			(t)->strs[TICODE_pln]
+#define t_plab_norm(t)			(t)->strs[TICODE_pln]
 #define t_print_screen(t)		(t)->strs[TICODE_mc0]
 #define t_ptr_non(t)			(t)->strs[TICODE_mc5p]
 #define t_ptr_off(t)			(t)->strs[TICODE_mc4]
@@ -1452,7 +1452,7 @@ enum TISTRS{
 #define pkey_local			 t_pkey_local(cur_term)
 #define pkey_plab			 t_pkey_plab(cur_term)
 #define pkey_xmit			 t_pkey_xmit(cur_term)
-#define pkey_norm			 t_pkey_norm(cur_term)
+#define plab_norm			 t_plab_norm(cur_term)
 #define print_screen			 t_print_screen(cur_term)
 #define ptr_non				 t_ptr_non(cur_term)
 #define ptr_off				 t_ptr_off(cur_term)
@@ -1611,7 +1611,7 @@ enum TISTRS{
  * enter_top_hl_mode: Turn on top highlight mode
  * enter_underline_mode: Start underscore mode
  * enter_upward_mode: Enable upward carriage motion
- * enter_vertical_hl_mode: Turn on verticle highlight mode
+ * enter_vertical_hl_mode: Turn on vertical highlight mode
  * enter_xon_mode: Turn on xon/xoff handshaking
  * erase_chars: Erase #1 characters
  * exit_alt_charset_mode: End alternate character set
@@ -1749,7 +1749,7 @@ enum TISTRS{
  * key_ll: sent by home-down key
  * key_mark: sent by mark key
  * key_message: sent by message key
- * key_mouse: 0631, Mouse event has occured
+ * key_mouse: 0631, Mouse event has occurred
  * key_move: sent by move key
  * key_next: sent by next-object key
  * key_npage: sent by next-page key
@@ -1776,7 +1776,7 @@ enum TISTRS{
  * key_select: sent by select key
  * key_send: sent by shifted end key
  * key_seol: sent by shifted clear-line key
- * key_sexit: sent by shited exit key
+ * key_sexit: sent by shifted exit key
  * key_sf: sent by scroll-forward/down key
  * key_sfind: sent by shifted find key
  * key_shelp: sent by shifted help key
@@ -1850,7 +1850,7 @@ enum TISTRS{
  * pkey_local: Prog funct key #1 to execute string #2
  * pkey_plab: Prog key #1 to xmit string #2 and show string #3
  * pkey_xmit: Prog funct key #1 to xmit string #2
- * pkey_norm: Prog label #1 to show string #3
+ * plab_norm: Prog label #1 to show string #2
  * print_screen: Print contents of screen
  * ptr_non: Turn off printer for #1 bytes
  * ptr_off: Turn off the printer
@@ -1933,8 +1933,8 @@ typedef struct {
 	/* We need to expose these so that the macros work */
 	const char *name;
 	const char *desc;
-	const signed char *flags;
-	const short *nums;
+	signed char *flags;
+	int *nums;
 	const char **strs;
 } TERMINAL;
 #endif

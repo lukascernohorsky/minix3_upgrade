@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.5.in,v 1.20 2014/03/18 18:20:38 riastradh Exp $
+.\"	$NetBSD: terminfo.5.in,v 1.24 2020/06/05 22:08:11 roy Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 25, 2013
+.Dd June 5, 2020
 .Dt TERMINFO 5
 .Os
 .Sh NAME
@@ -131,7 +131,7 @@ push the dynamic variable [a-z].
 .It Sy %P[A-Z]
 pop a parameter and push it to static variable [a-z].
 .It Sy %g[A-Z]
-push the dynamic variable [A-Z].
+push the static variable [a-z].
 .Pp
 Static variables persist over
 .Fn tparm
@@ -197,7 +197,7 @@ hts=\eEH, ht=^I,
 This implementation uses hashed databases managed by
 .Xr cdb 5
 instead of directories.
-To maintain compatability with other implementations,
+To maintain compatibility with other implementations,
 .Pa .cdb
 is appended to each file checked.
 .Pp

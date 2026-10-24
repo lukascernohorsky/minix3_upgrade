@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.17 2011/11/13 15:24:04 christos Exp $ */
+/* $NetBSD: termcap.c,v 1.25 2023/01/31 21:11:24 andvar Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,11 +28,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.17 2011/11/13 15:24:04 christos Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.25 2023/01/31 21:11:24 andvar Exp $");
 
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 #include <term_private.h>
@@ -57,14 +58,17 @@ tgetent(__unused char *bp, const char *name)
 	_DIAGASSERT(name != NULL);
 
 	/* Free the old term */
-	if (last != NULL) {
-		del_curterm(last);
-		last = NULL;
+	if (cur_term != NULL) {
+		if (last != NULL && cur_term != last)
+			del_curterm(last);
+		last = cur_term;
 	}
 	errret = -1;
 	if (setupterm(name, STDOUT_FILENO, &errret) != 0)
 		return errret;
-	last = cur_term;
+
+	if (last == NULL)
+		last = cur_term;
 
 	if (pad_char != NULL)
 		PC = pad_char[0];
@@ -85,7 +89,7 @@ tgetflag(const char *id2)
 		return 0;
 
 	ind = _t_flaghash((const unsigned char *)id, strlen(id));
-	if (ind <= __arraycount(_ti_cap_flagids)) {
+	if (ind < __arraycount(_ti_cap_flagids)) {
 		if (strcmp(id, _ti_cap_flagids[ind].id) == 0)
 			return cur_term->flags[_ti_cap_flagids[ind].ti];
 	}
@@ -110,7 +114,7 @@ tgetnum(const char *id2)
 		return -1;
 
 	ind = _t_numhash((const unsigned char *)id, strlen(id));
-	if (ind <= __arraycount(_ti_cap_numids)) {
+	if (ind < __arraycount(_ti_cap_numids)) {
 		te = &_ti_cap_numids[ind];
 		if (strcmp(id, te->id) == 0) {
 			if (!VALID_NUMERIC(cur_term->nums[te->ti]))
@@ -143,7 +147,7 @@ tgetstr(const char *id2, char **area)
 
 	str = NULL;
 	ind = _t_strhash((const unsigned char *)id, strlen(id));
-	if (ind <= __arraycount(_ti_cap_strids)) {
+	if (ind < __arraycount(_ti_cap_strids)) {
 		if (strcmp(id, _ti_cap_strids[ind].id) == 0) {
 			str = cur_term->strs[_ti_cap_strids[ind].ti];
 			if (str == NULL)
@@ -157,7 +161,7 @@ tgetstr(const char *id2, char **area)
 				str = ud->str;
 		}
 
-	/* XXX: FXIXME
+	/* XXX: FIXME
 	 * We should fix sgr0(me) as it has a slightly different meaning
 	 * for termcap. */
 
@@ -179,13 +183,14 @@ tgoto(const char *cm, int destcol, int destline)
 	return tiparm(cm, destline, destcol);
 }
 
+#ifdef TERMINFO_COMPILE
 static const char *
 flagname(const char *key)
 {
 	uint32_t idx;
 
 	idx = _t_flaghash((const unsigned char *)key, strlen(key));
-	if (idx <= __arraycount(_ti_cap_flagids) &&
+	if (idx < __arraycount(_ti_cap_flagids) &&
 	    strcmp(key, _ti_cap_flagids[idx].id) == 0)
 		return _ti_flagid(_ti_cap_flagids[idx].ti);
 	return key;
@@ -197,7 +202,7 @@ numname(const char *key)
 	uint32_t idx;
 
 	idx = _t_numhash((const unsigned char *)key, strlen(key));
-	if (idx <= __arraycount(_ti_cap_numids) && 
+	if (idx < __arraycount(_ti_cap_numids) &&
 	    strcmp(key, _ti_cap_numids[idx].id) == 0)
 		return _ti_numid(_ti_cap_numids[idx].ti);
 	return key;
@@ -209,7 +214,7 @@ strname(const char *key)
 	uint32_t idx;
 
 	idx = _t_strhash((const unsigned char *)key, strlen(key));
-	if (idx <= __arraycount(_ti_cap_strids) &&
+	if (idx < __arraycount(_ti_cap_strids) &&
 	    strcmp(key, _ti_cap_strids[idx].id) == 0)
 		return _ti_strid(_ti_cap_strids[idx].ti);
 
@@ -220,11 +225,11 @@ strname(const char *key)
 }
 
 /* Print a parameter if needed */
-static int
-printparam(char **dst, char p, int *nop)
+static size_t
+printparam(char **dst, char p, bool *nop)
 {
-	if (*nop != 0) {
-		*nop = 0;
+	if (*nop) {
+		*nop = false;
 		return 0;
 	}
 
@@ -235,24 +240,24 @@ printparam(char **dst, char p, int *nop)
 }
 
 /* Convert a termcap character into terminfo equivalents */
-static int
+static size_t
 printchar(char **dst, const char **src)
 {
-	unsigned char v;
-	int l;
+	char v;
+	size_t l;
 
 	l = 4;
-	v = (unsigned char) *++(*src);
+	v = *++(*src);
 	if (v == '\\') {
-		v = (unsigned char) *++(*src);
+		v = *++(*src);
 		switch (v) {
 		case '0':
 		case '1':
 		case '2':
 		case '3':
 			v = 0;
-			while (isdigit((unsigned char) **src))	
-				v = 8 * v + ((unsigned char) *(*src)++ - '0');
+			while (isdigit((unsigned char) **src))
+				v = 8 * v + (*(*src)++ - '0');
 			(*src)--;
 			break;
 		case '\0':
@@ -260,9 +265,11 @@ printchar(char **dst, const char **src)
 			break;
 		}
 	} else if (v == '^')
-		v = (unsigned char) (*++(*src) & 0x1f);
+		v = *++(*src) & 0x1f;
 	*(*dst)++ = '%';
-	if (isgraph(v) && v != ',' && v != '\'' && v != '\\' && v != ':') {
+	if (isgraph((unsigned char )v) &&
+	    v != ',' && v != '\'' && v != '\\' && v != ':')
+	{
 		*(*dst)++ = '\'';
 		*(*dst)++ = v;
 		*(*dst)++ = '\'';
@@ -292,9 +299,9 @@ static const char fmtElse[] = "%+%;";
 static char *
 strval(const char *val)
 {
-	char *info, *ip, c;
+	char *info, *ip, c, p;
 	const char *ps, *pe;
-	int p, nop;
+	bool nop;
 	size_t len, l;
 
 	len = 1024; /* no single string should be bigger */
@@ -318,7 +325,8 @@ strval(const char *val)
 	} else
 		ps = pe  = NULL;
 
-	l = nop = 0;
+	nop = false;
+	l = 0;
 	p = 1;
 	for (; *val != '\0'; val++) {
 		if (l + 2 > len)
@@ -344,7 +352,7 @@ strval(const char *val)
 			ip[19] += p;
 			ip += sizeof(fmtB) - 1;
 			l += sizeof(fmtB) - 1;
-			nop = 1;
+			nop = true;
 			continue;
 		case 'D':
 			if (l + sizeof(fmtD) > len)
@@ -355,7 +363,7 @@ strval(const char *val)
 			ip[5] += p;
 			ip += sizeof(fmtD) - 1;
 			l += sizeof(fmtD) - 1;
-			nop = 1;
+			nop = true;
 			continue;
 		case 'r':
 			/* non op as switched below */
@@ -405,7 +413,7 @@ strval(const char *val)
 			ip += sizeof(fmtElse) - 1;
 			l += sizeof(fmtElse) - 1;
 			l += 16;
-			nop = 1;
+			nop = true;
 			continue;
 		case '.':
 			if (l + 6 > len)
@@ -440,7 +448,7 @@ strval(const char *val)
 
 	/* Add our padding at the end. */
 	if (ps != NULL) {
-		size_t n = pe - ps;
+		size_t n = (size_t)(pe - ps);
 		if (l + n + 4 > len)
 			goto elen;
 		*ip++ = '$';
@@ -504,7 +512,8 @@ captoinfo(char *cap)
 			continue;
 		name = token;
 		val = p = NULL;
-		fv = nl = 0;
+		fv = 0;
+		nl = 0;
 		if (token[1] != '\0') {
 			tok[0] = token[0];
 			tok[1] = token[1];
@@ -553,8 +562,11 @@ captoinfo(char *cap)
 			else
 				len += rl;
 			p = realloc(info, len);
-			if (p == NULL)
+			if (p == NULL) {
+				if (fv == 1)
+					free(val);
 				return NULL;
+			}
 			info = p;
 		}
 
@@ -589,4 +601,4 @@ captoinfo(char *cap)
 	*ip = '\0';
 	return info;
 }
-
+#endif
