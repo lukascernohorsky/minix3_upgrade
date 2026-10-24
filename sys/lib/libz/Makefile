@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2015/09/07 03:44:19 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.24 2023/10/07 12:15:54 rin Exp $
 
 LIB=	z
 LIBISPRIVATE=	yes
@@ -24,12 +24,4 @@ CLEANFILES+= lib${LIB}.o
 .undef DESTDIR
 .include <bsd.lib.mk>
 
-lib${LIB}.o:: ${OBJS:O}
-	@echo building standard ${LIB} library
-	@rm -f lib${LIB}.o
-	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
-	@echo done
-
-.if defined(HAVE_GCC) && ${MACHINE_ARCH} == "vax"
-COPTS.inftrees.c+=	-O0
-.endif
+lib${LIB}.o:: ${OBJS:O} __buildstdlib

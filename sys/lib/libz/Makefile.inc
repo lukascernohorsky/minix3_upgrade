@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2015/09/06 15:34:55 uebayasi Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2020/09/28 02:44:34 simonb Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -19,9 +19,9 @@
 # Default values:
 ZDST?=		${.OBJDIR}/lib/z
 Z_AS?=		library
-ZDOTDIR?= ../../.
+ZDOTDIR?=	 ../../.
 
-ZDIR=		${S:S@^.@${ZDOTDIR}@:Q}/lib/libz
+ZDIR=		${S:S@^.@${ZDOTDIR}@:q}/lib/libz
 .if (${Z_AS} == "obj")
 ZLIB=		${ZDST}/libz.o
 ZLIB_PROF=	${ZDST}/libz.po
@@ -31,18 +31,18 @@ ZLIB_PROF=	${ZDST}/libz_p.a
 .endif
 
 ZMAKE= \
-	cd ${ZDST} && ${MAKE} -f ${ZDIR:Q}/Makefile \
-	    ZDIR=${ZDIR:Q} \
-	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} CPUFLAGS= \
-	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
-	    LORDER=${LORDER:Q} \
-	    TSORT=${TSORT:Q} \
-	    LD=${LD:Q} STRIP=${STRIP:Q} \
-	    AR=${AR:Q} NM=${NM:Q} \
-	    RANLIB=${RANLIB:Q} SIZE=${SIZE:Q} \
-	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
-	    ZCPPFLAGS=${CPPFLAGS:S@^-I.@-I${ZDOTDIR}@g:Q} \
-	    ZMISCCPPFLAGS=${ZMISCCPPFLAGS:Q} \
+	cd ${ZDST} && ${MAKE} -f ${ZDIR:q}/Makefile \
+	    ZDIR=${ZDIR:q} \
+	    CC=${CC:q} CFLAGS=${CFLAGS:q} CPUFLAGS= \
+	    AS=${AS:q} AFLAGS=${AFLAGS:q} \
+	    LORDER=${LORDER:q} \
+	    TSORT=${TSORT:q} \
+	    LD=${LD:q} STRIP=${STRIP:q} \
+	    AR=${AR:q} NM=${NM:q} \
+	    RANLIB=${RANLIB:q} SIZE=${SIZE:q} \
+	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:q} \
+	    ZCPPFLAGS=${CPPFLAGS:S@^-I.@-I${ZDOTDIR}@g:q} \
+	    ZMISCCPPFLAGS=${ZMISCCPPFLAGS:q} \
 	    ${ZMISCMAKEFLAGS}
 
 ${ZLIB}:		.NOTMAIN .MAKE __always_make_zlib
@@ -52,7 +52,6 @@ ${ZLIB}:		.NOTMAIN .MAKE __always_make_zlib
 .else
 	@${ZMAKE} libz.o
 .endif
-	@echo done
 
 ${ZLIB_PROF}:		.NOTMAIN .MAKE __always_make_zlib
 	@echo making sure the profiled z library is up to date...
@@ -61,25 +60,21 @@ ${ZLIB_PROF}:		.NOTMAIN .MAKE __always_make_zlib
 .else
 	@${ZMAKE} libz.po
 .endif
-	@echo done
 
 clean:			.NOTMAIN cleanzlib
 cleanzlib:		.NOTMAIN
 	@echo cleaning the z library objects
 	@if [ -d "${ZDST}" ]; then ${ZMAKE} clean; fi
-	@echo done
 
 cleandir distclean:	.NOTMAIN cleandirzlib
 cleandirzlib:		.NOTMAIN
 	@echo cleandiring the z library objects
 	@if [ -d "${ZDST}" ]; then ${ZMAKE} cleandir; fi
-	@echo done
 
 dependall depend:	.NOTMAIN dependzlib
 dependzlib:		.NOTMAIN .MAKE __always_make_zlib
 	@echo depending the z library objects
 	@${ZMAKE} depend
-	@echo done
 
 __always_make_zlib:	.NOTMAIN
 	@mkdir -p ${ZDST}
