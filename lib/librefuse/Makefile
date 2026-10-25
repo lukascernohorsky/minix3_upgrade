@@ -3,8 +3,12 @@
 USE_FORT?=	yes	# data driven bugs?
 
 LIB=		refuse
+.if !defined(__MINIX)
 LIBDPLIBS+=	puffs	${.CURDIR}/../libpuffs		\
 		pthread	${.CURDIR}/../libpthread
+.else
+LIBDPLIBS+=	puffs	${.CURDIR}/../libpuffs
+.endif # !defined(__MINIX)
 
 .ifdef DEBUG
 FUSE_OPT_DEBUG_FLAGS=	-g -DFUSE_OPT_DEBUG

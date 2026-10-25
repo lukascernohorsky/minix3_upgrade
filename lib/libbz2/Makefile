@@ -15,6 +15,14 @@ SRCS=		blocksort.c huffman.c crctable.c randtable.c compress.c \
 INCS=		bzlib.h
 INCSDIR=	/usr/include
 
+.if defined(__MINIX)
+.if !empty(DBG:M-Og) || !empty(CFLAGS:M-Og) || \
+	!empty(DBG:M-g) || !empty(CFLAGS:M-g)
+#LSC: -Wno-maybe-uninitialized while compiling with -DNDEBUG -Og
+CWARNFLAGS.gcc+=	-Wno-maybe-uninitialized
+.endif
+.endif # defined(__MINIX)
+
 COPTS+=		${CC_WNO_IMPLICIT_FALLTHROUGH}
 
 # XXX blocksort.c gets mis-compiled with 4.1

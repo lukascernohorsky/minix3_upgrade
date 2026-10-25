@@ -1,0 +1,5 @@
+reason: merge-conflict
+path: lib/librefuse/refuse.c
+date: 2026-10-24T08:15:10Z
+old_ref: db4f849365101385d6667256568616131bac8ee7
+new_ref: nbsd-11.0

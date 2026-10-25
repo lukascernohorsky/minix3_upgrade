@@ -2,12 +2,59 @@
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
+.if defined(__MINIX)
+.PATH: ${NETBSDSRCDIR}/minix/lib/libc/gen
+
+CPPFLAGS.fslib.c+= -I${NETBSDSRCDIR}/minix/fs
+CPPFLAGS.fsversion.c+= -I${NETBSDSRCDIR}/minix/fs
+
+SRCS+= fsversion.c gcov.c itoa.c read_tsc_64.c fslib.c
+
+.endif # defined(__MINIX)
 .PATH: ${ARCHDIR}/gen ${.CURDIR}/gen
 
 .if ${RUMPRUN} != "yes"
 SRCS+=	_errno.c daemon.c
 .endif
 
+.if defined(__MINIX)
+# Unsupported by Minix.
+# 	closefrom.c confstr.c extattr.c \
+#	pthread_atfork.c
+#
+# Not useful but portable
+#	disklabel.c
+
+SRCS+=	alarm.c alphasort.c arc4random.c assert.c asysctl.c \
+	basename.c clock.c closedir.c \
+	ctermid.c ctype_.c daemon.c \
+	dehumanize_number.c devname.c dirname.c err.c errx.c \
+	errc.c errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
+	fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
+	fts.c ftw.c getbsize.c getcap.c getcwd.c \
+	getdevmajor.c getdomainname.c getgrent.c \
+	getgrouplist.c getgroupmembership.c gethostname.c \
+	getloadavg.c getlogin.c getmntinfo.c \
+	getnetgrent.c getpagesize.c \
+	getpass.c getprogname.c getpwent.c getttyent.c \
+	getusershell.c glob.c humanize_number.c initdir.c initgroups.c \
+	isascii.c isatty.c isctype.c lockf.c nftw.c \
+	nice.c nlist.c nlist_aout.c nlist_coff.c nlist_ecoff.c nlist_elf32.c \
+	nlist_elf64.c opendir.c pause.c popen.c posix_spawn_sched.c \
+	posix_spawn_fileactions.c posix_spawnp.c psignal.c \
+	ptree.c pwcache.c pw_scan.c raise.c randomid.c rb.c readdir.c \
+	rewinddir.c scandir.c seekdir.c setdomainname.c \
+	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
+	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
+	siglist.c signal.c signame.c sigrelse.c \
+	sigset.c sigsetops.c sleep.c \
+	stringlist.c sysconf.c sysctl.c sysctlbyname.c sysctlgetmibinfo.c \
+	sysctlnametomib.c syslog.c telldir.c time.c \
+	times.c toascii.c tolower_.c ttyname.c ttyslot.c toupper_.c ualarm.c \
+	ulimit.c uname.c unvis.c usleep.c utime.c utimens.c utmp.c \
+	utmpx.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c \
+	warnc.c vwarn.c vwarnx.c vwarnc.c verr.c verrx.c verrc.c wordexp.c
+.else
 SRCS+=	alarm.c alphasort.c arc4random.c assert.c asysctl.c \
 	basename.c clock.c closedir.c closefrom.c \
 	confstr.c ctermid.c ctype_.c \
@@ -39,6 +86,7 @@ SRCS+=	alarm.c alphasort.c arc4random.c assert.c asysctl.c \
 	utmpx.c valloc.c vis.c wait.c wait3.c waitid.c waitpid.c warn.c \
 	warnx.c warnc.c wordexp.c xsyslog.c \
 	vwarn.c vwarnx.c vwarnc.c verr.c verrx.c verrc.c
+.endif # defined(__MINIX)
 
 LINTFLAGS.arc4random.c+=-Ac11	# stdatomic.h
 LINTFLAGS.arc4random.c+=-X 129	# expression has null effect (in atomic macros)
@@ -213,12 +261,3 @@ CPPFLAGS.tolower_.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.toupper_.c+=	-I${LIBCDIR}/locale
 
 errlist.c: errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
-	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
-
-LINTFLAGS.rb.c += -X 231	# XXX: marked as unused already why?
-LINTFLAGS.siglist.c += -X 351	# XXX: renames
-LINTFLAGS.signame.c += -X 351	# XXX: renames
-# missing atomic decls
-LINTFLAGS.arc4random.c += ${${ACTIVE_CC} == "clang":? -X 215 :}
-
-CLEANFILES+= errlist.c

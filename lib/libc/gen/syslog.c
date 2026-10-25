@@ -117,7 +117,10 @@ lock(const struct syslog_data *data)
 {
 	int rv = data == &_syslog_data;
 	if (rv)
+#if !defined(__minix)
 		mutex_lock(&syslog_mutex);
+	return rv;
+#endif /* !defined(__minix) */
 	return rv;
 }
 
@@ -126,7 +129,10 @@ unlock(const struct syslog_data *data)
 {
 	int rv = data == &_syslog_data;
 	if (rv)
+#if !defined(__minix)
 		mutex_unlock(&syslog_mutex);
+	return rv;
+#endif /* !defined(__minix) */
 	return rv;
 }
 

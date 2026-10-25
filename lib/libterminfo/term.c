@@ -48,7 +48,11 @@ __RCSID("$NetBSD: term.c,v 1.34 2020/04/05 14:53:39 martin Exp $");
  * Although we can read v1 structure (which includes v2 alias records)
  * we really want a v3 structure to get numerics of type int rather than short.
  */
+#if !defined(__minix)
 #define _PATH_TERMINFO	"/usr/share/misc/terminfo"
+#else
+#define _PATH_TERMINFO		"/usr/share/terminfo/terminfo"
+#endif /* !defined(__minix) */
 
 #ifdef TERMINFO_DB
 static char __ti_database[PATH_MAX];

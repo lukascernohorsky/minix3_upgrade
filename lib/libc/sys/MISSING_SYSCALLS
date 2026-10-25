@@ -68,7 +68,7 @@ swapon
 quotactl
 setrlimit
 # LFS: 184 lfs_bmapv, 185 lfs_markv, 186 lfs_segclean, 422 __lfs_segwait50
-lfs_*
+#lfs_*
 # extattr 361-372 (set/get/delete/list x file/fd/link) + extattrctl 360,
 # ktery maska extattr_* nechytne (chybi podtrzitko za extattr)
 extattr_*

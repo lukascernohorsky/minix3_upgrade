@@ -1,5 +1,6 @@
 #	$NetBSD: Makefile.inc,v 1.12 2024/05/19 22:25:47 christos Exp $
 
+#__MINIX: Not everything is imported yet.
 .PATH: ${COMPATDIR}/sys
 SRCS+= compat_getdents.c compat_getdirentries.c compat_msync.c \
     compat_ntp_gettime.c compat_sched.c compat_dup3.c \

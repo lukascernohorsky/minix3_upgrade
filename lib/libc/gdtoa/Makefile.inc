@@ -30,8 +30,10 @@ SRCS+=	strtod.c
 SRCS+=	dtoa.c ldtoa.c hdtoa.c gdtoa.c
 LINTFLAGS.ldtoa.c+=	-X 132
 
+.if !defined(__MINIX)
 # local locking implementation
 SRCS+=	gdtoa_locks.c
+.endif # !defined(__MINIX)
 
 # private interfaces
 SRCS+=	dmisc.c \

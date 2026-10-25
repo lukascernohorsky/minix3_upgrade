@@ -64,6 +64,11 @@ static void sputchar(int);
 static void kdoprnt(void (*)(int), const char *, va_list);
 
 static char *sbuf, *ebuf;
+#if defined(__minix)
+/* vsnprintf: add support for returning the amount of characters that would have been
+ * written if the buffer was large enough */
+static int  scount;
+#endif /* defined(__minix) */
 
 const char hexdigits[16] = "0123456789abcdef";
 
@@ -71,6 +76,9 @@ const char hexdigits[16] = "0123456789abcdef";
 #ifdef LIBSA_PRINTF_LONGLONG_SUPPORT
 #define LLONG		0x02
 #endif
+#if defined(__minix)
+#define HEXCAP		0x100
+#endif /* defined(__minix) */
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
 #define ALT		0x04
 #define SPACE		0x08
@@ -135,6 +143,10 @@ null_sputchar(int c)
 static void
 sputchar(int c)
 {
+#if defined(__minix)
+	scount++; /* increase scount regardless */
+	if (!sbuf) return; /* hanlde NULL sbuf  */
+#endif /* defined(__minix) */
 
 	if (sbuf < ebuf)
 		*sbuf++ = c;
@@ -145,6 +157,10 @@ vprintf(const char *fmt, va_list ap)
 {
 
 	kdoprnt(putchar, fmt, ap);
+#if defined(__minix) && defined(LIBSA_PRINTF_WIDTH_SUPPORT)
+	/* BJG: our libminc kputc() relies on a 0 to flush the diag buffer. */
+	putchar(0);
+#endif /* defined(__minix) && defined(LIBSA_PRINTF_WIDTH_SUPPORT) */
 }
 
 int
@@ -153,10 +169,26 @@ vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
 
 	sbuf = buf;
 	ebuf = buf + size - 1;
+#if defined(__minix)
+	scount = 0; /* use scount to keep track of written items */
+#endif /* defined(__minix) */
+
+#if defined(__minix)
+	kdoprnt(sputchar, fmt, ap);
+
+	if (sbuf){ /* handle case where sbuf == NULL */
+		*sbuf = '\0';
+	}
+#if defined(_MINIX_MAGIC)
+	sbuf = ebuf = NULL; /* leave no dangling pointers */
+#endif
+	return scount;
+#else /* __minix is not defined */
 	kdoprnt(buf == NULL ? null_sputchar : sputchar, fmt, ap);
 	if (buf != NULL)
 		*sbuf = '\0';
 	return sbuf - buf;
+#endif  /* defined(__minix) */
 }
 
 static void
@@ -169,6 +201,9 @@ kdoprnt(void (*put)(int), const char *fmt, va_list ap)
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
 	int width;
 	char *q;
+#if defined(__minix)
+	int max;
+#endif /* defined(__minix) */
 #endif
 
 	for (;;) {
@@ -180,10 +215,22 @@ kdoprnt(void (*put)(int), const char *fmt, va_list ap)
 		lflag = 0;
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
 		width = 0;
+#if defined(__minix)
+		max = -1;
+#endif /* defined(__minix) */
 #endif
 reswitch:
 		switch (ch = *fmt++) {
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
+#if defined(__minix)
+		case '.':
+			if (*fmt == '*') {
+				max = va_arg(ap, int);
+				fmt++;
+			} else for (max = 0; *fmt >= '0' && *fmt <= '9'; fmt++)
+				max = max * 10 + *fmt - '0';
+			goto reswitch;
+#endif /* defined(__minix) */
 		case '#':
 			lflag |= ALT;
 			goto reswitch;
@@ -254,10 +301,19 @@ reswitch:
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
 			for (q = p; *q != '\0'; ++q)
 				continue;
+#if defined(__minix)
+			if (max >= 0 && q - p > max)
+				q = &p[max];
+#endif /* defined(__minix) */
 			width -= q - p;
 #endif
 			RADJUSTPAD();
+#if defined(LIBSA_PRINTF_WIDTH_SUPPORT) && defined(__minix)
+			while ((max < 0 || max-- > 0) &&
+			    (ch = (unsigned char)*p++))
+#else /* !defined(LIBSA_PRINTF_WIDTH_SUPPORT) || !defined(__minix) */
 			while ((ch = (unsigned char)*p++))
+#endif /* !defined(LIBSA_PRINTF_WIDTH_SUPPORT) || !defined(__minix) */
 				put(ch);
 			LADJUSTPAD();
 			break;
@@ -294,6 +350,12 @@ reswitch:
 		case 'x':
 			KPRINT(16);
 			break;
+#if defined(__minix)
+		case 'X':
+			lflag |= HEXCAP;
+			KPRINT(16);
+			break;
+#endif /* defined(__minix) */
 		default:
 			if (ch == '\0')
 				return;
@@ -319,6 +381,14 @@ kprintn(void (*put)(int), UINTMAX_T ul, int base)
 	p = buf;
 	do {
 		*p++ = hexdigits[ul % base];
+#if defined(__minix)
+#ifdef LIBSA_PRINTF_WIDTH_SUPPORT
+		/* LSC: Quick hack to support capital hex printout. */
+		if ((lflag & HEXCAP) && (*(p-1) >= 'a') && (*(p-1) <= 'z')) {
+			*(p-1) -= 32;
+		}
+#endif
+#endif /* defined(__minix) */
 	} while (ul /= base);
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
 	q = p;

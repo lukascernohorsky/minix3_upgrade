@@ -11,8 +11,10 @@ COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/${MACHINE_CPU}
 COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/${MACHINE_ARCH}
 .endif
 
+.if !defined(__MINIX)
 .PATH: ${COMPILER_RT_CPU_DIR}
 .PATH: ${COMPILER_RT_ARCH_DIR}
+.endif # !defined(__MINIX)
 .PATH: ${COMPILER_RT_SRCDIR}/lib/builtins
 
 # Needs scaling support
@@ -30,6 +32,7 @@ GENERIC_SRCS+= \
 	multc3.c
 .endif
 
+.if !defined(__MINIX)
 .for src in ${GENERIC_SRCS}
 .  if exists(${COMPILER_RT_CPU_DIR}/${src:R}.S) || \
       exists(${COMPILER_RT_ARCH_DIR}/${src:R}.S)
@@ -39,5 +42,12 @@ SRCS+=	${src}
 COPTS.${src}+=	-Wno-error=missing-prototypes
 .  endif
 .endfor
+.else
+# For MINIX: do not pull in the assembly symbols, as they are not PIC ready
+.for src in ${GENERIC_SRCS}
+SRCS+=	${src}
+COPTS.${src}+=	-Wno-error=missing-prototypes
+.endfor
+.endif # !defined(__MINIX)
 
 .include "${COMPILER_RT_DIR}/abi.mk"

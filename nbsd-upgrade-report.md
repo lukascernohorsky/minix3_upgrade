@@ -1,0 +1,6309 @@
+# NetBSD library upgrade report
+
+Generated: 2026-10-24T10:47:24Z  
+Command: all  
+Minix repo: /usr/home/cerluk/Projekty/minix3  
+Old reference: db4f849365101385d6667256568616131bac8ee7  
+New reference: nbsd-11.0  
+Components: csu, i18n_module, libc, libbz2, libcrypt, libcurses, libedit, libexecinfo, libform, libintl, libkvm, libm, libmenu, libpci, libprop, libpuffs, librefuse, librmt, libtelnet, libterminfo, libutil, libwrap, libz, lua, libsa, libunwind, sys_libz, ld_elf_so  
+Mode: post-merge (data from merge state)
+
+## Souhrn
+
+audit: 4939 files, 4797 pure_netbsd, 63 minix_modified, 0 new_upstream, 79 missing_new_ref, 0 minix_only
+
+- updated (auto): 4341
+- merged (3-way): 61
+- conflicts quarantined: 0
+- new upstream files: 803
+- data files replaced: 0
+- removed upstream files: 79
+
+## Automaticky aktualizovano
+
+- common/include/ppath/Makefile
+- common/include/ppath/ppath.h
+- common/include/ppath/ppath_impl.h
+- common/include/prop/Makefile
+- common/include/prop/plistref.h
+- common/include/prop/prop_array.h
+- common/include/prop/prop_bool.h
+- common/include/prop/prop_data.h
+- common/include/prop/prop_dictionary.h
+- common/include/prop/prop_ingest.h
+- common/include/prop/prop_number.h
+- common/include/prop/prop_object.h
+- common/include/prop/prop_string.h
+- common/include/prop/proplib.h
+- lib/csu/README
+- lib/csu/arch/aarch64/Makefile.inc
+- lib/csu/arch/aarch64/crt0.S
+- lib/csu/arch/aarch64/crtbegin.h
+- lib/csu/arch/aarch64/crtend.S
+- lib/csu/arch/aarch64/crti.S
+- lib/csu/arch/aarch64/crtn.S
+- lib/csu/arch/alpha/Makefile.inc
+- lib/csu/arch/alpha/crt0.S
+- lib/csu/arch/alpha/crtbegin.h
+- lib/csu/arch/alpha/crtend.S
+- lib/csu/arch/alpha/crtfm.c
+- lib/csu/arch/alpha/crti.S
+- lib/csu/arch/alpha/crtn.S
+- lib/csu/arch/arm/Makefile.inc
+- lib/csu/arch/arm/crt0.S
+- lib/csu/arch/arm/crtbegin.h
+- lib/csu/arch/arm/crtend.S
+- lib/csu/arch/arm/crti.S
+- lib/csu/arch/arm/crtn.S
+- lib/csu/arch/earm/Makefile.inc
+- lib/csu/arch/earm/crt0.S
+- lib/csu/arch/earm/crtbegin.h
+- lib/csu/arch/earm/crtend.S
+- lib/csu/arch/earm/crti.S
+- lib/csu/arch/earm/crtn.S
+- lib/csu/arch/hppa/Makefile.inc
+- lib/csu/arch/hppa/crt0.S
+- lib/csu/arch/hppa/crtbegin.h
+- lib/csu/arch/hppa/crtend.S
+- lib/csu/arch/hppa/crti.S
+- lib/csu/arch/hppa/crtn.S
+- lib/csu/arch/i386/Makefile.inc
+- lib/csu/arch/i386/crt0.S
+- lib/csu/arch/i386/crtbegin.S
+- lib/csu/arch/i386/crtend.S
+- lib/csu/arch/i386/crti.S
+- lib/csu/arch/i386/crtn.S
+- lib/csu/arch/ia64/Makefile.inc
+- lib/csu/arch/ia64/crt0.S
+- lib/csu/arch/ia64/crtbegin.h
+- lib/csu/arch/ia64/crtend.S
+- lib/csu/arch/ia64/crti.S
+- lib/csu/arch/ia64/crtn.S
+- lib/csu/arch/m68k/Makefile.inc
+- lib/csu/arch/m68k/crt0.S
+- lib/csu/arch/m68k/crtbegin.h
+- lib/csu/arch/m68k/crtend.S
+- lib/csu/arch/m68k/crti.S
+- lib/csu/arch/m68k/crtn.S
+- lib/csu/arch/mips/Makefile.inc
+- lib/csu/arch/mips/crt0.S
+- lib/csu/arch/mips/crtbegin.h
+- lib/csu/arch/mips/crtend.S
+- lib/csu/arch/mips/crti.S
+- lib/csu/arch/mips/crtn.S
+- lib/csu/arch/or1k/Makefile.inc
+- lib/csu/arch/or1k/crt0.S
+- lib/csu/arch/or1k/crtbegin.h
+- lib/csu/arch/or1k/crtend.S
+- lib/csu/arch/or1k/crti.S
+- lib/csu/arch/or1k/crtn.S
+- lib/csu/arch/powerpc/Makefile.inc
+- lib/csu/arch/powerpc/crt0.S
+- lib/csu/arch/powerpc/crtbegin.h
+- lib/csu/arch/powerpc/crtend.S
+- lib/csu/arch/powerpc/crti.S
+- lib/csu/arch/powerpc/crtn.S
+- lib/csu/arch/riscv/Makefile.inc
+- lib/csu/arch/riscv/crt0.S
+- lib/csu/arch/riscv/crtbegin.h
+- lib/csu/arch/riscv/crtend.S
+- lib/csu/arch/riscv/crti.S
+- lib/csu/arch/riscv/crtn.S
+- lib/csu/arch/sh3/Makefile.inc
+- lib/csu/arch/sh3/crt0.S
+- lib/csu/arch/sh3/crtbegin.S
+- lib/csu/arch/sh3/crtend.S
+- lib/csu/arch/sh3/crti.S
+- lib/csu/arch/sh3/crtn.S
+- lib/csu/arch/sparc/Makefile.inc
+- lib/csu/arch/sparc/crt0.S
+- lib/csu/arch/sparc/crtbegin.h
+- lib/csu/arch/sparc/crtend.S
+- lib/csu/arch/sparc/crti.S
+- lib/csu/arch/sparc/crtn.S
+- lib/csu/arch/sparc64/Makefile.inc
+- lib/csu/arch/sparc64/crt0.S
+- lib/csu/arch/sparc64/crtbegin.h
+- lib/csu/arch/sparc64/crtend.S
+- lib/csu/arch/sparc64/crti.S
+- lib/csu/arch/sparc64/crtn.S
+- lib/csu/arch/vax/Makefile.inc
+- lib/csu/arch/vax/crt0.S
+- lib/csu/arch/vax/crtbegin.S
+- lib/csu/arch/vax/crtbegin.h
+- lib/csu/arch/vax/crtend.S
+- lib/csu/arch/vax/crti.S
+- lib/csu/arch/vax/crtn.S
+- lib/csu/arch/x86_64/Makefile.inc
+- lib/csu/arch/x86_64/crt0.S
+- lib/csu/arch/x86_64/crtbegin.S
+- lib/csu/arch/x86_64/crtend.S
+- lib/csu/arch/x86_64/crti.S
+- lib/csu/arch/x86_64/crtn.S
+- lib/csu/common/Makefile.inc
+- lib/csu/common/compident.S
+- lib/csu/common/crt0-common.c
+- lib/csu/common/crtbegin.c
+- lib/csu/common/sysident_assym.cf
+- lib/i18n_module/BIG5/Makefile
+- lib/i18n_module/DECHanyu/Makefile
+- lib/i18n_module/EUC/Makefile
+- lib/i18n_module/EUCTW/Makefile
+- lib/i18n_module/GBK2K/Makefile
+- lib/i18n_module/HZ/Makefile
+- lib/i18n_module/ISO2022/Makefile
+- lib/i18n_module/JOHAB/Makefile
+- lib/i18n_module/MSKanji/Makefile
+- lib/i18n_module/Makefile
+- lib/i18n_module/Makefile.inc
+- lib/i18n_module/UES/Makefile
+- lib/i18n_module/UTF1632/Makefile
+- lib/i18n_module/UTF7/Makefile
+- lib/i18n_module/UTF8/Makefile
+- lib/i18n_module/VIQR/Makefile
+- lib/i18n_module/ZW/Makefile
+- lib/i18n_module/iconv_none/Makefile
+- lib/i18n_module/iconv_std/Makefile
+- lib/i18n_module/mapper_646/Makefile
+- lib/i18n_module/mapper_none/Makefile
+- lib/i18n_module/mapper_parallel/Makefile
+- lib/i18n_module/mapper_serial/Makefile
+- lib/i18n_module/mapper_std/Makefile
+- lib/i18n_module/mapper_zone/Makefile
+- lib/i18n_module/shlib_version
+- lib/libbz2/Makefile
+- lib/libbz2/shlib_version
+- lib/libc/Makefile.inc
+- lib/libc/README
+- lib/libc/arch/aarch64/Makefile.inc
+- lib/libc/arch/aarch64/SYS.h
+- lib/libc/arch/aarch64/gdtoa/Makefile.inc
+- lib/libc/arch/aarch64/gdtoa/arith.h
+- lib/libc/arch/aarch64/gdtoa/gd_qnan.h
+- lib/libc/arch/aarch64/gen/Makefile.inc
+- lib/libc/arch/aarch64/gen/_lwp.c
+- lib/libc/arch/aarch64/gen/_setjmp.S
+- lib/libc/arch/aarch64/gen/fabs_ieee754.S
+- lib/libc/arch/aarch64/gen/flt_rounds.c
+- lib/libc/arch/aarch64/gen/fpgetmask.c
+- lib/libc/arch/aarch64/gen/fpgetround.c
+- lib/libc/arch/aarch64/gen/fpgetsticky.c
+- lib/libc/arch/aarch64/gen/fpsetmask.c
+- lib/libc/arch/aarch64/gen/fpsetround.c
+- lib/libc/arch/aarch64/gen/fpsetsticky.c
+- lib/libc/arch/aarch64/gen/makecontext.c
+- lib/libc/arch/aarch64/gen/nanf.c
+- lib/libc/arch/aarch64/gen/resumecontext.c
+- lib/libc/arch/aarch64/gen/setjmp.S
+- lib/libc/arch/aarch64/gen/sigsetjmp.S
+- lib/libc/arch/aarch64/gen/swapcontext.S
+- lib/libc/arch/aarch64/genassym.cf
+- lib/libc/arch/aarch64/net/Makefile.inc
+- lib/libc/arch/aarch64/softfloat/aarch64-gcc.h
+- lib/libc/arch/aarch64/softfloat/milieu.h
+- lib/libc/arch/aarch64/softfloat/qp.c
+- lib/libc/arch/aarch64/softfloat/softfloat-qp.h
+- lib/libc/arch/aarch64/softfloat/softfloat-wrapper.c
+- lib/libc/arch/aarch64/softfloat/softfloat.h
+- lib/libc/arch/aarch64/stdlib/Makefile.inc
+- lib/libc/arch/aarch64/string/Makefile.inc
+- lib/libc/arch/aarch64/sys/__clone.S
+- lib/libc/arch/aarch64/sys/__sigtramp2.S
+- lib/libc/arch/aarch64/sys/__syscall.S
+- lib/libc/arch/aarch64/sys/__vfork14.S
+- lib/libc/arch/aarch64/sys/brk.S
+- lib/libc/arch/aarch64/sys/cerror.S
+- lib/libc/arch/aarch64/sys/fork.S
+- lib/libc/arch/aarch64/sys/getcontext.S
+- lib/libc/arch/aarch64/sys/pipe.S
+- lib/libc/arch/aarch64/sys/ptrace.S
+- lib/libc/arch/aarch64/sys/sbrk.S
+- lib/libc/arch/aarch64/sys/shmat.S
+- lib/libc/arch/aarch64/sys/syscall.S
+- lib/libc/arch/alpha/Makefile.inc
+- lib/libc/arch/alpha/SYS.h
+- lib/libc/arch/alpha/gdtoa/Makefile.inc
+- lib/libc/arch/alpha/gdtoa/arith.h
+- lib/libc/arch/alpha/gdtoa/gd_qnan.h
+- lib/libc/arch/alpha/gen/Makefile.inc
+- lib/libc/arch/alpha/gen/__longjmp14.c
+- lib/libc/arch/alpha/gen/__setjmp14.S
+- lib/libc/arch/alpha/gen/__sigsetjmp14.S
+- lib/libc/arch/alpha/gen/_lwp.c
+- lib/libc/arch/alpha/gen/_resumecontext.S
+- lib/libc/arch/alpha/gen/divrem.m4
+- lib/libc/arch/alpha/gen/fabs.S
+- lib/libc/arch/alpha/gen/flt_rounds.c
+- lib/libc/arch/alpha/gen/fpgetmask.c
+- lib/libc/arch/alpha/gen/fpgetround.c
+- lib/libc/arch/alpha/gen/fpgetsticky.c
+- lib/libc/arch/alpha/gen/fpsetmask.c
+- lib/libc/arch/alpha/gen/fpsetround.c
+- lib/libc/arch/alpha/gen/fpsetsticky.c
+- lib/libc/arch/alpha/gen/makecontext.c
+- lib/libc/arch/alpha/gen/nanf.c
+- lib/libc/arch/alpha/gen/resumecontext.c
+- lib/libc/arch/alpha/gen/swapcontext.S
+- lib/libc/arch/alpha/genassym.cf
+- lib/libc/arch/alpha/gmon/Makefile.inc
+- lib/libc/arch/alpha/net/Makefile.inc
+- lib/libc/arch/alpha/stdlib/Makefile.inc
+- lib/libc/arch/alpha/string/Makefile.inc
+- lib/libc/arch/alpha/sys/__clone.S
+- lib/libc/arch/alpha/sys/__sigtramp2.S
+- lib/libc/arch/alpha/sys/__syscall.S
+- lib/libc/arch/alpha/sys/__vfork14.S
+- lib/libc/arch/alpha/sys/brk.S
+- lib/libc/arch/alpha/sys/cerror.S
+- lib/libc/arch/alpha/sys/fork.S
+- lib/libc/arch/alpha/sys/getcontext.S
+- lib/libc/arch/alpha/sys/pipe.S
+- lib/libc/arch/alpha/sys/ptrace.S
+- lib/libc/arch/alpha/sys/sbrk.S
+- lib/libc/arch/alpha/sys/shmat.S
+- lib/libc/arch/alpha/sys/syscall.S
+- lib/libc/arch/arm/Makefile.inc
+- lib/libc/arch/arm/SYS.h
+- lib/libc/arch/arm/gdtoa/Makefile.inc
+- lib/libc/arch/arm/gdtoa/arith.h
+- lib/libc/arch/arm/gdtoa/gd_qnan.h
+- lib/libc/arch/arm/gen/__aeabi_dcmpun.c
+- lib/libc/arch/arm/gen/__aeabi_fcmpun.c
+- lib/libc/arch/arm/gen/_lwp.c
+- lib/libc/arch/arm/gen/_setjmp.S
+- lib/libc/arch/arm/gen/alloca.S
+- lib/libc/arch/arm/gen/flt_rounds.c
+- lib/libc/arch/arm/gen/makecontext.c
+- lib/libc/arch/arm/gen/nanf.c
+- lib/libc/arch/arm/gen/resumecontext.c
+- lib/libc/arch/arm/gen/setjmp.S
+- lib/libc/arch/arm/gen/sigsetjmp.S
+- lib/libc/arch/arm/gen/swapcontext.S
+- lib/libc/arch/arm/hardfloat/fabs_ieee754.S
+- lib/libc/arch/arm/hardfloat/fpgetmask.S
+- lib/libc/arch/arm/hardfloat/fpgetround.c
+- lib/libc/arch/arm/hardfloat/fpgetsticky.S
+- lib/libc/arch/arm/hardfloat/fpsetmask.S
+- lib/libc/arch/arm/hardfloat/fpsetround.c
+- lib/libc/arch/arm/hardfloat/fpsetsticky.S
+- lib/libc/arch/arm/misc/arm_initfini.c
+- lib/libc/arch/arm/net/Makefile.inc
+- lib/libc/arch/arm/softfloat/__aeabi_dcmpeq.c
+- lib/libc/arch/arm/softfloat/__aeabi_dcmpge.c
+- lib/libc/arch/arm/softfloat/__aeabi_dcmpgt.c
+- lib/libc/arch/arm/softfloat/__aeabi_dcmple.c
+- lib/libc/arch/arm/softfloat/__aeabi_dcmplt.c
+- lib/libc/arch/arm/softfloat/__aeabi_dcmpun.c
+- lib/libc/arch/arm/softfloat/__aeabi_fcmpeq.c
+- lib/libc/arch/arm/softfloat/__aeabi_fcmpge.c
+- lib/libc/arch/arm/softfloat/__aeabi_fcmpgt.c
+- lib/libc/arch/arm/softfloat/__aeabi_fcmple.c
+- lib/libc/arch/arm/softfloat/__aeabi_fcmplt.c
+- lib/libc/arch/arm/softfloat/__aeabi_fcmpun.c
+- lib/libc/arch/arm/softfloat/arm-gcc.h
+- lib/libc/arch/arm/softfloat/milieu.h
+- lib/libc/arch/arm/softfloat/softfloat.h
+- lib/libc/arch/arm/stdlib/Makefile.inc
+- lib/libc/arch/arm/string/Makefile.inc
+- lib/libc/arch/arm/string/bcopy.S
+- lib/libc/arch/arm/string/bzero.S
+- lib/libc/arch/arm/string/strncat_naive.S
+- lib/libc/arch/arm/sys/__aeabi_read_tp.S
+- lib/libc/arch/arm/sys/__clone.S
+- lib/libc/arch/arm/sys/__sigtramp2.S
+- lib/libc/arch/arm/sys/__syscall.S
+- lib/libc/arch/arm/sys/__vfork14.S
+- lib/libc/arch/arm/sys/brk.S
+- lib/libc/arch/arm/sys/cerror.S
+- lib/libc/arch/arm/sys/fork.S
+- lib/libc/arch/arm/sys/getcontext.S
+- lib/libc/arch/arm/sys/pipe.S
+- lib/libc/arch/arm/sys/ptrace.S
+- lib/libc/arch/arm/sys/sbrk.S
+- lib/libc/arch/arm/sys/shmat.S
+- lib/libc/arch/arm/sys/syscall.S
+- lib/libc/arch/hppa/DEFS.h
+- lib/libc/arch/hppa/Makefile.inc
+- lib/libc/arch/hppa/SYS.h
+- lib/libc/arch/hppa/gdtoa/Makefile.inc
+- lib/libc/arch/hppa/gdtoa/arith.h
+- lib/libc/arch/hppa/gdtoa/gd_qnan.h
+- lib/libc/arch/hppa/gen/Makefile.inc
+- lib/libc/arch/hppa/gen/__longjmp14.c
+- lib/libc/arch/hppa/gen/__setjmp14.S
+- lib/libc/arch/hppa/gen/__sigsetjmp14.S
+- lib/libc/arch/hppa/gen/_lwp.c
+- lib/libc/arch/hppa/gen/_resumecontext.S
+- lib/libc/arch/hppa/gen/_setjmp.S
+- lib/libc/arch/hppa/gen/fabs.c
+- lib/libc/arch/hppa/gen/flt_rounds.c
+- lib/libc/arch/hppa/gen/fpgetmask.c
+- lib/libc/arch/hppa/gen/fpgetround.c
+- lib/libc/arch/hppa/gen/fpgetsticky.c
+- lib/libc/arch/hppa/gen/fpsetmask.c
+- lib/libc/arch/hppa/gen/fpsetround.c
+- lib/libc/arch/hppa/gen/fpsetsticky.c
+- lib/libc/arch/hppa/gen/makecontext.c
+- lib/libc/arch/hppa/gen/nanf.c
+- lib/libc/arch/hppa/gen/resumecontext.c
+- lib/libc/arch/hppa/gen/swapcontext.S
+- lib/libc/arch/hppa/genassym.cf
+- lib/libc/arch/hppa/net/Makefile.inc
+- lib/libc/arch/hppa/stdlib/Makefile.inc
+- lib/libc/arch/hppa/string/Makefile.inc
+- lib/libc/arch/hppa/string/bcmp.S
+- lib/libc/arch/hppa/string/bzero.S
+- lib/libc/arch/hppa/string/ffs.S
+- lib/libc/arch/hppa/string/strlcpy.S
+- lib/libc/arch/hppa/sys/__clone.S
+- lib/libc/arch/hppa/sys/__sigtramp2.S
+- lib/libc/arch/hppa/sys/__syscall.S
+- lib/libc/arch/hppa/sys/__vfork14.S
+- lib/libc/arch/hppa/sys/brk.S
+- lib/libc/arch/hppa/sys/cerror.S
+- lib/libc/arch/hppa/sys/fork.S
+- lib/libc/arch/hppa/sys/getcontext.S
+- lib/libc/arch/hppa/sys/pipe.S
+- lib/libc/arch/hppa/sys/ptrace.S
+- lib/libc/arch/hppa/sys/sbrk.S
+- lib/libc/arch/hppa/sys/shmat.S
+- lib/libc/arch/hppa/sys/syscall.S
+- lib/libc/arch/i386/Makefile.inc
+- lib/libc/arch/i386/SYS.h
+- lib/libc/arch/i386/gdtoa/Makefile.inc
+- lib/libc/arch/i386/gdtoa/arith.h
+- lib/libc/arch/i386/gdtoa/gd_qnan.h
+- lib/libc/arch/i386/gen/_lwp.c
+- lib/libc/arch/i386/gen/_setjmp.S
+- lib/libc/arch/i386/gen/alloca.S
+- lib/libc/arch/i386/gen/divsi3.S
+- lib/libc/arch/i386/gen/fabs.S
+- lib/libc/arch/i386/gen/fixdfsi.S
+- lib/libc/arch/i386/gen/fixunsdfsi.S
+- lib/libc/arch/i386/gen/flt_rounds.S
+- lib/libc/arch/i386/gen/fpclassifyl.c
+- lib/libc/arch/i386/gen/fpgetmask.S
+- lib/libc/arch/i386/gen/fpgetprec.S
+- lib/libc/arch/i386/gen/fpgetround.S
+- lib/libc/arch/i386/gen/fpgetsticky.S
+- lib/libc/arch/i386/gen/fpsetmask.S
+- lib/libc/arch/i386/gen/fpsetprec.S
+- lib/libc/arch/i386/gen/fpsetround.S
+- lib/libc/arch/i386/gen/fpsetsticky.S
+- lib/libc/arch/i386/gen/infinityl.c
+- lib/libc/arch/i386/gen/isfinitel.c
+- lib/libc/arch/i386/gen/isinfl.c
+- lib/libc/arch/i386/gen/isnanl.c
+- lib/libc/arch/i386/gen/makecontext.c
+- lib/libc/arch/i386/gen/nanf.c
+- lib/libc/arch/i386/gen/resumecontext.S
+- lib/libc/arch/i386/gen/setjmp.S
+- lib/libc/arch/i386/gen/sigsetjmp.S
+- lib/libc/arch/i386/gen/swapcontext.S
+- lib/libc/arch/i386/gen/udivsi3.S
+- lib/libc/arch/i386/net/Makefile.inc
+- lib/libc/arch/i386/stdlib/Makefile.inc
+- lib/libc/arch/i386/stdlib/abs.S
+- lib/libc/arch/i386/stdlib/div.S
+- lib/libc/arch/i386/stdlib/labs.S
+- lib/libc/arch/i386/stdlib/ldiv.S
+- lib/libc/arch/i386/stdlib/llabs.S
+- lib/libc/arch/i386/string/Makefile.inc
+- lib/libc/arch/i386/string/bcmp.S
+- lib/libc/arch/i386/string/bcopy.S
+- lib/libc/arch/i386/string/bzero.S
+- lib/libc/arch/i386/string/index.S
+- lib/libc/arch/i386/string/rindex.S
+- lib/libc/arch/i386/string/strncmp.S
+- lib/libc/arch/i386/string/swab.S
+- lib/libc/arch/i386/sys/__clone.S
+- lib/libc/arch/i386/sys/__sigtramp2.S
+- lib/libc/arch/i386/sys/__syscall.S
+- lib/libc/arch/i386/sys/__vfork14.S
+- lib/libc/arch/i386/sys/brk.S
+- lib/libc/arch/i386/sys/cerror.S
+- lib/libc/arch/i386/sys/fork.S
+- lib/libc/arch/i386/sys/getcontext.S
+- lib/libc/arch/i386/sys/pipe.S
+- lib/libc/arch/i386/sys/ptrace.S
+- lib/libc/arch/i386/sys/sbrk.S
+- lib/libc/arch/i386/sys/shmat.S
+- lib/libc/arch/i386/sys/syscall.S
+- lib/libc/arch/ia64/Makefile.inc
+- lib/libc/arch/ia64/SYS.h
+- lib/libc/arch/ia64/gdtoa/Makefile.inc
+- lib/libc/arch/ia64/gdtoa/arith.h
+- lib/libc/arch/ia64/gdtoa/gd_qnan.h
+- lib/libc/arch/ia64/gen/Makefile.inc
+- lib/libc/arch/ia64/gen/_lwp.c
+- lib/libc/arch/ia64/gen/_setjmp.S
+- lib/libc/arch/ia64/gen/flt_rounds.c
+- lib/libc/arch/ia64/gen/fpgetmask.c
+- lib/libc/arch/ia64/gen/fpgetround.c
+- lib/libc/arch/ia64/gen/fpsetmask.c
+- lib/libc/arch/ia64/gen/fpsetround.c
+- lib/libc/arch/ia64/gen/setjmp.S
+- lib/libc/arch/ia64/gen/sigsetjmp.S
+- lib/libc/arch/ia64/net/Makefile.inc
+- lib/libc/arch/ia64/stdlib/Makefile.inc
+- lib/libc/arch/ia64/string/Makefile.inc
+- lib/libc/arch/ia64/sys/__clone.S
+- lib/libc/arch/ia64/sys/__sigtramp2.S
+- lib/libc/arch/ia64/sys/__syscall.S
+- lib/libc/arch/ia64/sys/__vfork14.S
+- lib/libc/arch/ia64/sys/brk.S
+- lib/libc/arch/ia64/sys/cerror.S
+- lib/libc/arch/ia64/sys/fork.S
+- lib/libc/arch/ia64/sys/getcontext.S
+- lib/libc/arch/ia64/sys/pipe.S
+- lib/libc/arch/ia64/sys/ptrace.S
+- lib/libc/arch/ia64/sys/sbrk.S
+- lib/libc/arch/ia64/sys/shmat.S
+- lib/libc/arch/ia64/sys/syscall.S
+- lib/libc/arch/m68k/DEFS.h
+- lib/libc/arch/m68k/Makefile.inc
+- lib/libc/arch/m68k/SYS.h
+- lib/libc/arch/m68k/gdtoa/Makefile.inc
+- lib/libc/arch/m68k/gdtoa/arith.h
+- lib/libc/arch/m68k/gdtoa/gd_qnan.h
+- lib/libc/arch/m68k/gen/Makefile.inc
+- lib/libc/arch/m68k/gen/_lwp.c
+- lib/libc/arch/m68k/gen/_setjmp.S
+- lib/libc/arch/m68k/gen/alloca.S
+- lib/libc/arch/m68k/gen/ashlsi3.S
+- lib/libc/arch/m68k/gen/ashrsi3.S
+- lib/libc/arch/m68k/gen/fabs.S
+- lib/libc/arch/m68k/gen/flt_rounds_softfloat.S
+- lib/libc/arch/m68k/gen/fpclassifyl.c
+- lib/libc/arch/m68k/gen/fpfake.c
+- lib/libc/arch/m68k/gen/infinityl.c
+- lib/libc/arch/m68k/gen/isfinitel.c
+- lib/libc/arch/m68k/gen/isinfl.c
+- lib/libc/arch/m68k/gen/isnanl.c
+- lib/libc/arch/m68k/gen/ldexp_881.c
+- lib/libc/arch/m68k/gen/longjmp.c
+- lib/libc/arch/m68k/gen/lshlsi3.S
+- lib/libc/arch/m68k/gen/lshrsi3.S
+- lib/libc/arch/m68k/gen/makecontext.c
+- lib/libc/arch/m68k/gen/nanf.c
+- lib/libc/arch/m68k/gen/negdf2.S
+- lib/libc/arch/m68k/gen/negsf2.S
+- lib/libc/arch/m68k/gen/resumecontext.S
+- lib/libc/arch/m68k/gen/setjmp.S
+- lib/libc/arch/m68k/gen/sigsetjmp.S
+- lib/libc/arch/m68k/gen/swapcontext.S
+- lib/libc/arch/m68k/gen/umulsi3.S
+- lib/libc/arch/m68k/genassym.cf
+- lib/libc/arch/m68k/hardfloat/Makefile.inc
+- lib/libc/arch/m68k/hardfloat/adddf3.S
+- lib/libc/arch/m68k/hardfloat/addsf3.S
+- lib/libc/arch/m68k/hardfloat/cmpdf2.S
+- lib/libc/arch/m68k/hardfloat/cmpsf2.S
+- lib/libc/arch/m68k/hardfloat/divdf3.S
+- lib/libc/arch/m68k/hardfloat/divsf3.S
+- lib/libc/arch/m68k/hardfloat/extendsfdf2.S
+- lib/libc/arch/m68k/hardfloat/fixdfsi.S
+- lib/libc/arch/m68k/hardfloat/fixunsdfsi.S
+- lib/libc/arch/m68k/hardfloat/fixunssfsi.S
+- lib/libc/arch/m68k/hardfloat/floatsidf.S
+- lib/libc/arch/m68k/hardfloat/floatunsidf.S
+- lib/libc/arch/m68k/hardfloat/floatunsisf.S
+- lib/libc/arch/m68k/hardfloat/flt_rounds.c
+- lib/libc/arch/m68k/hardfloat/fpgetmask.c
+- lib/libc/arch/m68k/hardfloat/fpgetround.c
+- lib/libc/arch/m68k/hardfloat/fpgetsticky.c
+- lib/libc/arch/m68k/hardfloat/fpsetmask.c
+- lib/libc/arch/m68k/hardfloat/fpsetround.c
+- lib/libc/arch/m68k/hardfloat/fpsetsticky.c
+- lib/libc/arch/m68k/hardfloat/ldexp_881.c
+- lib/libc/arch/m68k/hardfloat/ledf2.S
+- lib/libc/arch/m68k/hardfloat/lesf2.S
+- lib/libc/arch/m68k/hardfloat/ltdf2.S
+- lib/libc/arch/m68k/hardfloat/ltsf2.S
+- lib/libc/arch/m68k/hardfloat/modf.S
+- lib/libc/arch/m68k/hardfloat/muldf3.S
+- lib/libc/arch/m68k/hardfloat/mulsf3.S
+- lib/libc/arch/m68k/hardfloat/nedf2.S
+- lib/libc/arch/m68k/hardfloat/nesf2.S
+- lib/libc/arch/m68k/hardfloat/subdf3.S
+- lib/libc/arch/m68k/hardfloat/subsf3.S
+- lib/libc/arch/m68k/hardfloat/truncdfsf2.S
+- lib/libc/arch/m68k/hardfloat/unorddf2.S
+- lib/libc/arch/m68k/hardfloat/unordsf2.S
+- lib/libc/arch/m68k/net/Makefile.inc
+- lib/libc/arch/m68k/quad/ashldi3.S
+- lib/libc/arch/m68k/quad/ashrdi3.S
+- lib/libc/arch/m68k/quad/lshrdi3.S
+- lib/libc/arch/m68k/softfloat/m68k-gcc.h
+- lib/libc/arch/m68k/softfloat/milieu.h
+- lib/libc/arch/m68k/softfloat/softfloat.h
+- lib/libc/arch/m68k/stdlib/Makefile.inc
+- lib/libc/arch/m68k/stdlib/abs.S
+- lib/libc/arch/m68k/stdlib/llabs.S
+- lib/libc/arch/m68k/string/Makefile.inc
+- lib/libc/arch/m68k/string/memccpy.S
+- lib/libc/arch/m68k/string/swab.S
+- lib/libc/arch/m68k/sys/__clone.S
+- lib/libc/arch/m68k/sys/__m68k_read_tp.S
+- lib/libc/arch/m68k/sys/__mmap.S
+- lib/libc/arch/m68k/sys/__sigtramp2.S
+- lib/libc/arch/m68k/sys/__syscall.S
+- lib/libc/arch/m68k/sys/__vfork14.S
+- lib/libc/arch/m68k/sys/_lwp_getprivate.S
+- lib/libc/arch/m68k/sys/brk.S
+- lib/libc/arch/m68k/sys/cerror.S
+- lib/libc/arch/m68k/sys/fork.S
+- lib/libc/arch/m68k/sys/getcontext.S
+- lib/libc/arch/m68k/sys/mremap.S
+- lib/libc/arch/m68k/sys/pipe.S
+- lib/libc/arch/m68k/sys/ptrace.S
+- lib/libc/arch/m68k/sys/sbrk.S
+- lib/libc/arch/m68k/sys/shmat.S
+- lib/libc/arch/m68k/sys/syscall.S
+- lib/libc/arch/mips/Makefile.inc
+- lib/libc/arch/mips/SYS.h
+- lib/libc/arch/mips/gdtoa/Makefile.inc
+- lib/libc/arch/mips/gdtoa/arith.h
+- lib/libc/arch/mips/gdtoa/gd_qnan.h
+- lib/libc/arch/mips/gen/Makefile.inc
+- lib/libc/arch/mips/gen/_lwp.c
+- lib/libc/arch/mips/gen/_resumecontext.S
+- lib/libc/arch/mips/gen/_setjmp.S
+- lib/libc/arch/mips/gen/cacheflush.c
+- lib/libc/arch/mips/gen/fabs.S
+- lib/libc/arch/mips/gen/flt_rounds.c
+- lib/libc/arch/mips/gen/fpgetmask.c
+- lib/libc/arch/mips/gen/fpgetround.c
+- lib/libc/arch/mips/gen/fpgetsticky.c
+- lib/libc/arch/mips/gen/fpsetmask.c
+- lib/libc/arch/mips/gen/fpsetround.c
+- lib/libc/arch/mips/gen/fpsetsticky.c
+- lib/libc/arch/mips/gen/ldexp.S
+- lib/libc/arch/mips/gen/longjmp.c
+- lib/libc/arch/mips/gen/makecontext.c
+- lib/libc/arch/mips/gen/modf.S
+- lib/libc/arch/mips/gen/nanf.c
+- lib/libc/arch/mips/gen/resumecontext.c
+- lib/libc/arch/mips/gen/setjmp.S
+- lib/libc/arch/mips/gen/sigsetjmp.S
+- lib/libc/arch/mips/gen/swapcontext.S
+- lib/libc/arch/mips/genassym.cf
+- lib/libc/arch/mips/net/Makefile.inc
+- lib/libc/arch/mips/softfloat/milieu.h
+- lib/libc/arch/mips/softfloat/mips-gcc.h
+- lib/libc/arch/mips/softfloat/softfloat.h
+- lib/libc/arch/mips/stdlib/Makefile.inc
+- lib/libc/arch/mips/string/Makefile.inc
+- lib/libc/arch/mips/string/bcmp.S
+- lib/libc/arch/mips/string/bzero.S
+- lib/libc/arch/mips/sys/__clone.S
+- lib/libc/arch/mips/sys/__sigtramp2.S
+- lib/libc/arch/mips/sys/__syscall.S
+- lib/libc/arch/mips/sys/__vfork14.S
+- lib/libc/arch/mips/sys/brk.S
+- lib/libc/arch/mips/sys/cerror.S
+- lib/libc/arch/mips/sys/fork.S
+- lib/libc/arch/mips/sys/getcontext.S
+- lib/libc/arch/mips/sys/pipe.S
+- lib/libc/arch/mips/sys/ptrace.S
+- lib/libc/arch/mips/sys/sbrk.S
+- lib/libc/arch/mips/sys/shmat.S
+- lib/libc/arch/mips/sys/syscall.S
+- lib/libc/arch/or1k/Makefile.inc
+- lib/libc/arch/or1k/SYS.h
+- lib/libc/arch/or1k/gdtoa/Makefile.inc
+- lib/libc/arch/or1k/gdtoa/arith.h
+- lib/libc/arch/or1k/gdtoa/gd_qnan.h
+- lib/libc/arch/or1k/gen/Makefile.inc
+- lib/libc/arch/or1k/gen/__setjmp14.S
+- lib/libc/arch/or1k/gen/__sigsetjmp14.S
+- lib/libc/arch/or1k/gen/_lwp.c
+- lib/libc/arch/or1k/gen/_setjmp.S
+- lib/libc/arch/or1k/gen/flt_rounds.c
+- lib/libc/arch/or1k/gen/fpgetmask.c
+- lib/libc/arch/or1k/gen/fpgetround.c
+- lib/libc/arch/or1k/gen/fpgetsticky.c
+- lib/libc/arch/or1k/gen/fpsetmask.c
+- lib/libc/arch/or1k/gen/fpsetround.c
+- lib/libc/arch/or1k/gen/fpsetsticky.c
+- lib/libc/arch/or1k/gen/makecontext.c
+- lib/libc/arch/or1k/gen/nanf.c
+- lib/libc/arch/or1k/gen/resumecontext.c
+- lib/libc/arch/or1k/gen/swapcontext.S
+- lib/libc/arch/or1k/genassym.cf
+- lib/libc/arch/or1k/net/Makefile.inc
+- lib/libc/arch/or1k/softfloat/milieu.h
+- lib/libc/arch/or1k/softfloat/or1k-gcc.h
+- lib/libc/arch/or1k/softfloat/softfloat.h
+- lib/libc/arch/or1k/stdlib/Makefile.inc
+- lib/libc/arch/or1k/string/Makefile.inc
+- lib/libc/arch/or1k/sys/__clone.S
+- lib/libc/arch/or1k/sys/__sigtramp2.S
+- lib/libc/arch/or1k/sys/__syscall.S
+- lib/libc/arch/or1k/sys/__vfork14.S
+- lib/libc/arch/or1k/sys/brk.S
+- lib/libc/arch/or1k/sys/cerror.S
+- lib/libc/arch/or1k/sys/fork.S
+- lib/libc/arch/or1k/sys/getcontext.S
+- lib/libc/arch/or1k/sys/pipe.S
+- lib/libc/arch/or1k/sys/ptrace.S
+- lib/libc/arch/or1k/sys/sbrk.S
+- lib/libc/arch/or1k/sys/shmat.S
+- lib/libc/arch/or1k/sys/syscall.S
+- lib/libc/arch/or1k/syscallargs.awk
+- lib/libc/arch/powerpc/Makefile.inc
+- lib/libc/arch/powerpc/SYS.h
+- lib/libc/arch/powerpc/gdtoa/Makefile.inc
+- lib/libc/arch/powerpc/gdtoa/arith.h
+- lib/libc/arch/powerpc/gdtoa/gd_qnan.h
+- lib/libc/arch/powerpc/gen/Makefile.inc
+- lib/libc/arch/powerpc/gen/__setjmp14.S
+- lib/libc/arch/powerpc/gen/__sigsetjmp14.S
+- lib/libc/arch/powerpc/gen/_lwp.c
+- lib/libc/arch/powerpc/gen/_setjmp.S
+- lib/libc/arch/powerpc/gen/fabs_ieee754.S
+- lib/libc/arch/powerpc/gen/flt_rounds.c
+- lib/libc/arch/powerpc/gen/fpgetmask.c
+- lib/libc/arch/powerpc/gen/fpgetround.c
+- lib/libc/arch/powerpc/gen/fpgetsticky.c
+- lib/libc/arch/powerpc/gen/fpsetmask.c
+- lib/libc/arch/powerpc/gen/fpsetround.c
+- lib/libc/arch/powerpc/gen/fpsetsticky.c
+- lib/libc/arch/powerpc/gen/makecontext.c
+- lib/libc/arch/powerpc/gen/nanf.c
+- lib/libc/arch/powerpc/gen/resumecontext.c
+- lib/libc/arch/powerpc/gen/swapcontext.S
+- lib/libc/arch/powerpc/gen/syncicache.c
+- lib/libc/arch/powerpc/genassym.cf
+- lib/libc/arch/powerpc/misc/powerpc_initfini.c
+- lib/libc/arch/powerpc/net/Makefile.inc
+- lib/libc/arch/powerpc/softfloat/milieu.h
+- lib/libc/arch/powerpc/softfloat/powerpc-gcc.h
+- lib/libc/arch/powerpc/softfloat/softfloat.h
+- lib/libc/arch/powerpc/stdlib/Makefile.inc
+- lib/libc/arch/powerpc/string/Makefile.inc
+- lib/libc/arch/powerpc/string/bzero.S
+- lib/libc/arch/powerpc/sys/__clone.S
+- lib/libc/arch/powerpc/sys/__sigtramp2.S
+- lib/libc/arch/powerpc/sys/__syscall.S
+- lib/libc/arch/powerpc/sys/__vfork14.S
+- lib/libc/arch/powerpc/sys/brk.S
+- lib/libc/arch/powerpc/sys/cerror.S
+- lib/libc/arch/powerpc/sys/fork.S
+- lib/libc/arch/powerpc/sys/getcontext.S
+- lib/libc/arch/powerpc/sys/pipe.S
+- lib/libc/arch/powerpc/sys/ptrace.S
+- lib/libc/arch/powerpc/sys/sbrk.S
+- lib/libc/arch/powerpc/sys/shmat.S
+- lib/libc/arch/powerpc/sys/syscall.S
+- lib/libc/arch/powerpc64/Makefile.inc
+- lib/libc/arch/powerpc64/SYS.h
+- lib/libc/arch/powerpc64/gdtoa/Makefile.inc
+- lib/libc/arch/powerpc64/gdtoa/arith.h
+- lib/libc/arch/powerpc64/gdtoa/gd_qnan.h
+- lib/libc/arch/powerpc64/gen/Makefile.inc
+- lib/libc/arch/powerpc64/gen/__setjmp14.S
+- lib/libc/arch/powerpc64/gen/__sigsetjmp14.S
+- lib/libc/arch/powerpc64/gen/_lwp.c
+- lib/libc/arch/powerpc64/gen/_setjmp.S
+- lib/libc/arch/powerpc64/gen/fabs.c
+- lib/libc/arch/powerpc64/gen/flt_rounds.c
+- lib/libc/arch/powerpc64/gen/fpgetmask.c
+- lib/libc/arch/powerpc64/gen/fpgetround.c
+- lib/libc/arch/powerpc64/gen/fpgetsticky.c
+- lib/libc/arch/powerpc64/gen/fpsetmask.c
+- lib/libc/arch/powerpc64/gen/fpsetround.c
+- lib/libc/arch/powerpc64/gen/fpsetsticky.c
+- lib/libc/arch/powerpc64/gen/makecontext.c
+- lib/libc/arch/powerpc64/gen/nanf.c
+- lib/libc/arch/powerpc64/gen/resumecontext.c
+- lib/libc/arch/powerpc64/gen/swapcontext.S
+- lib/libc/arch/powerpc64/gen/syncicache.c
+- lib/libc/arch/powerpc64/genassym.cf
+- lib/libc/arch/powerpc64/net/Makefile.inc
+- lib/libc/arch/powerpc64/stdlib/Makefile.inc
+- lib/libc/arch/powerpc64/string/Makefile.inc
+- lib/libc/arch/powerpc64/string/bzero.S
+- lib/libc/arch/powerpc64/sys/Makefile.inc
+- lib/libc/arch/powerpc64/sys/__clone.S
+- lib/libc/arch/powerpc64/sys/__sigtramp2.S
+- lib/libc/arch/powerpc64/sys/__syscall.S
+- lib/libc/arch/powerpc64/sys/__vfork14.S
+- lib/libc/arch/powerpc64/sys/brk.S
+- lib/libc/arch/powerpc64/sys/cerror.S
+- lib/libc/arch/powerpc64/sys/fork.S
+- lib/libc/arch/powerpc64/sys/getcontext.S
+- lib/libc/arch/powerpc64/sys/pipe.S
+- lib/libc/arch/powerpc64/sys/ptrace.S
+- lib/libc/arch/powerpc64/sys/sbrk.S
+- lib/libc/arch/powerpc64/sys/shmat.S
+- lib/libc/arch/powerpc64/sys/syscall.S
+- lib/libc/arch/riscv/Makefile.inc
+- lib/libc/arch/riscv/SYS.h
+- lib/libc/arch/riscv/gdtoa/Makefile.inc
+- lib/libc/arch/riscv/gdtoa/arith.h
+- lib/libc/arch/riscv/gdtoa/gd_qnan.h
+- lib/libc/arch/riscv/gen/Makefile.inc
+- lib/libc/arch/riscv/gen/__setjmp14.S
+- lib/libc/arch/riscv/gen/__sigsetjmp14.S
+- lib/libc/arch/riscv/gen/_lwp.c
+- lib/libc/arch/riscv/gen/_setjmp.S
+- lib/libc/arch/riscv/gen/flt_rounds.c
+- lib/libc/arch/riscv/gen/fpgetmask.c
+- lib/libc/arch/riscv/gen/fpgetround.c
+- lib/libc/arch/riscv/gen/fpgetsticky.c
+- lib/libc/arch/riscv/gen/fpsetmask.c
+- lib/libc/arch/riscv/gen/fpsetround.c
+- lib/libc/arch/riscv/gen/fpsetsticky.c
+- lib/libc/arch/riscv/gen/makecontext.c
+- lib/libc/arch/riscv/gen/nanf.c
+- lib/libc/arch/riscv/gen/resumecontext.c
+- lib/libc/arch/riscv/gen/swapcontext.S
+- lib/libc/arch/riscv/genassym.cf
+- lib/libc/arch/riscv/net/Makefile.inc
+- lib/libc/arch/riscv/stdlib/Makefile.inc
+- lib/libc/arch/riscv/string/Makefile.inc
+- lib/libc/arch/riscv/strlib
+- lib/libc/arch/riscv/sys/__clone.S
+- lib/libc/arch/riscv/sys/__sigtramp2.S
+- lib/libc/arch/riscv/sys/__syscall.S
+- lib/libc/arch/riscv/sys/__vfork14.S
+- lib/libc/arch/riscv/sys/brk.S
+- lib/libc/arch/riscv/sys/cerror.S
+- lib/libc/arch/riscv/sys/fork.S
+- lib/libc/arch/riscv/sys/getcontext.S
+- lib/libc/arch/riscv/sys/pipe.S
+- lib/libc/arch/riscv/sys/ptrace.S
+- lib/libc/arch/riscv/sys/sbrk.S
+- lib/libc/arch/riscv/sys/shmat.S
+- lib/libc/arch/riscv/sys/syscall.S
+- lib/libc/arch/sh3/Makefile.inc
+- lib/libc/arch/sh3/SYS.h
+- lib/libc/arch/sh3/gdtoa/Makefile.inc
+- lib/libc/arch/sh3/gdtoa/arith.h
+- lib/libc/arch/sh3/gdtoa/gd_qnan.h
+- lib/libc/arch/sh3/gen/Makefile.inc
+- lib/libc/arch/sh3/gen/_lwp.c
+- lib/libc/arch/sh3/gen/_setjmp.S
+- lib/libc/arch/sh3/gen/flt_rounds.c
+- lib/libc/arch/sh3/gen/makecontext.c
+- lib/libc/arch/sh3/gen/nanf.c
+- lib/libc/arch/sh3/gen/resumecontext.c
+- lib/libc/arch/sh3/gen/setjmp.S
+- lib/libc/arch/sh3/gen/sigsetjmp.S
+- lib/libc/arch/sh3/gen/swapcontext.S
+- lib/libc/arch/sh3/net/Makefile.inc
+- lib/libc/arch/sh3/net/htonl.c
+- lib/libc/arch/sh3/net/htons.c
+- lib/libc/arch/sh3/net/ntohl.c
+- lib/libc/arch/sh3/net/ntohs.c
+- lib/libc/arch/sh3/softfloat/milieu.h
+- lib/libc/arch/sh3/softfloat/sh3-gcc.h
+- lib/libc/arch/sh3/softfloat/softfloat.h
+- lib/libc/arch/sh3/stdlib/Makefile.inc
+- lib/libc/arch/sh3/string/Makefile.inc
+- lib/libc/arch/sh3/string/bcopy.S
+- lib/libc/arch/sh3/string/bzero.S
+- lib/libc/arch/sh3/sys/__clone.S
+- lib/libc/arch/sh3/sys/__sigtramp2.S
+- lib/libc/arch/sh3/sys/__syscall.S
+- lib/libc/arch/sh3/sys/__vfork14.S
+- lib/libc/arch/sh3/sys/brk.S
+- lib/libc/arch/sh3/sys/cerror.S
+- lib/libc/arch/sh3/sys/fork.S
+- lib/libc/arch/sh3/sys/getcontext.S
+- lib/libc/arch/sh3/sys/pipe.S
+- lib/libc/arch/sh3/sys/ptrace.S
+- lib/libc/arch/sh3/sys/sbrk.S
+- lib/libc/arch/sh3/sys/shmat.S
+- lib/libc/arch/sh3/sys/syscall.S
+- lib/libc/arch/sparc/Makefile.inc
+- lib/libc/arch/sparc/SYS.h
+- lib/libc/arch/sparc/gdtoa/Makefile.inc
+- lib/libc/arch/sparc/gdtoa/arith.h
+- lib/libc/arch/sparc/gdtoa/gd_qnan.h
+- lib/libc/arch/sparc/gen/Makefile.inc
+- lib/libc/arch/sparc/gen/_lwp.c
+- lib/libc/arch/sparc/gen/_setjmp.S
+- lib/libc/arch/sparc/gen/divrem.m4
+- lib/libc/arch/sparc/gen/fabs.S
+- lib/libc/arch/sparc/gen/fixunsdfsi.S
+- lib/libc/arch/sparc/gen/flt_rounds.c
+- lib/libc/arch/sparc/gen/fpgetmask.c
+- lib/libc/arch/sparc/gen/fpgetround.c
+- lib/libc/arch/sparc/gen/fpgetsticky.c
+- lib/libc/arch/sparc/gen/fpsetmask.c
+- lib/libc/arch/sparc/gen/fpsetround.c
+- lib/libc/arch/sparc/gen/fpsetsticky.c
+- lib/libc/arch/sparc/gen/longjmp.c
+- lib/libc/arch/sparc/gen/makecontext.c
+- lib/libc/arch/sparc/gen/modf.S
+- lib/libc/arch/sparc/gen/nanf.c
+- lib/libc/arch/sparc/gen/resumecontext.c
+- lib/libc/arch/sparc/gen/setjmp.S
+- lib/libc/arch/sparc/gen/sigsetjmp.S
+- lib/libc/arch/sparc/gen/swapcontext.S
+- lib/libc/arch/sparc/net/Makefile.inc
+- lib/libc/arch/sparc/stdlib/Makefile.inc
+- lib/libc/arch/sparc/stdlib/llabs.S
+- lib/libc/arch/sparc/string/Makefile.inc
+- lib/libc/arch/sparc/sys/__clone.S
+- lib/libc/arch/sparc/sys/__sigtramp2.S
+- lib/libc/arch/sparc/sys/__syscall.S
+- lib/libc/arch/sparc/sys/__vfork14.S
+- lib/libc/arch/sparc/sys/brk.S
+- lib/libc/arch/sparc/sys/cerror.S
+- lib/libc/arch/sparc/sys/fork.S
+- lib/libc/arch/sparc/sys/getcontext.S
+- lib/libc/arch/sparc/sys/pipe.S
+- lib/libc/arch/sparc/sys/ptrace.S
+- lib/libc/arch/sparc/sys/sbrk.S
+- lib/libc/arch/sparc/sys/shmat.S
+- lib/libc/arch/sparc/sys/syscall.S
+- lib/libc/arch/sparc64/Makefile.inc
+- lib/libc/arch/sparc64/SYS.h
+- lib/libc/arch/sparc64/gdtoa/Makefile.inc
+- lib/libc/arch/sparc64/gdtoa/arith.h
+- lib/libc/arch/sparc64/gdtoa/gd_qnan.h
+- lib/libc/arch/sparc64/gen/Makefile.inc
+- lib/libc/arch/sparc64/gen/_lwp.c
+- lib/libc/arch/sparc64/gen/_setjmp.S
+- lib/libc/arch/sparc64/gen/fabs.S
+- lib/libc/arch/sparc64/gen/fixunsdfsi.S
+- lib/libc/arch/sparc64/gen/flt_rounds.c
+- lib/libc/arch/sparc64/gen/fpclassifyl.c
+- lib/libc/arch/sparc64/gen/fpgetmask.c
+- lib/libc/arch/sparc64/gen/fpgetround.c
+- lib/libc/arch/sparc64/gen/fpgetsticky.c
+- lib/libc/arch/sparc64/gen/fpsetmask.c
+- lib/libc/arch/sparc64/gen/fpsetround.c
+- lib/libc/arch/sparc64/gen/fpsetsticky.c
+- lib/libc/arch/sparc64/gen/infinityl.c
+- lib/libc/arch/sparc64/gen/isfinitel.c
+- lib/libc/arch/sparc64/gen/isinfl.c
+- lib/libc/arch/sparc64/gen/isnanl.c
+- lib/libc/arch/sparc64/gen/longjmp.c
+- lib/libc/arch/sparc64/gen/makecontext.c
+- lib/libc/arch/sparc64/gen/modf.S
+- lib/libc/arch/sparc64/gen/nanf.c
+- lib/libc/arch/sparc64/gen/resumecontext.c
+- lib/libc/arch/sparc64/gen/setjmp.S
+- lib/libc/arch/sparc64/gen/sigsetjmp.S
+- lib/libc/arch/sparc64/gen/swapcontext.S
+- lib/libc/arch/sparc64/net/Makefile.inc
+- lib/libc/arch/sparc64/softfloat/milieu.h
+- lib/libc/arch/sparc64/softfloat/qp.c
+- lib/libc/arch/sparc64/softfloat/softfloat-qp.h
+- lib/libc/arch/sparc64/softfloat/softfloat-wrapper.c
+- lib/libc/arch/sparc64/softfloat/softfloat.h
+- lib/libc/arch/sparc64/softfloat/sparc64-gcc.h
+- lib/libc/arch/sparc64/stdlib/Makefile.inc
+- lib/libc/arch/sparc64/stdlib/abs.S
+- lib/libc/arch/sparc64/string/Makefile.inc
+- lib/libc/arch/sparc64/sys/__clone.S
+- lib/libc/arch/sparc64/sys/__sigtramp2.S
+- lib/libc/arch/sparc64/sys/__syscall.S
+- lib/libc/arch/sparc64/sys/__vfork14.S
+- lib/libc/arch/sparc64/sys/brk.S
+- lib/libc/arch/sparc64/sys/cerror.S
+- lib/libc/arch/sparc64/sys/fork.S
+- lib/libc/arch/sparc64/sys/getcontext.S
+- lib/libc/arch/sparc64/sys/pipe.S
+- lib/libc/arch/sparc64/sys/ptrace.S
+- lib/libc/arch/sparc64/sys/sbrk.S
+- lib/libc/arch/sparc64/sys/shmat.S
+- lib/libc/arch/sparc64/sys/syscall.S
+- lib/libc/arch/vax/DEFS.h
+- lib/libc/arch/vax/Makefile.inc
+- lib/libc/arch/vax/SYS.h
+- lib/libc/arch/vax/gdtoa/Makefile.inc
+- lib/libc/arch/vax/gdtoa/arith.h
+- lib/libc/arch/vax/gdtoa/gd_qnan.h
+- lib/libc/arch/vax/gen/Makefile.inc
+- lib/libc/arch/vax/gen/__longjmp14.c
+- lib/libc/arch/vax/gen/__setjmp14.S
+- lib/libc/arch/vax/gen/__sigsetjmp14.S
+- lib/libc/arch/vax/gen/_lwp.c
+- lib/libc/arch/vax/gen/_setjmp.S
+- lib/libc/arch/vax/gen/alloca.S
+- lib/libc/arch/vax/gen/byte_swap_2.S
+- lib/libc/arch/vax/gen/byte_swap_4.S
+- lib/libc/arch/vax/gen/fabs.S
+- lib/libc/arch/vax/gen/fpclassifyd.c
+- lib/libc/arch/vax/gen/fpclassifyf.c
+- lib/libc/arch/vax/gen/frexp.c
+- lib/libc/arch/vax/gen/infinity.c
+- lib/libc/arch/vax/gen/infinityf.c
+- lib/libc/arch/vax/gen/infinityl.c
+- lib/libc/arch/vax/gen/isfinited.c
+- lib/libc/arch/vax/gen/isfinitef.c
+- lib/libc/arch/vax/gen/isinf.c
+- lib/libc/arch/vax/gen/isnan.c
+- lib/libc/arch/vax/gen/ldexp.S
+- lib/libc/arch/vax/gen/makecontext.c
+- lib/libc/arch/vax/gen/modf.S
+- lib/libc/arch/vax/gen/resumecontext.c
+- lib/libc/arch/vax/gen/signbitd.c
+- lib/libc/arch/vax/gen/signbitf.c
+- lib/libc/arch/vax/gen/swapcontext.S
+- lib/libc/arch/vax/genassym.cf
+- lib/libc/arch/vax/net/Makefile.inc
+- lib/libc/arch/vax/stdlib/Makefile.inc
+- lib/libc/arch/vax/string/Makefile.inc
+- lib/libc/arch/vax/string/bcmp.S
+- lib/libc/arch/vax/string/bcopy.S
+- lib/libc/arch/vax/string/bzero.S
+- lib/libc/arch/vax/string/ffs.S
+- lib/libc/arch/vax/string/index.S
+- lib/libc/arch/vax/string/memcmp.S
+- lib/libc/arch/vax/sys/__clone.S
+- lib/libc/arch/vax/sys/__sigtramp3.S
+- lib/libc/arch/vax/sys/__syscall.S
+- lib/libc/arch/vax/sys/__vfork14.S
+- lib/libc/arch/vax/sys/brk.S
+- lib/libc/arch/vax/sys/cerror.S
+- lib/libc/arch/vax/sys/execl.S
+- lib/libc/arch/vax/sys/execle.S
+- lib/libc/arch/vax/sys/execlp.S
+- lib/libc/arch/vax/sys/fork.S
+- lib/libc/arch/vax/sys/getcontext.S
+- lib/libc/arch/vax/sys/pipe.S
+- lib/libc/arch/vax/sys/ptrace.S
+- lib/libc/arch/vax/sys/sbrk.S
+- lib/libc/arch/vax/sys/shmat.S
+- lib/libc/arch/vax/sys/syscall.S
+- lib/libc/arch/x86_64/Makefile.inc
+- lib/libc/arch/x86_64/SYS.h
+- lib/libc/arch/x86_64/gdtoa/Makefile.inc
+- lib/libc/arch/x86_64/gdtoa/arith.h
+- lib/libc/arch/x86_64/gdtoa/gd_qnan.h
+- lib/libc/arch/x86_64/gen/Makefile.inc
+- lib/libc/arch/x86_64/gen/__setjmp14.S
+- lib/libc/arch/x86_64/gen/__sigsetjmp14.S
+- lib/libc/arch/x86_64/gen/_lwp.c
+- lib/libc/arch/x86_64/gen/_setjmp.S
+- lib/libc/arch/x86_64/gen/alloca.S
+- lib/libc/arch/x86_64/gen/fabs.S
+- lib/libc/arch/x86_64/gen/flt_rounds.S
+- lib/libc/arch/x86_64/gen/fpclassifyl.c
+- lib/libc/arch/x86_64/gen/fpgetmask.S
+- lib/libc/arch/x86_64/gen/fpgetprec.S
+- lib/libc/arch/x86_64/gen/fpgetround.S
+- lib/libc/arch/x86_64/gen/fpgetsticky.S
+- lib/libc/arch/x86_64/gen/fpsetmask.S
+- lib/libc/arch/x86_64/gen/fpsetprec.S
+- lib/libc/arch/x86_64/gen/fpsetround.S
+- lib/libc/arch/x86_64/gen/fpsetsticky.S
+- lib/libc/arch/x86_64/gen/infinityl.c
+- lib/libc/arch/x86_64/gen/isfinitel.c
+- lib/libc/arch/x86_64/gen/isinfl.c
+- lib/libc/arch/x86_64/gen/isnanl.c
+- lib/libc/arch/x86_64/gen/makecontext.c
+- lib/libc/arch/x86_64/gen/nanf.c
+- lib/libc/arch/x86_64/gen/resumecontext.S
+- lib/libc/arch/x86_64/gen/swapcontext.S
+- lib/libc/arch/x86_64/net/Makefile.inc
+- lib/libc/arch/x86_64/stdlib/Makefile.inc
+- lib/libc/arch/x86_64/stdlib/abs.S
+- lib/libc/arch/x86_64/stdlib/div.S
+- lib/libc/arch/x86_64/stdlib/labs.S
+- lib/libc/arch/x86_64/stdlib/ldiv.S
+- lib/libc/arch/x86_64/string/Makefile.inc
+- lib/libc/arch/x86_64/string/strncmp.S
+- lib/libc/arch/x86_64/string/swab.S
+- lib/libc/arch/x86_64/sys/__clone.S
+- lib/libc/arch/x86_64/sys/__sigtramp2.S
+- lib/libc/arch/x86_64/sys/__syscall.S
+- lib/libc/arch/x86_64/sys/__vfork14.S
+- lib/libc/arch/x86_64/sys/brk.S
+- lib/libc/arch/x86_64/sys/cerror.S
+- lib/libc/arch/x86_64/sys/fork.S
+- lib/libc/arch/x86_64/sys/getcontext.S
+- lib/libc/arch/x86_64/sys/pipe.S
+- lib/libc/arch/x86_64/sys/ptrace.S
+- lib/libc/arch/x86_64/sys/sbrk.S
+- lib/libc/arch/x86_64/sys/shmat.S
+- lib/libc/arch/x86_64/sys/syscall.S
+- lib/libc/atomic/Makefile.inc
+- lib/libc/atomic/atomic_add.3
+- lib/libc/atomic/atomic_and.3
+- lib/libc/atomic/atomic_cas.3
+- lib/libc/atomic/atomic_dec.3
+- lib/libc/atomic/atomic_inc.3
+- lib/libc/atomic/atomic_ops.3
+- lib/libc/atomic/atomic_or.3
+- lib/libc/atomic/atomic_swap.3
+- lib/libc/atomic/membar_ops.3
+- lib/libc/cdb/Makefile.inc
+- lib/libc/cdb/cdb.5
+- lib/libc/cdb/cdbr.3
+- lib/libc/cdb/cdbw.3
+- lib/libc/cdb/cdbw.c
+- lib/libc/citrus/Makefile.inc
+- lib/libc/citrus/citrus_aliasname_local.h
+- lib/libc/citrus/citrus_bcs.c
+- lib/libc/citrus/citrus_bcs.h
+- lib/libc/citrus/citrus_bcs_strtol.c
+- lib/libc/citrus/citrus_bcs_strtoul.c
+- lib/libc/citrus/citrus_csmapper.c
+- lib/libc/citrus/citrus_csmapper.h
+- lib/libc/citrus/citrus_ctype.c
+- lib/libc/citrus/citrus_ctype.h
+- lib/libc/citrus/citrus_ctype_fallback.c
+- lib/libc/citrus/citrus_ctype_fallback.h
+- lib/libc/citrus/citrus_ctype_local.h
+- lib/libc/citrus/citrus_ctype_template.h
+- lib/libc/citrus/citrus_db.c
+- lib/libc/citrus/citrus_db.h
+- lib/libc/citrus/citrus_db_factory.c
+- lib/libc/citrus/citrus_db_factory.h
+- lib/libc/citrus/citrus_db_file.h
+- lib/libc/citrus/citrus_db_hash.c
+- lib/libc/citrus/citrus_db_hash.h
+- lib/libc/citrus/citrus_esdb.c
+- lib/libc/citrus/citrus_esdb.h
+- lib/libc/citrus/citrus_esdb_file.h
+- lib/libc/citrus/citrus_fix_grouping.h
+- lib/libc/citrus/citrus_hash.c
+- lib/libc/citrus/citrus_hash.h
+- lib/libc/citrus/citrus_iconv.c
+- lib/libc/citrus/citrus_iconv.h
+- lib/libc/citrus/citrus_iconv_local.h
+- lib/libc/citrus/citrus_lc_ctype.c
+- lib/libc/citrus/citrus_lc_messages.c
+- lib/libc/citrus/citrus_lc_messages.h
+- lib/libc/citrus/citrus_lc_monetary.c
+- lib/libc/citrus/citrus_lc_monetary.h
+- lib/libc/citrus/citrus_lc_numeric.c
+- lib/libc/citrus/citrus_lc_numeric.h
+- lib/libc/citrus/citrus_lc_template.h
+- lib/libc/citrus/citrus_lc_template_decl.h
+- lib/libc/citrus/citrus_lc_time.c
+- lib/libc/citrus/citrus_lc_time.h
+- lib/libc/citrus/citrus_lookup.c
+- lib/libc/citrus/citrus_lookup.h
+- lib/libc/citrus/citrus_lookup_factory.c
+- lib/libc/citrus/citrus_lookup_factory.h
+- lib/libc/citrus/citrus_lookup_file.h
+- lib/libc/citrus/citrus_mapper.c
+- lib/libc/citrus/citrus_mapper.h
+- lib/libc/citrus/citrus_mapper_local.h
+- lib/libc/citrus/citrus_memstream.c
+- lib/libc/citrus/citrus_memstream.h
+- lib/libc/citrus/citrus_mmap.c
+- lib/libc/citrus/citrus_mmap.h
+- lib/libc/citrus/citrus_module.c
+- lib/libc/citrus/citrus_module.h
+- lib/libc/citrus/citrus_namespace.h
+- lib/libc/citrus/citrus_none.c
+- lib/libc/citrus/citrus_none.h
+- lib/libc/citrus/citrus_pivot_factory.c
+- lib/libc/citrus/citrus_pivot_factory.h
+- lib/libc/citrus/citrus_pivot_file.h
+- lib/libc/citrus/citrus_prop.c
+- lib/libc/citrus/citrus_prop.h
+- lib/libc/citrus/citrus_region.h
+- lib/libc/citrus/citrus_stdenc.c
+- lib/libc/citrus/citrus_stdenc.h
+- lib/libc/citrus/citrus_stdenc_local.h
+- lib/libc/citrus/citrus_stdenc_template.h
+- lib/libc/citrus/citrus_types.h
+- lib/libc/citrus/modules/citrus_big5.c
+- lib/libc/citrus/modules/citrus_big5.h
+- lib/libc/citrus/modules/citrus_dechanyu.c
+- lib/libc/citrus/modules/citrus_dechanyu.h
+- lib/libc/citrus/modules/citrus_euc.c
+- lib/libc/citrus/modules/citrus_euc.h
+- lib/libc/citrus/modules/citrus_euctw.c
+- lib/libc/citrus/modules/citrus_euctw.h
+- lib/libc/citrus/modules/citrus_gbk2k.c
+- lib/libc/citrus/modules/citrus_gbk2k.h
+- lib/libc/citrus/modules/citrus_hz.c
+- lib/libc/citrus/modules/citrus_hz.h
+- lib/libc/citrus/modules/citrus_iconv_none.c
+- lib/libc/citrus/modules/citrus_iconv_none.h
+- lib/libc/citrus/modules/citrus_iconv_std.c
+- lib/libc/citrus/modules/citrus_iconv_std.h
+- lib/libc/citrus/modules/citrus_iconv_std_local.h
+- lib/libc/citrus/modules/citrus_iso2022.c
+- lib/libc/citrus/modules/citrus_iso2022.h
+- lib/libc/citrus/modules/citrus_johab.c
+- lib/libc/citrus/modules/citrus_johab.h
+- lib/libc/citrus/modules/citrus_mapper_646.c
+- lib/libc/citrus/modules/citrus_mapper_646.h
+- lib/libc/citrus/modules/citrus_mapper_none.c
+- lib/libc/citrus/modules/citrus_mapper_none.h
+- lib/libc/citrus/modules/citrus_mapper_serial.c
+- lib/libc/citrus/modules/citrus_mapper_serial.h
+- lib/libc/citrus/modules/citrus_mapper_std.c
+- lib/libc/citrus/modules/citrus_mapper_std.h
+- lib/libc/citrus/modules/citrus_mapper_std_file.h
+- lib/libc/citrus/modules/citrus_mapper_std_local.h
+- lib/libc/citrus/modules/citrus_mapper_zone.c
+- lib/libc/citrus/modules/citrus_mapper_zone.h
+- lib/libc/citrus/modules/citrus_mskanji.c
+- lib/libc/citrus/modules/citrus_mskanji.h
+- lib/libc/citrus/modules/citrus_ues.c
+- lib/libc/citrus/modules/citrus_ues.h
+- lib/libc/citrus/modules/citrus_utf1632.c
+- lib/libc/citrus/modules/citrus_utf1632.h
+- lib/libc/citrus/modules/citrus_utf7.c
+- lib/libc/citrus/modules/citrus_utf7.h
+- lib/libc/citrus/modules/citrus_utf8.c
+- lib/libc/citrus/modules/citrus_utf8.h
+- lib/libc/citrus/modules/citrus_viqr.c
+- lib/libc/citrus/modules/citrus_viqr.h
+- lib/libc/citrus/modules/citrus_zw.c
+- lib/libc/citrus/modules/citrus_zw.h
+- lib/libc/compat-43/creat.3
+- lib/libc/compat-43/creat.c
+- lib/libc/compat-43/getdtablesize.3
+- lib/libc/compat-43/getdtablesize.c
+- lib/libc/compat-43/gethostid.3
+- lib/libc/compat-43/gethostid.c
+- lib/libc/compat-43/getwd.c
+- lib/libc/compat-43/killpg.3
+- lib/libc/compat-43/killpg.c
+- lib/libc/compat-43/sethostid.c
+- lib/libc/compat-43/setpgrp.c
+- lib/libc/compat-43/setrgid.c
+- lib/libc/compat-43/setruid.3
+- lib/libc/compat-43/setruid.c
+- lib/libc/compat-43/sigblock.3
+- lib/libc/compat-43/sigcompat.c
+- lib/libc/compat-43/sigpause.3
+- lib/libc/compat-43/sigsetmask.3
+- lib/libc/compat-43/sigvec.3
+- lib/libc/compat/arch/aarch64/Makefile.inc
+- lib/libc/compat/arch/alpha/Makefile.inc
+- lib/libc/compat/arch/alpha/gen/Makefile.inc
+- lib/libc/compat/arch/alpha/gen/compat__setjmp.S
+- lib/libc/compat/arch/alpha/gen/compat_setjmp.S
+- lib/libc/compat/arch/alpha/gen/compat_sigsetjmp.S
+- lib/libc/compat/arch/alpha/sys/Makefile.inc
+- lib/libc/compat/arch/alpha/sys/compat_Ovfork.S
+- lib/libc/compat/arch/alpha/sys/compat___semctl.S
+- lib/libc/compat/arch/alpha/sys/compat___sigreturn14.S
+- lib/libc/compat/arch/alpha/sys/compat___sigtramp1.S
+- lib/libc/compat/arch/alpha/sys/compat_msgctl.S
+- lib/libc/compat/arch/alpha/sys/compat_quotactl.S
+- lib/libc/compat/arch/alpha/sys/compat_shmctl.S
+- lib/libc/compat/arch/alpha/sys/compat_sigaction.S
+- lib/libc/compat/arch/alpha/sys/compat_sigpending.S
+- lib/libc/compat/arch/alpha/sys/compat_sigprocmask.S
+- lib/libc/compat/arch/alpha/sys/compat_sigreturn.S
+- lib/libc/compat/arch/alpha/sys/compat_sigsuspend.S
+- lib/libc/compat/arch/arm/Makefile.inc
+- lib/libc/compat/arch/arm/gen/Makefile.inc
+- lib/libc/compat/arch/arm/gen/compat_setjmp.S
+- lib/libc/compat/arch/arm/gen/compat_sigsetjmp.S
+- lib/libc/compat/arch/arm/sys/Makefile.inc
+- lib/libc/compat/arch/arm/sys/compat_Ovfork.S
+- lib/libc/compat/arch/arm/sys/compat___semctl.S
+- lib/libc/compat/arch/arm/sys/compat___sigreturn14.S
+- lib/libc/compat/arch/arm/sys/compat___sigtramp1.S
+- lib/libc/compat/arch/arm/sys/compat_msgctl.S
+- lib/libc/compat/arch/arm/sys/compat_quotactl.S
+- lib/libc/compat/arch/arm/sys/compat_shmctl.S
+- lib/libc/compat/arch/arm/sys/compat_sigaction.S
+- lib/libc/compat/arch/arm/sys/compat_sigpending.S
+- lib/libc/compat/arch/arm/sys/compat_sigprocmask.S
+- lib/libc/compat/arch/arm/sys/compat_sigreturn.S
+- lib/libc/compat/arch/arm/sys/compat_sigsuspend.S
+- lib/libc/compat/arch/hppa/Makefile.inc
+- lib/libc/compat/arch/hppa/gen/Makefile.inc
+- lib/libc/compat/arch/hppa/locale/compat_setlocale32.c
+- lib/libc/compat/arch/hppa/sys/Makefile.inc
+- lib/libc/compat/arch/hppa/sys/compat_Ovfork.S
+- lib/libc/compat/arch/hppa/sys/compat___semctl.S
+- lib/libc/compat/arch/hppa/sys/compat___sigreturn14.S
+- lib/libc/compat/arch/hppa/sys/compat_msgctl.S
+- lib/libc/compat/arch/hppa/sys/compat_quotactl.S
+- lib/libc/compat/arch/hppa/sys/compat_shmctl.S
+- lib/libc/compat/arch/hppa/sys/compat_sigaction.S
+- lib/libc/compat/arch/hppa/sys/compat_sigpending.S
+- lib/libc/compat/arch/hppa/sys/compat_sigprocmask.S
+- lib/libc/compat/arch/hppa/sys/compat_sigreturn.S
+- lib/libc/compat/arch/hppa/sys/compat_sigsuspend.S
+- lib/libc/compat/arch/i386/Makefile.inc
+- lib/libc/compat/arch/i386/gen/Makefile.inc
+- lib/libc/compat/arch/i386/gen/compat_setjmp.S
+- lib/libc/compat/arch/i386/gen/compat_sigsetjmp.S
+- lib/libc/compat/arch/i386/sys/Makefile.inc
+- lib/libc/compat/arch/i386/sys/compat_Ovfork.S
+- lib/libc/compat/arch/i386/sys/compat___semctl.S
+- lib/libc/compat/arch/i386/sys/compat___sigreturn14.S
+- lib/libc/compat/arch/i386/sys/compat___sigtramp1.S
+- lib/libc/compat/arch/i386/sys/compat_msgctl.S
+- lib/libc/compat/arch/i386/sys/compat_quotactl.S
+- lib/libc/compat/arch/i386/sys/compat_shmctl.S
+- lib/libc/compat/arch/i386/sys/compat_sigaction.S
+- lib/libc/compat/arch/i386/sys/compat_sigpending.S
+- lib/libc/compat/arch/i386/sys/compat_sigprocmask.S
+- lib/libc/compat/arch/i386/sys/compat_sigreturn.S
+- lib/libc/compat/arch/i386/sys/compat_sigsuspend.S
+- lib/libc/compat/arch/ia64/Makefile.inc
+- lib/libc/compat/arch/ia64/sys/Makefile.inc
+- lib/libc/compat/arch/ia64/sys/compat___semctl.S
+- lib/libc/compat/arch/ia64/sys/compat_quotactl.S
+- lib/libc/compat/arch/m68k/Makefile.inc
+- lib/libc/compat/arch/m68k/gen/Makefile.inc
+- lib/libc/compat/arch/m68k/gen/compat_setjmp.S
+- lib/libc/compat/arch/m68k/gen/compat_sigsetjmp.S
+- lib/libc/compat/arch/m68k/sys/Makefile.inc
+- lib/libc/compat/arch/m68k/sys/compat_Ovfork.S
+- lib/libc/compat/arch/m68k/sys/compat___semctl.S
+- lib/libc/compat/arch/m68k/sys/compat___sigreturn14.S
+- lib/libc/compat/arch/m68k/sys/compat___sigtramp1.S
+- lib/libc/compat/arch/m68k/sys/compat_msgctl.S
+- lib/libc/compat/arch/m68k/sys/compat_quotactl.S
+- lib/libc/compat/arch/m68k/sys/compat_shmctl.S
+- lib/libc/compat/arch/m68k/sys/compat_sigaction.S
+- lib/libc/compat/arch/m68k/sys/compat_sigpending.S
+- lib/libc/compat/arch/m68k/sys/compat_sigprocmask.S
+- lib/libc/compat/arch/m68k/sys/compat_sigreturn.S
+- lib/libc/compat/arch/m68k/sys/compat_sigsuspend.S
+- lib/libc/compat/arch/mips/Makefile.inc
+- lib/libc/compat/arch/mips/gen/Makefile.inc
+- lib/libc/compat/arch/mips/gen/compat_setjmp.S
+- lib/libc/compat/arch/mips/gen/compat_sigsetjmp.S
+- lib/libc/compat/arch/mips/sys/Makefile.inc
+- lib/libc/compat/arch/mips/sys/compat_Ovfork.S
+- lib/libc/compat/arch/mips/sys/compat___semctl.S
+- lib/libc/compat/arch/mips/sys/compat___sigreturn14.S
+- lib/libc/compat/arch/mips/sys/compat___sigtramp1.S
+- lib/libc/compat/arch/mips/sys/compat_msgctl.S
+- lib/libc/compat/arch/mips/sys/compat_quotactl.S
+- lib/libc/compat/arch/mips/sys/compat_shmctl.S
+- lib/libc/compat/arch/mips/sys/compat_sigaction.S
+- lib/libc/compat/arch/mips/sys/compat_sigpending.S
+- lib/libc/compat/arch/mips/sys/compat_sigprocmask.S
+- lib/libc/compat/arch/mips/sys/compat_sigreturn.S
+- lib/libc/compat/arch/mips/sys/compat_sigsuspend.S
+- lib/libc/compat/arch/or1k/Makefile.inc
+- lib/libc/compat/arch/powerpc/Makefile.inc
+- lib/libc/compat/arch/powerpc/gen/Makefile.inc
+- lib/libc/compat/arch/powerpc/gen/compat_setjmp.S
+- lib/libc/compat/arch/powerpc/gen/compat_sigsetjmp.S
+- lib/libc/compat/arch/powerpc/sys/Makefile.inc
+- lib/libc/compat/arch/powerpc/sys/compat_Ovfork.S
+- lib/libc/compat/arch/powerpc/sys/compat___semctl.S
+- lib/libc/compat/arch/powerpc/sys/compat___sigreturn14.S
+- lib/libc/compat/arch/powerpc/sys/compat___sigtramp1.S
+- lib/libc/compat/arch/powerpc/sys/compat_msgctl.S
+- lib/libc/compat/arch/powerpc/sys/compat_quotactl.S
+- lib/libc/compat/arch/powerpc/sys/compat_shmctl.S
+- lib/libc/compat/arch/powerpc/sys/compat_sigaction13.S
+- lib/libc/compat/arch/powerpc/sys/compat_sigpending13.S
+- lib/libc/compat/arch/powerpc/sys/compat_sigprocmask13.S
+- lib/libc/compat/arch/powerpc/sys/compat_sigreturn13.S
+- lib/libc/compat/arch/powerpc/sys/compat_sigsuspend13.S
+- lib/libc/compat/arch/powerpc64/Makefile.inc
+- lib/libc/compat/arch/powerpc64/gen/Makefile.inc
+- lib/libc/compat/arch/powerpc64/sys/Makefile.inc
+- lib/libc/compat/arch/powerpc64/sys/compat___semctl.S
+- lib/libc/compat/arch/powerpc64/sys/compat_msgctl.S
+- lib/libc/compat/arch/powerpc64/sys/compat_quotactl.S
+- lib/libc/compat/arch/powerpc64/sys/compat_shmctl.S
+- lib/libc/compat/arch/riscv/Makefile.inc
+- lib/libc/compat/arch/sh3/Makefile.inc
+- lib/libc/compat/arch/sh3/gen/Makefile.inc
+- lib/libc/compat/arch/sh3/gen/compat_setjmp.S
+- lib/libc/compat/arch/sh3/gen/compat_sigsetjmp.S
+- lib/libc/compat/arch/sh3/sys/Makefile.inc
+- lib/libc/compat/arch/sh3/sys/compat_Ovfork.S
+- lib/libc/compat/arch/sh3/sys/compat___semctl.S
+- lib/libc/compat/arch/sh3/sys/compat___sigreturn14.S
+- lib/libc/compat/arch/sh3/sys/compat___sigtramp1.S
+- lib/libc/compat/arch/sh3/sys/compat_msgctl.S
+- lib/libc/compat/arch/sh3/sys/compat_quotactl.S
+- lib/libc/compat/arch/sh3/sys/compat_shmctl.S
+- lib/libc/compat/arch/sh3/sys/compat_sigaction.S
+- lib/libc/compat/arch/sh3/sys/compat_sigpending.S
+- lib/libc/compat/arch/sh3/sys/compat_sigprocmask.S
+- lib/libc/compat/arch/sh3/sys/compat_sigreturn.S
+- lib/libc/compat/arch/sh3/sys/compat_sigsuspend.S
+- lib/libc/compat/arch/sparc/Makefile.inc
+- lib/libc/compat/arch/sparc/gen/Makefile.inc
+- lib/libc/compat/arch/sparc/gen/compat_setjmp.S
+- lib/libc/compat/arch/sparc/gen/compat_sigsetjmp.S
+- lib/libc/compat/arch/sparc/sys/Makefile.inc
+- lib/libc/compat/arch/sparc/sys/compat_Ovfork.S
+- lib/libc/compat/arch/sparc/sys/compat___semctl.S
+- lib/libc/compat/arch/sparc/sys/compat___sigreturn14.S
+- lib/libc/compat/arch/sparc/sys/compat___sigtramp1.S
+- lib/libc/compat/arch/sparc/sys/compat_msgctl.S
+- lib/libc/compat/arch/sparc/sys/compat_quotactl.S
+- lib/libc/compat/arch/sparc/sys/compat_shmctl.S
+- lib/libc/compat/arch/sparc/sys/compat_sigaction.S
+- lib/libc/compat/arch/sparc/sys/compat_sigpending.S
+- lib/libc/compat/arch/sparc/sys/compat_sigprocmask.S
+- lib/libc/compat/arch/sparc/sys/compat_sigreturn.S
+- lib/libc/compat/arch/sparc/sys/compat_sigsuspend.S
+- lib/libc/compat/arch/sparc64/Makefile.inc
+- lib/libc/compat/arch/sparc64/gen/Makefile.inc
+- lib/libc/compat/arch/sparc64/gen/compat_setjmp.S
+- lib/libc/compat/arch/sparc64/gen/compat_sigsetjmp.S
+- lib/libc/compat/arch/sparc64/sys/Makefile.inc
+- lib/libc/compat/arch/sparc64/sys/compat_Ovfork.S
+- lib/libc/compat/arch/sparc64/sys/compat___semctl.S
+- lib/libc/compat/arch/sparc64/sys/compat___sigreturn14.S
+- lib/libc/compat/arch/sparc64/sys/compat___sigtramp1.S
+- lib/libc/compat/arch/sparc64/sys/compat_msgctl.S
+- lib/libc/compat/arch/sparc64/sys/compat_quotactl.S
+- lib/libc/compat/arch/sparc64/sys/compat_shmctl.S
+- lib/libc/compat/arch/sparc64/sys/compat_sigaction.S
+- lib/libc/compat/arch/sparc64/sys/compat_sigpending.S
+- lib/libc/compat/arch/sparc64/sys/compat_sigprocmask.S
+- lib/libc/compat/arch/sparc64/sys/compat_sigreturn.S
+- lib/libc/compat/arch/sparc64/sys/compat_sigsuspend.S
+- lib/libc/compat/arch/vax/Makefile.inc
+- lib/libc/compat/arch/vax/sys/Makefile.inc
+- lib/libc/compat/arch/vax/sys/compat_Ovfork.S
+- lib/libc/compat/arch/vax/sys/compat___semctl.S
+- lib/libc/compat/arch/vax/sys/compat___sigreturn14.S
+- lib/libc/compat/arch/vax/sys/compat___sigtramp2.S
+- lib/libc/compat/arch/vax/sys/compat_msgctl.S
+- lib/libc/compat/arch/vax/sys/compat_quotactl.S
+- lib/libc/compat/arch/vax/sys/compat_shmctl.S
+- lib/libc/compat/arch/vax/sys/compat_sigaction13.S
+- lib/libc/compat/arch/vax/sys/compat_sigpending13.S
+- lib/libc/compat/arch/vax/sys/compat_sigprocmask13.S
+- lib/libc/compat/arch/vax/sys/compat_sigreturn13.S
+- lib/libc/compat/arch/vax/sys/compat_sigsuspend13.S
+- lib/libc/compat/arch/x86_64/Makefile.inc
+- lib/libc/compat/arch/x86_64/gen/Makefile.inc
+- lib/libc/compat/arch/x86_64/sys/Makefile.inc
+- lib/libc/compat/arch/x86_64/sys/compat_Ovfork.S
+- lib/libc/compat/arch/x86_64/sys/compat___semctl.S
+- lib/libc/compat/arch/x86_64/sys/compat___sigreturn14.S
+- lib/libc/compat/arch/x86_64/sys/compat_msgctl.S
+- lib/libc/compat/arch/x86_64/sys/compat_quotactl.S
+- lib/libc/compat/arch/x86_64/sys/compat_shmctl.S
+- lib/libc/compat/arch/x86_64/sys/compat_sigaction.S
+- lib/libc/compat/arch/x86_64/sys/compat_sigpending.S
+- lib/libc/compat/arch/x86_64/sys/compat_sigprocmask.S
+- lib/libc/compat/arch/x86_64/sys/compat_sigreturn.S
+- lib/libc/compat/arch/x86_64/sys/compat_sigsuspend.S
+- lib/libc/compat/db/Makefile.inc
+- lib/libc/compat/db/hash/Makefile.inc
+- lib/libc/compat/db/hash/compat_ndbmdatum.c
+- lib/libc/compat/gen/Makefile.inc
+- lib/libc/compat/gen/compat___fts13.c
+- lib/libc/compat/gen/compat___fts30.c
+- lib/libc/compat/gen/compat___fts31.c
+- lib/libc/compat/gen/compat___fts32.c
+- lib/libc/compat/gen/compat___fts50.c
+- lib/libc/compat/gen/compat___glob13.c
+- lib/libc/compat/gen/compat___unvis13.c
+- lib/libc/compat/gen/compat__readdir_unlocked30.c
+- lib/libc/compat/gen/compat_alloca.c
+- lib/libc/compat/gen/compat_alphasort.c
+- lib/libc/compat/gen/compat_devname.c
+- lib/libc/compat/gen/compat_errlist.c
+- lib/libc/compat/gen/compat_frexp_ieee754.c
+- lib/libc/compat/gen/compat_fts.c
+- lib/libc/compat/gen/compat_getmntinfo.c
+- lib/libc/compat/gen/compat_getpwent.c
+- lib/libc/compat/gen/compat_glob.c
+- lib/libc/compat/gen/compat_lastlogx.c
+- lib/libc/compat/gen/compat_ldexp_ieee754.c
+- lib/libc/compat/gen/compat_modf_ieee754.c
+- lib/libc/compat/gen/compat_opendir.c
+- lib/libc/compat/gen/compat_readdir.c
+- lib/libc/compat/gen/compat_scandir.c
+- lib/libc/compat/gen/compat_siglist.c
+- lib/libc/compat/gen/compat_signame.c
+- lib/libc/compat/gen/compat_sigsetops.c
+- lib/libc/compat/gen/compat_syslog.c
+- lib/libc/compat/gen/compat_time.c
+- lib/libc/compat/gen/compat_times.c
+- lib/libc/compat/gen/compat_timezone.c
+- lib/libc/compat/gen/compat_unvis.c
+- lib/libc/compat/gen/compat_utime.c
+- lib/libc/compat/gen/compat_utmp.c
+- lib/libc/compat/gen/compat_utmpx.c
+- lib/libc/compat/include/aio.h
+- lib/libc/compat/include/dirent.h
+- lib/libc/compat/include/fstypes.h
+- lib/libc/compat/include/fts.h
+- lib/libc/compat/include/glob.h
+- lib/libc/compat/include/locale.h
+- lib/libc/compat/include/lwp.h
+- lib/libc/compat/include/mqueue.h
+- lib/libc/compat/include/ndbm.h
+- lib/libc/compat/include/ns.h
+- lib/libc/compat/include/pwd.h
+- lib/libc/compat/include/rpc/pmap_clnt.h
+- lib/libc/compat/include/rpc/rpcb_clnt.h
+- lib/libc/compat/include/setjmp.h
+- lib/libc/compat/include/signal.h
+- lib/libc/compat/include/stdio.h
+- lib/libc/compat/include/stdlib.h
+- lib/libc/compat/include/time.h
+- lib/libc/compat/include/unistd.h
+- lib/libc/compat/include/utime.h
+- lib/libc/compat/include/utmp.h
+- lib/libc/compat/include/utmpx.h
+- lib/libc/compat/include/vis.h
+- lib/libc/compat/locale/Makefile.inc
+- lib/libc/compat/locale/compat_setlocale1.c
+- lib/libc/compat/locale/compat_setlocale32.c
+- lib/libc/compat/net/Makefile.inc
+- lib/libc/compat/net/__cmsg_alignbytes.c
+- lib/libc/compat/net/compat_ns_addr.c
+- lib/libc/compat/net/compat_ns_ntoa.c
+- lib/libc/compat/rpc/Makefile.inc
+- lib/libc/compat/rpc/compat_pmap_rmtcall.c
+- lib/libc/compat/rpc/compat_rpcb.c
+- lib/libc/compat/shlib_version
+- lib/libc/compat/stdio/Makefile.inc
+- lib/libc/compat/stdio/compat_fgetpos.c
+- lib/libc/compat/stdio/compat_fsetpos.c
+- lib/libc/compat/stdlib/Makefile.inc
+- lib/libc/compat/stdlib/compat_putenv.c
+- lib/libc/compat/stdlib/compat_random.c
+- lib/libc/compat/stdlib/compat_unsetenv.c
+- lib/libc/compat/sys/Lint_Ovfork.c
+- lib/libc/compat/sys/Makefile.inc
+- lib/libc/compat/sys/compat___fhstat30.c
+- lib/libc/compat/sys/compat___lwp_park50.c
+- lib/libc/compat/sys/compat___msgctl13.c
+- lib/libc/compat/sys/compat___ntp_gettime30.c
+- lib/libc/compat/sys/compat___semctl13.c
+- lib/libc/compat/sys/compat___shmctl13.c
+- lib/libc/compat/sys/compat___stat13.c
+- lib/libc/compat/sys/compat___stat30.c
+- lib/libc/compat/sys/compat__lwp_park.c
+- lib/libc/compat/sys/compat_adjtime.c
+- lib/libc/compat/sys/compat_aio_suspend.c
+- lib/libc/compat/sys/compat_clock.c
+- lib/libc/compat/sys/compat_fhopen.c
+- lib/libc/compat/sys/compat_fhstatvfs.c
+- lib/libc/compat/sys/compat_fhstatvfs1.c
+- lib/libc/compat/sys/compat_getdents.c
+- lib/libc/compat/sys/compat_getdirentries.c
+- lib/libc/compat/sys/compat_getfh.c
+- lib/libc/compat/sys/compat_getrusage.c
+- lib/libc/compat/sys/compat_gettimeofday.c
+- lib/libc/compat/sys/compat_itimer.c
+- lib/libc/compat/sys/compat_kevent.c
+- lib/libc/compat/sys/compat_lfs_segwait.c
+- lib/libc/compat/sys/compat_mknod.c
+- lib/libc/compat/sys/compat_mount.c
+- lib/libc/compat/sys/compat_mqueue.c
+- lib/libc/compat/sys/compat_msync.c
+- lib/libc/compat/sys/compat_nanosleep.c
+- lib/libc/compat/sys/compat_ntp_gettime.c
+- lib/libc/compat/sys/compat_sched.c
+- lib/libc/compat/sys/compat_select.c
+- lib/libc/compat/sys/compat_semctl.c
+- lib/libc/compat/sys/compat_settimeofday.c
+- lib/libc/compat/sys/compat_sigaltstack.c
+- lib/libc/compat/sys/compat_sigtimedwait.c
+- lib/libc/compat/sys/compat_socket.c
+- lib/libc/compat/sys/compat_stat.c
+- lib/libc/compat/sys/compat_statfs.c
+- lib/libc/compat/sys/compat_timer.c
+- lib/libc/compat/sys/compat_utimes.c
+- lib/libc/compat/sys/compat_wait4.c
+- lib/libc/compat/sys/getdirentries.3
+- lib/libc/compat/time/Makefile.inc
+- lib/libc/compat/time/compat_difftime.c
+- lib/libc/compat/time/compat_localtime.c
+- lib/libc/compiler_rt/Makefile.inc
+- lib/libc/db/Makefile.inc
+- lib/libc/db/README
+- lib/libc/db/btree/Makefile.inc
+- lib/libc/db/btree/bt_close.c
+- lib/libc/db/btree/bt_conv.c
+- lib/libc/db/btree/bt_debug.c
+- lib/libc/db/btree/bt_delete.c
+- lib/libc/db/btree/bt_get.c
+- lib/libc/db/btree/bt_open.c
+- lib/libc/db/btree/bt_overflow.c
+- lib/libc/db/btree/bt_page.c
+- lib/libc/db/btree/bt_put.c
+- lib/libc/db/btree/bt_search.c
+- lib/libc/db/btree/bt_seq.c
+- lib/libc/db/btree/bt_split.c
+- lib/libc/db/btree/bt_utils.c
+- lib/libc/db/btree/btree.h
+- lib/libc/db/btree/extern.h
+- lib/libc/db/changelog
+- lib/libc/db/db/Makefile.inc
+- lib/libc/db/db/db.c
+- lib/libc/db/db/dbfile.c
+- lib/libc/db/db2netbsd
+- lib/libc/db/hash/Makefile.inc
+- lib/libc/db/hash/README
+- lib/libc/db/hash/extern.h
+- lib/libc/db/hash/hash.c
+- lib/libc/db/hash/hash.h
+- lib/libc/db/hash/hash_bigkey.c
+- lib/libc/db/hash/hash_buf.c
+- lib/libc/db/hash/hash_func.c
+- lib/libc/db/hash/hash_log2.c
+- lib/libc/db/hash/hash_page.c
+- lib/libc/db/hash/ndbm.c
+- lib/libc/db/hash/ndbmdatum.c
+- lib/libc/db/hash/page.h
+- lib/libc/db/man/Makefile.inc
+- lib/libc/db/man/btree.3
+- lib/libc/db/man/dbm_clearerr.3
+- lib/libc/db/man/dbopen.3
+- lib/libc/db/man/hash.3
+- lib/libc/db/man/mpool.3
+- lib/libc/db/man/recno.3
+- lib/libc/db/mpool/Makefile.inc
+- lib/libc/db/mpool/README
+- lib/libc/db/mpool/mpool.c
+- lib/libc/db/recno/Makefile.inc
+- lib/libc/db/recno/extern.h
+- lib/libc/db/recno/rec_close.c
+- lib/libc/db/recno/rec_delete.c
+- lib/libc/db/recno/rec_get.c
+- lib/libc/db/recno/rec_open.c
+- lib/libc/db/recno/rec_put.c
+- lib/libc/db/recno/rec_search.c
+- lib/libc/db/recno/rec_seq.c
+- lib/libc/db/recno/rec_utils.c
+- lib/libc/db/recno/recno.h
+- lib/libc/dlfcn/Makefile.inc
+- lib/libc/dlfcn/dlfcn_elf.c
+- lib/libc/gdtoa/Makefile.inc
+- lib/libc/gdtoa/README
+- lib/libc/gdtoa/arithchk.c
+- lib/libc/gdtoa/dmisc.c
+- lib/libc/gdtoa/dtoa.c
+- lib/libc/gdtoa/g_Qfmt.c
+- lib/libc/gdtoa/g__fmt.c
+- lib/libc/gdtoa/g_ddfmt.c
+- lib/libc/gdtoa/g_dfmt.c
+- lib/libc/gdtoa/g_ffmt.c
+- lib/libc/gdtoa/g_xLfmt.c
+- lib/libc/gdtoa/g_xfmt.c
+- lib/libc/gdtoa/gdtoa.c
+- lib/libc/gdtoa/gdtoa.h
+- lib/libc/gdtoa/gdtoa_fltrnds.h
+- lib/libc/gdtoa/gdtoa_locks.c
+- lib/libc/gdtoa/gdtoaimp.h
+- lib/libc/gdtoa/gethex.c
+- lib/libc/gdtoa/gmisc.c
+- lib/libc/gdtoa/hd_init.c
+- lib/libc/gdtoa/hdtoa.c
+- lib/libc/gdtoa/hexnan.c
+- lib/libc/gdtoa/ldtoa.c
+- lib/libc/gdtoa/makefile
+- lib/libc/gdtoa/misc.c
+- lib/libc/gdtoa/qnan.c
+- lib/libc/gdtoa/smisc.c
+- lib/libc/gdtoa/strtoIQ.c
+- lib/libc/gdtoa/strtoId.c
+- lib/libc/gdtoa/strtoIdd.c
+- lib/libc/gdtoa/strtoIf.c
+- lib/libc/gdtoa/strtoIg.c
+- lib/libc/gdtoa/strtoIx.c
+- lib/libc/gdtoa/strtoIxL.c
+- lib/libc/gdtoa/strtod.c
+- lib/libc/gdtoa/strtodI.c
+- lib/libc/gdtoa/strtodg.c
+- lib/libc/gdtoa/strtodnrp.c
+- lib/libc/gdtoa/strtof.c
+- lib/libc/gdtoa/strtof_vaxf.c
+- lib/libc/gdtoa/strtold_pQ.c
+- lib/libc/gdtoa/strtold_px.c
+- lib/libc/gdtoa/strtold_pxL.c
+- lib/libc/gdtoa/strtold_subr.c
+- lib/libc/gdtoa/strtopQ.c
+- lib/libc/gdtoa/strtopd.c
+- lib/libc/gdtoa/strtopdd.c
+- lib/libc/gdtoa/strtopf.c
+- lib/libc/gdtoa/strtopx.c
+- lib/libc/gdtoa/strtopxL.c
+- lib/libc/gdtoa/strtorQ.c
+- lib/libc/gdtoa/strtord.c
+- lib/libc/gdtoa/strtordd.c
+- lib/libc/gdtoa/strtorf.c
+- lib/libc/gdtoa/strtorx.c
+- lib/libc/gdtoa/strtorxL.c
+- lib/libc/gdtoa/sum.c
+- lib/libc/gdtoa/test/Q.ou0
+- lib/libc/gdtoa/test/Q.ou1
+- lib/libc/gdtoa/test/Qtest.c
+- lib/libc/gdtoa/test/README
+- lib/libc/gdtoa/test/d.out
+- lib/libc/gdtoa/test/dI.out
+- lib/libc/gdtoa/test/dIsi.out
+- lib/libc/gdtoa/test/dItest.c
+- lib/libc/gdtoa/test/dd.out
+- lib/libc/gdtoa/test/ddsi.out
+- lib/libc/gdtoa/test/ddtest.c
+- lib/libc/gdtoa/test/dt.c
+- lib/libc/gdtoa/test/dtest.c
+- lib/libc/gdtoa/test/dtst.out
+- lib/libc/gdtoa/test/f.out
+- lib/libc/gdtoa/test/ftest.c
+- lib/libc/gdtoa/test/getround.c
+- lib/libc/gdtoa/test/makefile
+- lib/libc/gdtoa/test/obad/strtodt.out
+- lib/libc/gdtoa/test/obad/xL.out
+- lib/libc/gdtoa/test/pfLqtestnos
+- lib/libc/gdtoa/test/pftest.c
+- lib/libc/gdtoa/test/pftestLq.out
+- lib/libc/gdtoa/test/pftestQ.out
+- lib/libc/gdtoa/test/pftestnos
+- lib/libc/gdtoa/test/pftestx.out
+- lib/libc/gdtoa/test/rtestnos
+- lib/libc/gdtoa/test/strtoIdSI.c
+- lib/libc/gdtoa/test/strtoIddSI.c
+- lib/libc/gdtoa/test/strtodISI.c
+- lib/libc/gdtoa/test/strtodt.c
+- lib/libc/gdtoa/test/strtopddSI.c
+- lib/libc/gdtoa/test/strtorddSI.c
+- lib/libc/gdtoa/test/testnos
+- lib/libc/gdtoa/test/testnos1
+- lib/libc/gdtoa/test/testnos3
+- lib/libc/gdtoa/test/x.ou0
+- lib/libc/gdtoa/test/x.ou1
+- lib/libc/gdtoa/test/xL.ou0
+- lib/libc/gdtoa/test/xL.ou1
+- lib/libc/gdtoa/test/xLtest.c
+- lib/libc/gdtoa/test/xQtest.c
+- lib/libc/gdtoa/test/xsum0.out
+- lib/libc/gdtoa/test/xtest.c
+- lib/libc/gdtoa/ulp.c
+- lib/libc/gdtoa/xsum0.out
+- lib/libc/gen/Lint___setjmp14.c
+- lib/libc/gen/Lint___sigsetjmp14.c
+- lib/libc/gen/Lint__setjmp.c
+- lib/libc/gen/Lint_alloca.c
+- lib/libc/gen/Lint_bswap16.c
+- lib/libc/gen/Lint_bswap32.c
+- lib/libc/gen/Lint_bswap64.c
+- lib/libc/gen/Lint_fabs.c
+- lib/libc/gen/Lint_flt_rounds.c
+- lib/libc/gen/Lint_fpgetmask.c
+- lib/libc/gen/Lint_fpgetround.c
+- lib/libc/gen/Lint_fpgetsticky.c
+- lib/libc/gen/Lint_fpsetmask.c
+- lib/libc/gen/Lint_fpsetround.c
+- lib/libc/gen/Lint_fpsetsticky.c
+- lib/libc/gen/Lint_frexp.c
+- lib/libc/gen/Lint_ldexp.c
+- lib/libc/gen/Lint_modf.c
+- lib/libc/gen/Lint_resumecontext.c
+- lib/libc/gen/Lint_swapcontext.c
+- lib/libc/gen/Makefile.inc
+- lib/libc/gen/_errno.c
+- lib/libc/gen/_lwp_makecontext.3
+- lib/libc/gen/alarm.3
+- lib/libc/gen/alarm.c
+- lib/libc/gen/alphasort.c
+- lib/libc/gen/arc4random.3
+- lib/libc/gen/arc4random.c
+- lib/libc/gen/assert.c
+- lib/libc/gen/asysctl.c
+- lib/libc/gen/basename.3
+- lib/libc/gen/basename.c
+- lib/libc/gen/bswap.3
+- lib/libc/gen/cgetcap.3
+- lib/libc/gen/clock.3
+- lib/libc/gen/clock.c
+- lib/libc/gen/closedir.c
+- lib/libc/gen/closefrom.3
+- lib/libc/gen/closefrom.c
+- lib/libc/gen/confstr.3
+- lib/libc/gen/confstr.c
+- lib/libc/gen/cpuset.3
+- lib/libc/gen/ctermid.3
+- lib/libc/gen/ctermid.c
+- lib/libc/gen/ctype.3
+- lib/libc/gen/ctype_.c
+- lib/libc/gen/daemon.3
+- lib/libc/gen/daemon.c
+- lib/libc/gen/dehumanize_number.c
+- lib/libc/gen/devname.3
+- lib/libc/gen/devname.c
+- lib/libc/gen/directory.3
+- lib/libc/gen/dirent_private.h
+- lib/libc/gen/dirname.3
+- lib/libc/gen/dirname.c
+- lib/libc/gen/disklabel.c
+- lib/libc/gen/endutxent.3
+- lib/libc/gen/err.3
+- lib/libc/gen/err.c
+- lib/libc/gen/errc.c
+- lib/libc/gen/errno.c
+- lib/libc/gen/errx.c
+- lib/libc/gen/exec.3
+- lib/libc/gen/execl.c
+- lib/libc/gen/execle.c
+- lib/libc/gen/execlp.c
+- lib/libc/gen/execv.c
+- lib/libc/gen/execvp.c
+- lib/libc/gen/extattr.c
+- lib/libc/gen/extattr_copy_file.3
+- lib/libc/gen/fabs_ieee754.c
+- lib/libc/gen/fixunsdfsi_ieee754.c
+- lib/libc/gen/fixunsgen64_ieee754.c
+- lib/libc/gen/fixunsgen_ieee754.c
+- lib/libc/gen/fixunssfsi_ieee754.c
+- lib/libc/gen/fixunstfdi_ieee754.c
+- lib/libc/gen/fixunstfsi_ieee754.c
+- lib/libc/gen/floatunditf_ieee754.c
+- lib/libc/gen/floatunsidf_ieee754.c
+- lib/libc/gen/floatunsisf_ieee754.c
+- lib/libc/gen/fmtcheck.3
+- lib/libc/gen/fmtcheck.c
+- lib/libc/gen/fmtmsg.3
+- lib/libc/gen/fmtmsg.c
+- lib/libc/gen/fnmatch.3
+- lib/libc/gen/fnmatch.c
+- lib/libc/gen/fpclassify.3
+- lib/libc/gen/fpclassifyd_ieee754.c
+- lib/libc/gen/fpclassifyf_ieee754.c
+- lib/libc/gen/fpclassifyl_ieee754.c
+- lib/libc/gen/fpgetmask.3
+- lib/libc/gen/fstab.c
+- lib/libc/gen/ftok.3
+- lib/libc/gen/ftok.c
+- lib/libc/gen/fts.3
+- lib/libc/gen/ftw.3
+- lib/libc/gen/ftw.c
+- lib/libc/gen/getbsize.3
+- lib/libc/gen/getbsize.c
+- lib/libc/gen/getcap.c
+- lib/libc/gen/getcwd.3
+- lib/libc/gen/getcwd.c
+- lib/libc/gen/getdevmajor.3
+- lib/libc/gen/getdevmajor.c
+- lib/libc/gen/getdiskbyname.3
+- lib/libc/gen/getdomainname.3
+- lib/libc/gen/getdomainname.c
+- lib/libc/gen/getfsent.3
+- lib/libc/gen/getgrent.3
+- lib/libc/gen/getgrent.c
+- lib/libc/gen/getgrouplist.3
+- lib/libc/gen/getgrouplist.c
+- lib/libc/gen/getgroupmembership.c
+- lib/libc/gen/gethostname.3
+- lib/libc/gen/gethostname.c
+- lib/libc/gen/getlastlogx.3
+- lib/libc/gen/getloadavg.3
+- lib/libc/gen/getloadavg.c
+- lib/libc/gen/getmntinfo.3
+- lib/libc/gen/getmntinfo.c
+- lib/libc/gen/getnetgrent.3
+- lib/libc/gen/getnetgrent.c
+- lib/libc/gen/getpagesize.3
+- lib/libc/gen/getpagesize.c
+- lib/libc/gen/getpass.3
+- lib/libc/gen/getpass.c
+- lib/libc/gen/getprogname.3
+- lib/libc/gen/getprogname.c
+- lib/libc/gen/getpwent.3
+- lib/libc/gen/getpwent.c
+- lib/libc/gen/getttyent.3
+- lib/libc/gen/getttyent.c
+- lib/libc/gen/getusershell.3
+- lib/libc/gen/getusershell.c
+- lib/libc/gen/glob.3
+- lib/libc/gen/glob.c
+- lib/libc/gen/humanize_number.3
+- lib/libc/gen/humanize_number.c
+- lib/libc/gen/infinity_ieee754.c
+- lib/libc/gen/infinityf_ieee754.c
+- lib/libc/gen/infinityl_dbl_ieee754.c
+- lib/libc/gen/infinityl_ieee754.c
+- lib/libc/gen/initgroups.3
+- lib/libc/gen/initgroups.c
+- lib/libc/gen/isalnum.3
+- lib/libc/gen/isalpha.3
+- lib/libc/gen/isascii.3
+- lib/libc/gen/isascii.c
+- lib/libc/gen/isatty.c
+- lib/libc/gen/isblank.3
+- lib/libc/gen/iscntrl.3
+- lib/libc/gen/isctype.c
+- lib/libc/gen/isdigit.3
+- lib/libc/gen/isfinite.3
+- lib/libc/gen/isfinited_ieee754.c
+- lib/libc/gen/isfinitef_ieee754.c
+- lib/libc/gen/isfinitel_ieee754.c
+- lib/libc/gen/isgraph.3
+- lib/libc/gen/isgreater.3
+- lib/libc/gen/isinf.3
+- lib/libc/gen/isinfd_ieee754.c
+- lib/libc/gen/isinff_ieee754.c
+- lib/libc/gen/isinfl_ieee754.c
+- lib/libc/gen/islower.3
+- lib/libc/gen/isnan.3
+- lib/libc/gen/isnand_ieee754.c
+- lib/libc/gen/isnanf_ieee754.c
+- lib/libc/gen/isnanl_ieee754.c
+- lib/libc/gen/isnormal.3
+- lib/libc/gen/isprint.3
+- lib/libc/gen/ispunct.3
+- lib/libc/gen/isspace.3
+- lib/libc/gen/isupper.3
+- lib/libc/gen/isxdigit.3
+- lib/libc/gen/lockf.3
+- lib/libc/gen/lockf.c
+- lib/libc/gen/makecontext.3
+- lib/libc/gen/nftw.c
+- lib/libc/gen/nice.3
+- lib/libc/gen/nice.c
+- lib/libc/gen/nlist.3
+- lib/libc/gen/nlist.c
+- lib/libc/gen/nlist_aout.c
+- lib/libc/gen/nlist_coff.c
+- lib/libc/gen/nlist_ecoff.c
+- lib/libc/gen/nlist_elf32.c
+- lib/libc/gen/nlist_elf64.c
+- lib/libc/gen/nlist_private.h
+- lib/libc/gen/pause.3
+- lib/libc/gen/pause.c
+- lib/libc/gen/popen.3
+- lib/libc/gen/popen.c
+- lib/libc/gen/posix_spawn.3
+- lib/libc/gen/posix_spawn_file_actions_addopen.3
+- lib/libc/gen/posix_spawn_file_actions_init.3
+- lib/libc/gen/posix_spawn_fileactions.c
+- lib/libc/gen/posix_spawn_sched.c
+- lib/libc/gen/posix_spawnattr_getflags.3
+- lib/libc/gen/posix_spawnattr_getpgroup.3
+- lib/libc/gen/posix_spawnattr_getschedparam.3
+- lib/libc/gen/posix_spawnattr_getschedpolicy.3
+- lib/libc/gen/posix_spawnattr_getsigdefault.3
+- lib/libc/gen/posix_spawnattr_getsigmask.3
+- lib/libc/gen/posix_spawnattr_init.3
+- lib/libc/gen/posix_spawnp.c
+- lib/libc/gen/psignal.3
+- lib/libc/gen/psignal.c
+- lib/libc/gen/pthread_atfork.3
+- lib/libc/gen/pthread_atfork.c
+- lib/libc/gen/pw_private.h
+- lib/libc/gen/pw_scan.c
+- lib/libc/gen/pwcache.3
+- lib/libc/gen/pwcache.c
+- lib/libc/gen/pwcache.h
+- lib/libc/gen/raise.3
+- lib/libc/gen/raise.c
+- lib/libc/gen/randomid.3
+- lib/libc/gen/randomid.c
+- lib/libc/gen/readdir.c
+- lib/libc/gen/realpath.3
+- lib/libc/gen/rewinddir.c
+- lib/libc/gen/scandir.3
+- lib/libc/gen/scandir.c
+- lib/libc/gen/seekdir.c
+- lib/libc/gen/setdomainname.c
+- lib/libc/gen/sethostname.c
+- lib/libc/gen/setjmp.3
+- lib/libc/gen/setjmperr.c
+- lib/libc/gen/setmode.3
+- lib/libc/gen/setmode.c
+- lib/libc/gen/setproctitle.3
+- lib/libc/gen/setproctitle.c
+- lib/libc/gen/setprogname.c
+- lib/libc/gen/shquote.3
+- lib/libc/gen/shquote.c
+- lib/libc/gen/shquotev.c
+- lib/libc/gen/sighold.3
+- lib/libc/gen/sighold.c
+- lib/libc/gen/sigignore.3
+- lib/libc/gen/sigignore.c
+- lib/libc/gen/siginterrupt.3
+- lib/libc/gen/siginterrupt.c
+- lib/libc/gen/siglist.c
+- lib/libc/gen/signal.3
+- lib/libc/gen/signal.c
+- lib/libc/gen/signame.c
+- lib/libc/gen/signbit.3
+- lib/libc/gen/signbitd_ieee754.c
+- lib/libc/gen/signbitf_ieee754.c
+- lib/libc/gen/signbitl_ieee754.c
+- lib/libc/gen/sigrelse.3
+- lib/libc/gen/sigrelse.c
+- lib/libc/gen/sigset.3
+- lib/libc/gen/sigset.c
+- lib/libc/gen/sigsetops.3
+- lib/libc/gen/sigsetops.c
+- lib/libc/gen/sleep.3
+- lib/libc/gen/sleep.c
+- lib/libc/gen/stringlist.3
+- lib/libc/gen/stringlist.c
+- lib/libc/gen/sysconf.3
+- lib/libc/gen/sysconf.c
+- lib/libc/gen/sysctl.3
+- lib/libc/gen/sysctl.c
+- lib/libc/gen/sysctlbyname.c
+- lib/libc/gen/sysctlgetmibinfo.c
+- lib/libc/gen/sysctlnametomib.c
+- lib/libc/gen/syslog.3
+- lib/libc/gen/syslog.c
+- lib/libc/gen/telldir.c
+- lib/libc/gen/time.3
+- lib/libc/gen/time.c
+- lib/libc/gen/times.3
+- lib/libc/gen/times.c
+- lib/libc/gen/timezone.3
+- lib/libc/gen/toascii.3
+- lib/libc/gen/toascii.c
+- lib/libc/gen/tolower.3
+- lib/libc/gen/tolower_.c
+- lib/libc/gen/toupper.3
+- lib/libc/gen/toupper_.c
+- lib/libc/gen/ttyname.3
+- lib/libc/gen/ttyname.c
+- lib/libc/gen/ualarm.3
+- lib/libc/gen/ualarm.c
+- lib/libc/gen/ulimit.3
+- lib/libc/gen/ulimit.c
+- lib/libc/gen/uname.3
+- lib/libc/gen/uname.c
+- lib/libc/gen/unvis.3
+- lib/libc/gen/unvis.c
+- lib/libc/gen/usleep.3
+- lib/libc/gen/usleep.c
+- lib/libc/gen/utime.3
+- lib/libc/gen/utime.c
+- lib/libc/gen/utimens.c
+- lib/libc/gen/utmp.c
+- lib/libc/gen/utmpx.c
+- lib/libc/gen/valloc.3
+- lib/libc/gen/valloc.c
+- lib/libc/gen/verr.c
+- lib/libc/gen/verrc.c
+- lib/libc/gen/verrx.c
+- lib/libc/gen/vis.3
+- lib/libc/gen/vwarn.c
+- lib/libc/gen/vwarnc.c
+- lib/libc/gen/vwarnx.c
+- lib/libc/gen/wait.c
+- lib/libc/gen/wait3.c
+- lib/libc/gen/waitpid.c
+- lib/libc/gen/warn.c
+- lib/libc/gen/warnc.c
+- lib/libc/gen/warnx.c
+- lib/libc/gen/wordexp.3
+- lib/libc/gen/wordexp.c
+- lib/libc/gmon/Makefile.inc
+- lib/libc/gmon/moncontrol.3
+- lib/libc/hash/Makefile.inc
+- lib/libc/hash/hashhl.c
+- lib/libc/hash/md2/Makefile.inc
+- lib/libc/hash/md2/md2.3
+- lib/libc/hash/md2/md2.c
+- lib/libc/hash/md2/md2hl.c
+- lib/libc/hash/murmurhash/Makefile.inc
+- lib/libc/hash/rmd160/Makefile.inc
+- lib/libc/hash/rmd160/rmd160.3
+- lib/libc/hash/rmd160/rmd160hl.c
+- lib/libc/hash/sha1/Makefile.inc
+- lib/libc/hash/sha1/sha1.3
+- lib/libc/hash/sha1/sha1hl.c
+- lib/libc/hash/sha2/Makefile.inc
+- lib/libc/hash/sha2/sha2.3
+- lib/libc/hash/sha2/sha224hl.c
+- lib/libc/hash/sha2/sha256hl.c
+- lib/libc/hash/sha2/sha384hl.c
+- lib/libc/hash/sha2/sha512hl.c
+- lib/libc/iconv/Makefile.inc
+- lib/libc/iconv/iconv.3
+- lib/libc/iconv/iconv.c
+- lib/libc/include/env.h
+- lib/libc/include/extern.h
+- lib/libc/include/fd_setsize.h
+- lib/libc/include/isc/assertions.h
+- lib/libc/include/isc/dst.h
+- lib/libc/include/isc/eventlib.h
+- lib/libc/include/isc/heap.h
+- lib/libc/include/isc/list.h
+- lib/libc/include/isc/memcluster.h
+- lib/libc/include/pathnames.h
+- lib/libc/include/port_after.h
+- lib/libc/include/port_before.h
+- lib/libc/include/reentrant.h
+- lib/libc/include/resolv_mt.h
+- lib/libc/inet/Makefile.inc
+- lib/libc/inet/inet.3
+- lib/libc/inet/inet6_option_space.3
+- lib/libc/inet/inet6_rthdr_space.3
+- lib/libc/inet/inet_cidr_ntop.c
+- lib/libc/inet/inet_cidr_pton.c
+- lib/libc/inet/inet_lnaof.c
+- lib/libc/inet/inet_makeaddr.c
+- lib/libc/inet/inet_net.3
+- lib/libc/inet/inet_net_ntop.c
+- lib/libc/inet/inet_net_pton.c
+- lib/libc/inet/inet_neta.c
+- lib/libc/inet/inet_netof.c
+- lib/libc/inet/inet_network.c
+- lib/libc/inet/inet_ntoa.c
+- lib/libc/inet/inet_ntop.c
+- lib/libc/inet/inet_pton.c
+- lib/libc/inet/nsap_addr.c
+- lib/libc/isc/Makefile.inc
+- lib/libc/isc/assertions.c
+- lib/libc/isc/ev_streams.c
+- lib/libc/isc/ev_timers.c
+- lib/libc/isc/eventlib_p.h
+- lib/libc/libcincludes.mk
+- lib/libc/locale/Makefile.inc
+- lib/libc/locale/__mb_cur_max.c
+- lib/libc/locale/__wctoint.h
+- lib/libc/locale/_wcstod.h
+- lib/libc/locale/_wcstol.h
+- lib/libc/locale/_wcstoul.h
+- lib/libc/locale/_wctrans.c
+- lib/libc/locale/_wctrans_local.h
+- lib/libc/locale/_wctype.c
+- lib/libc/locale/_wctype_local.h
+- lib/libc/locale/aliasname_local.h
+- lib/libc/locale/btowc.3
+- lib/libc/locale/ctype_local.h
+- lib/libc/locale/dummy_lc_collate.c
+- lib/libc/locale/dummy_lc_template.h
+- lib/libc/locale/duplocale.c
+- lib/libc/locale/fix_grouping.c
+- lib/libc/locale/fix_grouping.h
+- lib/libc/locale/freelocale.c
+- lib/libc/locale/generic_lc_all.c
+- lib/libc/locale/generic_lc_template_decl.h
+- lib/libc/locale/global_locale.c
+- lib/libc/locale/iswalnum.3
+- lib/libc/locale/iswctype.3
+- lib/libc/locale/iswctype_mb.c
+- lib/libc/locale/localeconv.c
+- lib/libc/locale/localeio.h
+- lib/libc/locale/mblen.3
+- lib/libc/locale/mbrlen.3
+- lib/libc/locale/mbrtowc.3
+- lib/libc/locale/mbsinit.3
+- lib/libc/locale/mbsrtowcs.3
+- lib/libc/locale/mbstowcs.3
+- lib/libc/locale/mbtowc.3
+- lib/libc/locale/multibyte.h
+- lib/libc/locale/multibyte_amd1.c
+- lib/libc/locale/multibyte_c90.c
+- lib/libc/locale/nb_lc_messages_misc.h
+- lib/libc/locale/nb_lc_monetary_misc.h
+- lib/libc/locale/nb_lc_numeric_misc.h
+- lib/libc/locale/nb_lc_template.h
+- lib/libc/locale/nb_lc_template_decl.h
+- lib/libc/locale/nb_lc_time_misc.h
+- lib/libc/locale/newlocale.c
+- lib/libc/locale/nl_langinfo.3
+- lib/libc/locale/nl_langinfo.c
+- lib/libc/locale/rune.c
+- lib/libc/locale/runetable.c
+- lib/libc/locale/runetype_file.h
+- lib/libc/locale/runetype_local.h
+- lib/libc/locale/setlocale.3
+- lib/libc/locale/setlocale.c
+- lib/libc/locale/setlocale_local.h
+- lib/libc/locale/towctrans.3
+- lib/libc/locale/towlower.3
+- lib/libc/locale/wcrtomb.3
+- lib/libc/locale/wcscoll.3
+- lib/libc/locale/wcscoll.c
+- lib/libc/locale/wcsftime.3
+- lib/libc/locale/wcsftime.c
+- lib/libc/locale/wcsrtombs.3
+- lib/libc/locale/wcstod.3
+- lib/libc/locale/wcstod.c
+- lib/libc/locale/wcstof.c
+- lib/libc/locale/wcstoimax.c
+- lib/libc/locale/wcstol.3
+- lib/libc/locale/wcstol.c
+- lib/libc/locale/wcstold.c
+- lib/libc/locale/wcstoll.c
+- lib/libc/locale/wcstombs.3
+- lib/libc/locale/wcstoul.c
+- lib/libc/locale/wcstoull.c
+- lib/libc/locale/wcstoumax.c
+- lib/libc/locale/wcsxfrm.3
+- lib/libc/locale/wcsxfrm.c
+- lib/libc/locale/wctob.3
+- lib/libc/locale/wctomb.3
+- lib/libc/locale/wctrans.3
+- lib/libc/locale/wctype.3
+- lib/libc/locale/wcwidth.3
+- lib/libc/md/Makefile.inc
+- lib/libc/md/md2hl.c
+- lib/libc/md/md4.copyright
+- lib/libc/md/md4hl.c
+- lib/libc/md/md5.copyright
+- lib/libc/md/md5hl.c
+- lib/libc/md/mdX.3
+- lib/libc/md/mdXhl.c
+- lib/libc/misc/Makefile.inc
+- lib/libc/misc/initfini.c
+- lib/libc/nameser/Makefile.inc
+- lib/libc/nameser/ns_name.c
+- lib/libc/nameser/ns_netint.c
+- lib/libc/nameser/ns_parse.c
+- lib/libc/nameser/ns_print.c
+- lib/libc/nameser/ns_samedomain.c
+- lib/libc/nameser/ns_ttl.c
+- lib/libc/net/Lint_htonl.c
+- lib/libc/net/Lint_htons.c
+- lib/libc/net/Lint_ntohl.c
+- lib/libc/net/Lint_ntohs.c
+- lib/libc/net/Makefile.inc
+- lib/libc/net/base64.c
+- lib/libc/net/byteorder.3
+- lib/libc/net/ethers.3
+- lib/libc/net/ethers.c
+- lib/libc/net/gai_strerror.3
+- lib/libc/net/getaddrinfo.3
+- lib/libc/net/getaddrinfo.c
+- lib/libc/net/gethnamaddr.c
+- lib/libc/net/gethostbyname.3
+- lib/libc/net/getifaddrs.3
+- lib/libc/net/getifaddrs.c
+- lib/libc/net/getnameinfo.3
+- lib/libc/net/getnameinfo.c
+- lib/libc/net/getnetent.3
+- lib/libc/net/getnetent.c
+- lib/libc/net/getnetnamadr.c
+- lib/libc/net/getpeereid.3
+- lib/libc/net/getpeereid.c
+- lib/libc/net/getprotobyname.c
+- lib/libc/net/getprotobyname_r.c
+- lib/libc/net/getprotobynumber.c
+- lib/libc/net/getprotobynumber_r.c
+- lib/libc/net/getprotoent.3
+- lib/libc/net/getprotoent.c
+- lib/libc/net/getprotoent_r.c
+- lib/libc/net/getservbyname.c
+- lib/libc/net/getservbyname_r.c
+- lib/libc/net/getservbyport.c
+- lib/libc/net/getservbyport_r.c
+- lib/libc/net/getservent.3
+- lib/libc/net/getservent.c
+- lib/libc/net/getservent_r.c
+- lib/libc/net/hesiod.3
+- lib/libc/net/hesiod.c
+- lib/libc/net/hostent.h
+- lib/libc/net/if_indextoname.3
+- lib/libc/net/if_indextoname.c
+- lib/libc/net/if_nameindex.c
+- lib/libc/net/if_nametoindex.c
+- lib/libc/net/inet6_getscopeid.3
+- lib/libc/net/inet6_opt_init.3
+- lib/libc/net/inet6_option_space.3
+- lib/libc/net/inet6_rth_space.3
+- lib/libc/net/inet6_rthdr_space.3
+- lib/libc/net/inet6_scopeid.c
+- lib/libc/net/ip6opt.c
+- lib/libc/net/iso_addr.c
+- lib/libc/net/linkaddr.3
+- lib/libc/net/linkaddr.c
+- lib/libc/net/nsdispatch.3
+- lib/libc/net/nsdispatch.c
+- lib/libc/net/nslexer.l
+- lib/libc/net/nsparser.y
+- lib/libc/net/protoent.h
+- lib/libc/net/rcmd.3
+- lib/libc/net/recv.c
+- lib/libc/net/resolver.3
+- lib/libc/net/rthdr.c
+- lib/libc/net/send.c
+- lib/libc/net/servent.h
+- lib/libc/net/sethostent.c
+- lib/libc/net/sockatmark.3
+- lib/libc/net/sockatmark.c
+- lib/libc/net/vars6.c
+- lib/libc/nls/C.msg
+- lib/libc/nls/Makefile.inc
+- lib/libc/nls/Pig.msg
+- lib/libc/nls/ca.msg
+- lib/libc/nls/catclose.3
+- lib/libc/nls/catclose.c
+- lib/libc/nls/catgets.3
+- lib/libc/nls/catgets.c
+- lib/libc/nls/catopen.3
+- lib/libc/nls/catopen.c
+- lib/libc/nls/cs.msg
+- lib/libc/nls/de.msg
+- lib/libc/nls/es.msg
+- lib/libc/nls/fi.msg
+- lib/libc/nls/fr.msg
+- lib/libc/nls/nl.msg
+- lib/libc/nls/no.msg
+- lib/libc/nls/pl.msg
+- lib/libc/nls/sk.msg
+- lib/libc/nls/sv.msg
+- lib/libc/quad/Makefile.inc
+- lib/libc/quad/TESTS/Makefile
+- lib/libc/quad/TESTS/divrem.c
+- lib/libc/quad/TESTS/mul.c
+- lib/libc/quad/fixdfdi.c
+- lib/libc/quad/fixdfdi_ieee754.c
+- lib/libc/quad/fixsfdi.c
+- lib/libc/quad/fixsfdi_ieee754.c
+- lib/libc/quad/fixunsdfdi.c
+- lib/libc/quad/fixunsdfdi_ieee754.c
+- lib/libc/quad/fixunssfdi.c
+- lib/libc/quad/fixunssfdi_ieee754.c
+- lib/libc/quad/floatdidf.c
+- lib/libc/quad/floatdidf_ieee754.c
+- lib/libc/quad/floatdisf.c
+- lib/libc/quad/floatdisf_ieee754.c
+- lib/libc/quad/floatundidf.c
+- lib/libc/quad/floatundidf_ieee754.c
+- lib/libc/quad/floatundisf.c
+- lib/libc/quad/floatundisf_ieee754.c
+- lib/libc/quad/floatunditf_ieee754.c
+- lib/libc/regex/COPYRIGHT
+- lib/libc/regex/Makefile.inc
+- lib/libc/regex/WHATSNEW
+- lib/libc/regex/cname.h
+- lib/libc/regex/engine.c
+- lib/libc/regex/re_format.7
+- lib/libc/regex/regcomp.c
+- lib/libc/regex/regerror.c
+- lib/libc/regex/regex.3
+- lib/libc/regex/regex2.h
+- lib/libc/regex/regexec.c
+- lib/libc/regex/regfree.c
+- lib/libc/regex/utils.h
+- lib/libc/resolv/Makefile.inc
+- lib/libc/resolv/h_errno.c
+- lib/libc/resolv/herror.c
+- lib/libc/resolv/mtctxres.c
+- lib/libc/resolv/res_compat.c
+- lib/libc/resolv/res_data.c
+- lib/libc/resolv/res_debug.c
+- lib/libc/resolv/res_debug.h
+- lib/libc/resolv/res_init.c
+- lib/libc/resolv/res_mkquery.c
+- lib/libc/resolv/res_private.h
+- lib/libc/resolv/res_query.c
+- lib/libc/resolv/res_send.c
+- lib/libc/resolv/res_state.c
+- lib/libc/rpc/DISCLAIMER
+- lib/libc/rpc/Makefile.inc
+- lib/libc/rpc/README
+- lib/libc/rpc/__rpc_getxid.c
+- lib/libc/rpc/auth_none.c
+- lib/libc/rpc/auth_unix.c
+- lib/libc/rpc/authunix_prot.c
+- lib/libc/rpc/bindresvport.3
+- lib/libc/rpc/bindresvport.c
+- lib/libc/rpc/clnt_bcast.c
+- lib/libc/rpc/clnt_dg.c
+- lib/libc/rpc/clnt_generic.c
+- lib/libc/rpc/clnt_perror.c
+- lib/libc/rpc/clnt_raw.c
+- lib/libc/rpc/clnt_simple.c
+- lib/libc/rpc/clnt_vc.c
+- lib/libc/rpc/getnetconfig.3
+- lib/libc/rpc/getnetconfig.c
+- lib/libc/rpc/getnetpath.3
+- lib/libc/rpc/getnetpath.c
+- lib/libc/rpc/getrpcent.3
+- lib/libc/rpc/getrpcent.c
+- lib/libc/rpc/getrpcport.3
+- lib/libc/rpc/getrpcport.c
+- lib/libc/rpc/mt_misc.c
+- lib/libc/rpc/pmap_clnt.c
+- lib/libc/rpc/pmap_getmaps.c
+- lib/libc/rpc/pmap_getport.c
+- lib/libc/rpc/pmap_prot.c
+- lib/libc/rpc/pmap_prot2.c
+- lib/libc/rpc/pmap_rmt.c
+- lib/libc/rpc/rpc.3
+- lib/libc/rpc/rpc_callmsg.c
+- lib/libc/rpc/rpc_clnt_auth.3
+- lib/libc/rpc/rpc_clnt_calls.3
+- lib/libc/rpc/rpc_clnt_create.3
+- lib/libc/rpc/rpc_commondata.c
+- lib/libc/rpc/rpc_dtablesize.c
+- lib/libc/rpc/rpc_generic.c
+- lib/libc/rpc/rpc_internal.h
+- lib/libc/rpc/rpc_prot.c
+- lib/libc/rpc/rpc_soc.3
+- lib/libc/rpc/rpc_soc.c
+- lib/libc/rpc/rpc_svc_calls.3
+- lib/libc/rpc/rpc_svc_create.3
+- lib/libc/rpc/rpc_svc_err.3
+- lib/libc/rpc/rpc_svc_reg.3
+- lib/libc/rpc/rpc_xdr.3
+- lib/libc/rpc/rpcb_clnt.c
+- lib/libc/rpc/rpcb_prot.c
+- lib/libc/rpc/rpcb_st_xdr.c
+- lib/libc/rpc/rpcbind.3
+- lib/libc/rpc/svc.c
+- lib/libc/rpc/svc_auth.c
+- lib/libc/rpc/svc_auth_unix.c
+- lib/libc/rpc/svc_dg.c
+- lib/libc/rpc/svc_dg.h
+- lib/libc/rpc/svc_fdset.c
+- lib/libc/rpc/svc_fdset.h
+- lib/libc/rpc/svc_generic.c
+- lib/libc/rpc/svc_raw.c
+- lib/libc/rpc/svc_run.c
+- lib/libc/rpc/svc_simple.c
+- lib/libc/rpc/svc_vc.c
+- lib/libc/rpc/xdr.3
+- lib/libc/rpc/xdr_float.c
+- lib/libc/rpc/xdr_rec.c
+- lib/libc/rpc/xdr_reference.c
+- lib/libc/rpc/xdr_sizeof.c
+- lib/libc/rpc/xdr_stdio.c
+- lib/libc/shlib_version
+- lib/libc/softfloat/README.NetBSD
+- lib/libc/softfloat/README.txt
+- lib/libc/softfloat/bits32/softfloat-macros
+- lib/libc/softfloat/bits32/softfloat.c
+- lib/libc/softfloat/bits64/softfloat-macros
+- lib/libc/softfloat/bits64/softfloat.c
+- lib/libc/softfloat/eqtf2.c
+- lib/libc/softfloat/fpgetmask.c
+- lib/libc/softfloat/fpgetround.c
+- lib/libc/softfloat/fpgetsticky.c
+- lib/libc/softfloat/fpsetmask.c
+- lib/libc/softfloat/fpsetround.c
+- lib/libc/softfloat/fpsetsticky.c
+- lib/libc/softfloat/getf2.c
+- lib/libc/softfloat/gexf2.c
+- lib/libc/softfloat/gtdf2.c
+- lib/libc/softfloat/gtsf2.c
+- lib/libc/softfloat/gttf2.c
+- lib/libc/softfloat/gtxf2.c
+- lib/libc/softfloat/letf2.c
+- lib/libc/softfloat/ltdf2.c
+- lib/libc/softfloat/ltsf2.c
+- lib/libc/softfloat/lttf2.c
+- lib/libc/softfloat/nedf2.c
+- lib/libc/softfloat/negdf2.c
+- lib/libc/softfloat/negsf2.c
+- lib/libc/softfloat/negtf2.c
+- lib/libc/softfloat/negxf2.c
+- lib/libc/softfloat/nesf2.c
+- lib/libc/softfloat/netf2.c
+- lib/libc/softfloat/nexf2.c
+- lib/libc/softfloat/softfloat-for-gcc.h
+- lib/libc/softfloat/softfloat-history.txt
+- lib/libc/softfloat/softfloat-source.txt
+- lib/libc/softfloat/softfloat-specialize
+- lib/libc/softfloat/softfloat.txt
+- lib/libc/softfloat/templates/milieu.h
+- lib/libc/softfloat/templates/softfloat-specialize
+- lib/libc/softfloat/templates/softfloat.h
+- lib/libc/softfloat/timesoftfloat.c
+- lib/libc/softfloat/timesoftfloat.txt
+- lib/libc/softfloat/unorddf2.c
+- lib/libc/softfloat/unordsf2.c
+- lib/libc/softfloat/unordtf2.c
+- lib/libc/ssp/Makefile.inc
+- lib/libc/ssp/__builtin_object_size.3
+- lib/libc/ssp/fgets_chk.c
+- lib/libc/ssp/gets_chk.c
+- lib/libc/ssp/memcpy_chk.c
+- lib/libc/ssp/memmove_chk.c
+- lib/libc/ssp/memset_chk.c
+- lib/libc/ssp/snprintf_chk.c
+- lib/libc/ssp/sprintf_chk.c
+- lib/libc/ssp/ssp.3
+- lib/libc/ssp/stpcpy_chk.c
+- lib/libc/ssp/stpncpy_chk.c
+- lib/libc/ssp/strcat_chk.c
+- lib/libc/ssp/strcpy_chk.c
+- lib/libc/ssp/strncat_chk.c
+- lib/libc/ssp/strncpy_chk.c
+- lib/libc/ssp/vsnprintf_chk.c
+- lib/libc/ssp/vsprintf_chk.c
+- lib/libc/stdio/Makefile.inc
+- lib/libc/stdio/clrerr.c
+- lib/libc/stdio/dprintf.c
+- lib/libc/stdio/fclose.3
+- lib/libc/stdio/fclose.c
+- lib/libc/stdio/fdopen.c
+- lib/libc/stdio/feof.c
+- lib/libc/stdio/ferror.3
+- lib/libc/stdio/ferror.c
+- lib/libc/stdio/fflush.3
+- lib/libc/stdio/fflush.c
+- lib/libc/stdio/fgetc.c
+- lib/libc/stdio/fgetln.3
+- lib/libc/stdio/fgetln.c
+- lib/libc/stdio/fgetpos.c
+- lib/libc/stdio/fgets.3
+- lib/libc/stdio/fgets.c
+- lib/libc/stdio/fgetstr.c
+- lib/libc/stdio/fgetwc.c
+- lib/libc/stdio/fgetwln.3
+- lib/libc/stdio/fgetwln.c
+- lib/libc/stdio/fgetws.3
+- lib/libc/stdio/fgetws.c
+- lib/libc/stdio/fileext.h
+- lib/libc/stdio/fileno.c
+- lib/libc/stdio/flags.c
+- lib/libc/stdio/floatio.h
+- lib/libc/stdio/flockfile.3
+- lib/libc/stdio/flockfile.c
+- lib/libc/stdio/fmemopen.3
+- lib/libc/stdio/fmemopen.c
+- lib/libc/stdio/fopen.3
+- lib/libc/stdio/fopen.c
+- lib/libc/stdio/fparseln.3
+- lib/libc/stdio/fparseln.c
+- lib/libc/stdio/fprintf.c
+- lib/libc/stdio/fpurge.c
+- lib/libc/stdio/fputc.c
+- lib/libc/stdio/fputs.3
+- lib/libc/stdio/fputs.c
+- lib/libc/stdio/fputwc.c
+- lib/libc/stdio/fputws.3
+- lib/libc/stdio/fputws.c
+- lib/libc/stdio/fread.3
+- lib/libc/stdio/fread.c
+- lib/libc/stdio/freopen.c
+- lib/libc/stdio/fscanf.c
+- lib/libc/stdio/fseek.3
+- lib/libc/stdio/fseek.c
+- lib/libc/stdio/fseeko.c
+- lib/libc/stdio/fsetpos.c
+- lib/libc/stdio/ftell.c
+- lib/libc/stdio/ftello.c
+- lib/libc/stdio/funopen.3
+- lib/libc/stdio/funopen.c
+- lib/libc/stdio/fvwrite.c
+- lib/libc/stdio/fvwrite.h
+- lib/libc/stdio/fwalk.c
+- lib/libc/stdio/fwide.3
+- lib/libc/stdio/fwide.c
+- lib/libc/stdio/fwprintf.c
+- lib/libc/stdio/fwrite.c
+- lib/libc/stdio/fwscanf.c
+- lib/libc/stdio/getc.3
+- lib/libc/stdio/getc.c
+- lib/libc/stdio/getchar.c
+- lib/libc/stdio/getdelim.3
+- lib/libc/stdio/getdelim.c
+- lib/libc/stdio/getline.c
+- lib/libc/stdio/gets.c
+- lib/libc/stdio/gettemp.c
+- lib/libc/stdio/gettemp.h
+- lib/libc/stdio/getw.c
+- lib/libc/stdio/getwc.3
+- lib/libc/stdio/getwc.c
+- lib/libc/stdio/getwchar.c
+- lib/libc/stdio/glue.h
+- lib/libc/stdio/local.h
+- lib/libc/stdio/makebuf.c
+- lib/libc/stdio/mkdtemp.c
+- lib/libc/stdio/mkostemp.c
+- lib/libc/stdio/mkostemps.c
+- lib/libc/stdio/mkstemp.c
+- lib/libc/stdio/mkstemps.c
+- lib/libc/stdio/mktemp.3
+- lib/libc/stdio/mktemp.c
+- lib/libc/stdio/open_memstream.3
+- lib/libc/stdio/open_memstream.c
+- lib/libc/stdio/open_wmemstream.c
+- lib/libc/stdio/perror.c
+- lib/libc/stdio/printf.3
+- lib/libc/stdio/printf.c
+- lib/libc/stdio/putc.3
+- lib/libc/stdio/putc.c
+- lib/libc/stdio/putchar.c
+- lib/libc/stdio/puts.c
+- lib/libc/stdio/putw.c
+- lib/libc/stdio/putwc.3
+- lib/libc/stdio/putwc.c
+- lib/libc/stdio/putwchar.c
+- lib/libc/stdio/refill.c
+- lib/libc/stdio/remove.3
+- lib/libc/stdio/remove.c
+- lib/libc/stdio/rewind.c
+- lib/libc/stdio/rget.c
+- lib/libc/stdio/scanf.3
+- lib/libc/stdio/scanf.c
+- lib/libc/stdio/setbuf.3
+- lib/libc/stdio/setbuf.c
+- lib/libc/stdio/setbuffer.c
+- lib/libc/stdio/setvbuf.c
+- lib/libc/stdio/snprintf_ss.c
+- lib/libc/stdio/sscanf.c
+- lib/libc/stdio/stdio.3
+- lib/libc/stdio/stdio.c
+- lib/libc/stdio/swprintf.c
+- lib/libc/stdio/swscanf.c
+- lib/libc/stdio/tempnam.c
+- lib/libc/stdio/tmpfile.c
+- lib/libc/stdio/tmpnam.3
+- lib/libc/stdio/tmpnam.c
+- lib/libc/stdio/ungetc.3
+- lib/libc/stdio/ungetc.c
+- lib/libc/stdio/ungetwc.3
+- lib/libc/stdio/ungetwc.c
+- lib/libc/stdio/vasprintf.c
+- lib/libc/stdio/vdprintf.c
+- lib/libc/stdio/vfprintf.c
+- lib/libc/stdio/vfscanf.c
+- lib/libc/stdio/vfwprintf.c
+- lib/libc/stdio/vfwscanf.c
+- lib/libc/stdio/vprintf.c
+- lib/libc/stdio/vscanf.c
+- lib/libc/stdio/vsnprintf.c
+- lib/libc/stdio/vsnprintf_ss.c
+- lib/libc/stdio/vsprintf.c
+- lib/libc/stdio/vsscanf.c
+- lib/libc/stdio/vswprintf.c
+- lib/libc/stdio/vswscanf.c
+- lib/libc/stdio/vwprintf.c
+- lib/libc/stdio/vwscanf.c
+- lib/libc/stdio/wbuf.c
+- lib/libc/stdio/wcio.h
+- lib/libc/stdio/wprintf.3
+- lib/libc/stdio/wprintf.c
+- lib/libc/stdio/wscanf.3
+- lib/libc/stdio/wscanf.c
+- lib/libc/stdio/wsetup.c
+- lib/libc/stdlib/Lint_abs.c
+- lib/libc/stdlib/Lint_div.c
+- lib/libc/stdlib/Lint_imaxabs.c
+- lib/libc/stdlib/Lint_labs.c
+- lib/libc/stdlib/Lint_ldiv.c
+- lib/libc/stdlib/Lint_llabs.c
+- lib/libc/stdlib/Makefile.inc
+- lib/libc/stdlib/_env.c
+- lib/libc/stdlib/_rand48.c
+- lib/libc/stdlib/a64l.3
+- lib/libc/stdlib/a64l.c
+- lib/libc/stdlib/abort.3
+- lib/libc/stdlib/abs.3
+- lib/libc/stdlib/abs.c
+- lib/libc/stdlib/alloca.3
+- lib/libc/stdlib/at_quick_exit.3
+- lib/libc/stdlib/atexit.3
+- lib/libc/stdlib/atexit.c
+- lib/libc/stdlib/atof.3
+- lib/libc/stdlib/atof.c
+- lib/libc/stdlib/atoi.3
+- lib/libc/stdlib/atoi.c
+- lib/libc/stdlib/atol.3
+- lib/libc/stdlib/atol.c
+- lib/libc/stdlib/atoll.3
+- lib/libc/stdlib/atoll.c
+- lib/libc/stdlib/bsearch.3
+- lib/libc/stdlib/bsearch.c
+- lib/libc/stdlib/div.3
+- lib/libc/stdlib/div.c
+- lib/libc/stdlib/drand48.c
+- lib/libc/stdlib/erand48.c
+- lib/libc/stdlib/erand48_ieee754.c
+- lib/libc/stdlib/exit.3
+- lib/libc/stdlib/exit.c
+- lib/libc/stdlib/getenv.3
+- lib/libc/stdlib/getenv.c
+- lib/libc/stdlib/getopt.3
+- lib/libc/stdlib/getopt_long.3
+- lib/libc/stdlib/getopt_long.c
+- lib/libc/stdlib/getsubopt.3
+- lib/libc/stdlib/getsubopt.c
+- lib/libc/stdlib/grantpt.3
+- lib/libc/stdlib/hcreate.3
+- lib/libc/stdlib/hcreate.c
+- lib/libc/stdlib/imaxabs.c
+- lib/libc/stdlib/imaxdiv.c
+- lib/libc/stdlib/insque.3
+- lib/libc/stdlib/insque.c
+- lib/libc/stdlib/jemalloc.3
+- lib/libc/stdlib/jemalloc.c
+- lib/libc/stdlib/jrand48.c
+- lib/libc/stdlib/l64a.c
+- lib/libc/stdlib/labs.c
+- lib/libc/stdlib/lcong48.c
+- lib/libc/stdlib/ldiv.c
+- lib/libc/stdlib/llabs.c
+- lib/libc/stdlib/lldiv.c
+- lib/libc/stdlib/local.h
+- lib/libc/stdlib/lrand48.c
+- lib/libc/stdlib/lsearch.3
+- lib/libc/stdlib/lsearch.c
+- lib/libc/stdlib/malloc.3
+- lib/libc/stdlib/malloc.c
+- lib/libc/stdlib/memory.3
+- lib/libc/stdlib/merge.c
+- lib/libc/stdlib/mi_vector_hash.3
+- lib/libc/stdlib/mrand48.c
+- lib/libc/stdlib/nrand48.c
+- lib/libc/stdlib/posix_memalign.3
+- lib/libc/stdlib/posix_openpt.3
+- lib/libc/stdlib/posix_openpt.c
+- lib/libc/stdlib/ptsname.3
+- lib/libc/stdlib/pty.c
+- lib/libc/stdlib/putenv.c
+- lib/libc/stdlib/qabs.3
+- lib/libc/stdlib/qabs.c
+- lib/libc/stdlib/qdiv.3
+- lib/libc/stdlib/qdiv.c
+- lib/libc/stdlib/qsort.3
+- lib/libc/stdlib/qsort.c
+- lib/libc/stdlib/quick_exit.3
+- lib/libc/stdlib/quick_exit.c
+- lib/libc/stdlib/radixsort.3
+- lib/libc/stdlib/radixsort.c
+- lib/libc/stdlib/rand.3
+- lib/libc/stdlib/rand.c
+- lib/libc/stdlib/rand48.3
+- lib/libc/stdlib/rand48.h
+- lib/libc/stdlib/rand_r.c
+- lib/libc/stdlib/random.3
+- lib/libc/stdlib/reallocarr.3
+- lib/libc/stdlib/reallocarr.c
+- lib/libc/stdlib/reallocarray.3
+- lib/libc/stdlib/reallocarray.c
+- lib/libc/stdlib/remque.c
+- lib/libc/stdlib/seed48.c
+- lib/libc/stdlib/setenv.c
+- lib/libc/stdlib/srand48.c
+- lib/libc/stdlib/strfmon.3
+- lib/libc/stdlib/strfmon.c
+- lib/libc/stdlib/strsuftoll.3
+- lib/libc/stdlib/strsuftoll.c
+- lib/libc/stdlib/strtod.3
+- lib/libc/stdlib/strtoi.3
+- lib/libc/stdlib/strtol.3
+- lib/libc/stdlib/strtol.c
+- lib/libc/stdlib/strtonum.3
+- lib/libc/stdlib/strtonum.c
+- lib/libc/stdlib/strtoq.c
+- lib/libc/stdlib/strtoul.3
+- lib/libc/stdlib/strtouq.c
+- lib/libc/stdlib/system.3
+- lib/libc/stdlib/system.c
+- lib/libc/stdlib/tdelete.c
+- lib/libc/stdlib/tfind.c
+- lib/libc/stdlib/tsearch.3
+- lib/libc/stdlib/tsearch.c
+- lib/libc/stdlib/twalk.c
+- lib/libc/stdlib/unlockpt.3
+- lib/libc/stdlib/unsetenv.c
+- lib/libc/string/Lint_bcmp.c
+- lib/libc/string/Lint_bcopy.c
+- lib/libc/string/Lint_bzero.c
+- lib/libc/string/Lint_ffs.c
+- lib/libc/string/Lint_index.c
+- lib/libc/string/Lint_memccpy.c
+- lib/libc/string/Lint_memchr.c
+- lib/libc/string/Lint_memcmp.c
+- lib/libc/string/Lint_memcpy.c
+- lib/libc/string/Lint_memmove.c
+- lib/libc/string/Lint_memset.c
+- lib/libc/string/Lint_rindex.c
+- lib/libc/string/Lint_strcat.c
+- lib/libc/string/Lint_strchr.c
+- lib/libc/string/Lint_strcmp.c
+- lib/libc/string/Lint_strcpy.c
+- lib/libc/string/Lint_strlen.c
+- lib/libc/string/Lint_strncat.c
+- lib/libc/string/Lint_strncmp.c
+- lib/libc/string/Lint_strncpy.c
+- lib/libc/string/Lint_strrchr.c
+- lib/libc/string/Lint_swab.c
+- lib/libc/string/Makefile.inc
+- lib/libc/string/__strsignal.c
+- lib/libc/string/bcmp.3
+- lib/libc/string/bcopy.3
+- lib/libc/string/bm.3
+- lib/libc/string/bm.c
+- lib/libc/string/bstring.3
+- lib/libc/string/bzero.3
+- lib/libc/string/consttime_memequal.3
+- lib/libc/string/explicit_memset.3
+- lib/libc/string/ffs.3
+- lib/libc/string/index.3
+- lib/libc/string/index.c
+- lib/libc/string/memccpy.3
+- lib/libc/string/memccpy.c
+- lib/libc/string/memchr.3
+- lib/libc/string/memcmp.3
+- lib/libc/string/memcpy.3
+- lib/libc/string/memmem.3
+- lib/libc/string/memmove.3
+- lib/libc/string/memrchr.c
+- lib/libc/string/memset.3
+- lib/libc/string/popcount.3
+- lib/libc/string/rindex.3
+- lib/libc/string/rindex.c
+- lib/libc/string/stpcpy.c
+- lib/libc/string/stpncpy.c
+- lib/libc/string/strcasecmp.3
+- lib/libc/string/strcasestr.c
+- lib/libc/string/strcat.3
+- lib/libc/string/strchr.3
+- lib/libc/string/strcmp.3
+- lib/libc/string/strcoll.3
+- lib/libc/string/strcoll.c
+- lib/libc/string/strcpy.3
+- lib/libc/string/strcspn.3
+- lib/libc/string/strdup.3
+- lib/libc/string/strdup.c
+- lib/libc/string/strerror.3
+- lib/libc/string/strerror.c
+- lib/libc/string/strerror_r.c
+- lib/libc/string/stresep.c
+- lib/libc/string/string.3
+- lib/libc/string/strings.3
+- lib/libc/string/strlcpy.3
+- lib/libc/string/strlen.3
+- lib/libc/string/strmode.3
+- lib/libc/string/strmode.c
+- lib/libc/string/strndup.c
+- lib/libc/string/strnstr.c
+- lib/libc/string/strpbrk.3
+- lib/libc/string/strrchr.3
+- lib/libc/string/strsep.3
+- lib/libc/string/strsignal.3
+- lib/libc/string/strsignal.c
+- lib/libc/string/strspn.3
+- lib/libc/string/strstr.3
+- lib/libc/string/strtok.3
+- lib/libc/string/strtok.c
+- lib/libc/string/strtok_r.c
+- lib/libc/string/strxfrm.3
+- lib/libc/string/strxfrm.c
+- lib/libc/string/swab.3
+- lib/libc/string/swab.c
+- lib/libc/string/wcscasecmp.3
+- lib/libc/string/wcscasecmp.c
+- lib/libc/string/wcscat.c
+- lib/libc/string/wcschr.c
+- lib/libc/string/wcscmp.c
+- lib/libc/string/wcscpy.c
+- lib/libc/string/wcscspn.c
+- lib/libc/string/wcscspn_bloom.h
+- lib/libc/string/wcsdup.3
+- lib/libc/string/wcsdup.c
+- lib/libc/string/wcslcat.c
+- lib/libc/string/wcslcpy.c
+- lib/libc/string/wcslen.c
+- lib/libc/string/wcsncasecmp.c
+- lib/libc/string/wcsncat.c
+- lib/libc/string/wcsncmp.c
+- lib/libc/string/wcsncpy.c
+- lib/libc/string/wcspbrk.c
+- lib/libc/string/wcsrchr.c
+- lib/libc/string/wcsspn.c
+- lib/libc/string/wcsstr.c
+- lib/libc/string/wcstok.3
+- lib/libc/string/wcstok.c
+- lib/libc/string/wcswcs.c
+- lib/libc/string/wcswidth.3
+- lib/libc/string/wmemchr.3
+- lib/libc/string/wmemchr.c
+- lib/libc/string/wmemcmp.c
+- lib/libc/string/wmemcpy.c
+- lib/libc/string/wmemmove.c
+- lib/libc/string/wmemset.c
+- lib/libc/sys/Lint___clone.c
+- lib/libc/sys/Lint___syscall.c
+- lib/libc/sys/Lint___vfork14.c
+- lib/libc/sys/Lint_brk.c
+- lib/libc/sys/Lint_clone.c
+- lib/libc/sys/Lint_getcontext.c
+- lib/libc/sys/Lint_pipe.c
+- lib/libc/sys/Lint_ptrace.c
+- lib/libc/sys/Lint_sbrk.c
+- lib/libc/sys/Lint_syscall.c
+- lib/libc/sys/Makefile.inc
+- lib/libc/sys/__quotactl.2
+- lib/libc/sys/_exit.2
+- lib/libc/sys/_lwp_create.2
+- lib/libc/sys/_lwp_ctl.2
+- lib/libc/sys/_lwp_detach.2
+- lib/libc/sys/_lwp_exit.2
+- lib/libc/sys/_lwp_getname.2
+- lib/libc/sys/_lwp_getprivate.2
+- lib/libc/sys/_lwp_kill.2
+- lib/libc/sys/_lwp_park.2
+- lib/libc/sys/_lwp_self.2
+- lib/libc/sys/_lwp_setname.2
+- lib/libc/sys/_lwp_suspend.2
+- lib/libc/sys/_lwp_unpark.2
+- lib/libc/sys/_lwp_unpark_all.2
+- lib/libc/sys/_lwp_wait.2
+- lib/libc/sys/_lwp_wakeup.2
+- lib/libc/sys/accept.2
+- lib/libc/sys/access.2
+- lib/libc/sys/acct.2
+- lib/libc/sys/adjtime.2
+- lib/libc/sys/adjtime.c
+- lib/libc/sys/bind.2
+- lib/libc/sys/brk.2
+- lib/libc/sys/chdir.2
+- lib/libc/sys/chflags.2
+- lib/libc/sys/chmod.2
+- lib/libc/sys/chown.2
+- lib/libc/sys/chroot.2
+- lib/libc/sys/clock_settime.2
+- lib/libc/sys/clock_settime.c
+- lib/libc/sys/clone.2
+- lib/libc/sys/close.2
+- lib/libc/sys/connect.2
+- lib/libc/sys/dup.2
+- lib/libc/sys/execve.2
+- lib/libc/sys/extattr_get_file.2
+- lib/libc/sys/fcntl.2
+- lib/libc/sys/fdatasync.2
+- lib/libc/sys/fdiscard.2
+- lib/libc/sys/fdiscard.c
+- lib/libc/sys/fhopen.2
+- lib/libc/sys/flock.2
+- lib/libc/sys/fork.2
+- lib/libc/sys/fsync.2
+- lib/libc/sys/ftruncate.c
+- lib/libc/sys/getcontext.2
+- lib/libc/sys/getdents.2
+- lib/libc/sys/getfh.2
+- lib/libc/sys/getgid.2
+- lib/libc/sys/getgroups.2
+- lib/libc/sys/getitimer.2
+- lib/libc/sys/getlogin.2
+- lib/libc/sys/getpeername.2
+- lib/libc/sys/getpgrp.2
+- lib/libc/sys/getpid.2
+- lib/libc/sys/getpriority.2
+- lib/libc/sys/getrlimit.2
+- lib/libc/sys/getrusage.2
+- lib/libc/sys/getsid.2
+- lib/libc/sys/getsockname.2
+- lib/libc/sys/getsockopt.2
+- lib/libc/sys/gettimeofday.2
+- lib/libc/sys/getuid.2
+- lib/libc/sys/getvfsstat.2
+- lib/libc/sys/intro.2
+- lib/libc/sys/ioctl.2
+- lib/libc/sys/issetugid.2
+- lib/libc/sys/kill.2
+- lib/libc/sys/kqueue.2
+- lib/libc/sys/ktrace.2
+- lib/libc/sys/lfs_bmapv.2
+- lib/libc/sys/lfs_markv.2
+- lib/libc/sys/lfs_segclean.2
+- lib/libc/sys/lfs_segwait.2
+- lib/libc/sys/link.2
+- lib/libc/sys/listen.2
+- lib/libc/sys/lseek.2
+- lib/libc/sys/lseek.c
+- lib/libc/sys/madvise.2
+- lib/libc/sys/makelintstub
+- lib/libc/sys/mincore.2
+- lib/libc/sys/minherit.2
+- lib/libc/sys/mkdir.2
+- lib/libc/sys/mkfifo.2
+- lib/libc/sys/mknod.2
+- lib/libc/sys/mknodat.c
+- lib/libc/sys/mlock.2
+- lib/libc/sys/mlockall.2
+- lib/libc/sys/mmap.2
+- lib/libc/sys/mmap.c
+- lib/libc/sys/modctl.2
+- lib/libc/sys/mount.2
+- lib/libc/sys/mprotect.2
+- lib/libc/sys/mremap.2
+- lib/libc/sys/msgctl.2
+- lib/libc/sys/msgget.2
+- lib/libc/sys/msgrcv.2
+- lib/libc/sys/msgsnd.2
+- lib/libc/sys/msync.2
+- lib/libc/sys/munmap.2
+- lib/libc/sys/nanosleep.2
+- lib/libc/sys/nfssvc.2
+- lib/libc/sys/ntp_adjtime.2
+- lib/libc/sys/ntp_adjtime.c
+- lib/libc/sys/open.2
+- lib/libc/sys/pathconf.2
+- lib/libc/sys/pipe.2
+- lib/libc/sys/poll.2
+- lib/libc/sys/posix_fadvise.2
+- lib/libc/sys/posix_fadvise.c
+- lib/libc/sys/posix_fallocate.c
+- lib/libc/sys/posix_madvise.c
+- lib/libc/sys/pread.c
+- lib/libc/sys/preadv.c
+- lib/libc/sys/profil.2
+- lib/libc/sys/ptrace.2
+- lib/libc/sys/pwrite.c
+- lib/libc/sys/pwritev.c
+- lib/libc/sys/rasctl.2
+- lib/libc/sys/read.2
+- lib/libc/sys/readlink.2
+- lib/libc/sys/reboot.2
+- lib/libc/sys/recv.2
+- lib/libc/sys/rename.2
+- lib/libc/sys/revoke.2
+- lib/libc/sys/rmdir.2
+- lib/libc/sys/sa_enable.2
+- lib/libc/sys/sa_register.2
+- lib/libc/sys/sa_setconcurrency.2
+- lib/libc/sys/sa_stacks.2
+- lib/libc/sys/sa_yield.2
+- lib/libc/sys/sched.c
+- lib/libc/sys/select.2
+- lib/libc/sys/semctl.2
+- lib/libc/sys/semctl.c
+- lib/libc/sys/semget.2
+- lib/libc/sys/semop.2
+- lib/libc/sys/send.2
+- lib/libc/sys/setgroups.2
+- lib/libc/sys/setpgid.2
+- lib/libc/sys/setregid.2
+- lib/libc/sys/setreuid.2
+- lib/libc/sys/setsid.2
+- lib/libc/sys/settimeofday.c
+- lib/libc/sys/setuid.2
+- lib/libc/sys/shmat.2
+- lib/libc/sys/shmctl.2
+- lib/libc/sys/shmget.2
+- lib/libc/sys/shutdown.2
+- lib/libc/sys/sigaction.2
+- lib/libc/sys/sigaltstack.2
+- lib/libc/sys/sigpending.2
+- lib/libc/sys/sigprocmask.2
+- lib/libc/sys/sigqueue.2
+- lib/libc/sys/sigqueue.c
+- lib/libc/sys/sigstack.2
+- lib/libc/sys/sigsuspend.2
+- lib/libc/sys/sigtimedwait.2
+- lib/libc/sys/sigtimedwait.c
+- lib/libc/sys/sigwait.c
+- lib/libc/sys/sigwaitinfo.c
+- lib/libc/sys/socket.2
+- lib/libc/sys/socketpair.2
+- lib/libc/sys/stat.2
+- lib/libc/sys/statvfs.2
+- lib/libc/sys/statvfs.c
+- lib/libc/sys/swapctl.2
+- lib/libc/sys/swapon.3
+- lib/libc/sys/swapon.c
+- lib/libc/sys/symlink.2
+- lib/libc/sys/sync.2
+- lib/libc/sys/sysarch.2
+- lib/libc/sys/syscall.2
+- lib/libc/sys/timer_create.2
+- lib/libc/sys/timer_delete.2
+- lib/libc/sys/timer_settime.2
+- lib/libc/sys/truncate.2
+- lib/libc/sys/truncate.c
+- lib/libc/sys/umask.2
+- lib/libc/sys/undelete.2
+- lib/libc/sys/unlink.2
+- lib/libc/sys/utimes.2
+- lib/libc/sys/utrace.2
+- lib/libc/sys/uuidgen.2
+- lib/libc/sys/vfork.2
+- lib/libc/sys/wait.2
+- lib/libc/sys/write.2
+- lib/libc/termios/Makefile.inc
+- lib/libc/termios/cfgetispeed.c
+- lib/libc/termios/cfgetospeed.c
+- lib/libc/termios/cfmakeraw.c
+- lib/libc/termios/cfsetispeed.c
+- lib/libc/termios/cfsetospeed.c
+- lib/libc/termios/cfsetspeed.c
+- lib/libc/termios/tcdrain.c
+- lib/libc/termios/tcflow.c
+- lib/libc/termios/tcflush.c
+- lib/libc/termios/tcgetattr.c
+- lib/libc/termios/tcgetpgrp.3
+- lib/libc/termios/tcgetpgrp.c
+- lib/libc/termios/tcgetsid.3
+- lib/libc/termios/tcgetsid.c
+- lib/libc/termios/tcsendbreak.3
+- lib/libc/termios/tcsendbreak.c
+- lib/libc/termios/tcsetattr.3
+- lib/libc/termios/tcsetattr.c
+- lib/libc/termios/tcsetpgrp.3
+- lib/libc/termios/tcsetpgrp.c
+- lib/libc/thread-stub/Makefile.inc
+- lib/libc/thread-stub/__isthreaded.c
+- lib/libc/thread-stub/thread-stub-init.c
+- lib/libc/thread-stub/thread-stub.c
+- lib/libc/time/Makefile
+- lib/libc/time/Makefile.inc
+- lib/libc/time/NEWS
+- lib/libc/time/README
+- lib/libc/time/Theory
+- lib/libc/time/asctime.c
+- lib/libc/time/checktab.awk
+- lib/libc/time/ctime.3
+- lib/libc/time/difftime.c
+- lib/libc/time/getdate.3
+- lib/libc/time/getdate.c
+- lib/libc/time/leapseconds.awk
+- lib/libc/time/localtime.c
+- lib/libc/time/offtime.3
+- lib/libc/time/private.h
+- lib/libc/time/strftime.3
+- lib/libc/time/strftime.c
+- lib/libc/time/strptime.3
+- lib/libc/time/strptime.c
+- lib/libc/time/time2posix.3
+- lib/libc/time/tzcode2netbsd
+- lib/libc/time/tzfile.5
+- lib/libc/time/tzselect.8
+- lib/libc/time/tzselect.ksh
+- lib/libc/time/tzset.3
+- lib/libc/time/zdump.8
+- lib/libc/time/zdump.c
+- lib/libc/time/zic.8
+- lib/libc/time/zic.c
+- lib/libc/tls/Makefile.inc
+- lib/libc/tls/tls.c
+- lib/libc/uuid/Makefile.inc
+- lib/libc/uuid/uuid.3
+- lib/libc/uuid/uuid_compare.c
+- lib/libc/uuid/uuid_create_nil.c
+- lib/libc/uuid/uuid_equal.c
+- lib/libc/uuid/uuid_from_string.c
+- lib/libc/uuid/uuid_hash.c
+- lib/libc/uuid/uuid_is_nil.c
+- lib/libc/uuid/uuid_stream.c
+- lib/libc/uuid/uuid_to_string.c
+- lib/libc/yp/Makefile.inc
+- lib/libc/yp/local.h
+- lib/libc/yp/xdryp.c
+- lib/libc/yp/yp_all.c
+- lib/libc/yp/yp_first.c
+- lib/libc/yp/yp_maplist.c
+- lib/libc/yp/yp_master.c
+- lib/libc/yp/yp_match.c
+- lib/libc/yp/yp_order.c
+- lib/libc/yp/ypclnt.3
+- lib/libc/yp/yperr_string.c
+- lib/libc/yp/yplib.c
+- lib/libc/yp/ypprot_err.c
+- lib/libcrypt/Makefile
+- lib/libcrypt/bcrypt.c
+- lib/libcrypt/blowfish.c
+- lib/libcrypt/crypt-sha1.c
+- lib/libcrypt/crypt.3
+- lib/libcrypt/crypt.c
+- lib/libcrypt/crypt.h
+- lib/libcrypt/hmac.c
+- lib/libcrypt/hmac_sha1.c
+- lib/libcrypt/md5crypt.c
+- lib/libcrypt/pw_gensalt.c
+- lib/libcrypt/shlib_version
+- lib/libcrypt/util.c
+- lib/libcurses/EXAMPLES/Makefile
+- lib/libcurses/EXAMPLES/ex1.c
+- lib/libcurses/EXAMPLES/view.c
+- lib/libcurses/Makefile
+- lib/libcurses/PSD.doc/Makefile
+- lib/libcurses/PSD.doc/Master
+- lib/libcurses/PSD.doc/appen.A
+- lib/libcurses/PSD.doc/appen.B
+- lib/libcurses/PSD.doc/appen.C
+- lib/libcurses/PSD.doc/c_macros
+- lib/libcurses/PSD.doc/doc.I
+- lib/libcurses/PSD.doc/doc.II
+- lib/libcurses/PSD.doc/doc.III
+- lib/libcurses/PSD.doc/doc.IV
+- lib/libcurses/PSD.doc/ex1.c
+- lib/libcurses/PSD.doc/ex2.c
+- lib/libcurses/PSD.doc/fns.doc
+- lib/libcurses/PSD.doc/intro.0
+- lib/libcurses/PSD.doc/intro.1
+- lib/libcurses/PSD.doc/intro.2
+- lib/libcurses/PSD.doc/intro.3
+- lib/libcurses/PSD.doc/intro.4
+- lib/libcurses/PSD.doc/intro.5
+- lib/libcurses/PSD.doc/intro.6
+- lib/libcurses/PSD.doc/life.c
+- lib/libcurses/PSD.doc/macros
+- lib/libcurses/PSD.doc/twinkle1.c
+- lib/libcurses/PSD.doc/twinkle2.c
+- lib/libcurses/PSD.doc/win_st.c
+- lib/libcurses/acs.c
+- lib/libcurses/add_wch.c
+- lib/libcurses/add_wchstr.c
+- lib/libcurses/addbytes.c
+- lib/libcurses/addch.c
+- lib/libcurses/addchnstr.c
+- lib/libcurses/addnstr.c
+- lib/libcurses/addwstr.c
+- lib/libcurses/attributes.c
+- lib/libcurses/background.c
+- lib/libcurses/bell.c
+- lib/libcurses/border.c
+- lib/libcurses/box.c
+- lib/libcurses/cchar.c
+- lib/libcurses/chgat.c
+- lib/libcurses/clear.c
+- lib/libcurses/clearok.c
+- lib/libcurses/clrtobot.c
+- lib/libcurses/clrtoeol.c
+- lib/libcurses/color.c
+- lib/libcurses/copywin.c
+- lib/libcurses/cr_put.c
+- lib/libcurses/ctrace.c
+- lib/libcurses/cur_hash.c
+- lib/libcurses/curs_set.c
+- lib/libcurses/curses.3
+- lib/libcurses/curses.c
+- lib/libcurses/curses.h
+- lib/libcurses/curses_addch.3
+- lib/libcurses/curses_addchstr.3
+- lib/libcurses/curses_addstr.3
+- lib/libcurses/curses_attributes.3
+- lib/libcurses/curses_background.3
+- lib/libcurses/curses_border.3
+- lib/libcurses/curses_chgat.3
+- lib/libcurses/curses_clear.3
+- lib/libcurses/curses_color.3
+- lib/libcurses/curses_cursor.3
+- lib/libcurses/curses_default_colors.3
+- lib/libcurses/curses_delch.3
+- lib/libcurses/curses_deleteln.3
+- lib/libcurses/curses_echochar.3
+- lib/libcurses/curses_fileio.3
+- lib/libcurses/curses_inch.3
+- lib/libcurses/curses_input.3
+- lib/libcurses/curses_insdelln.3
+- lib/libcurses/curses_insertln.3
+- lib/libcurses/curses_keyname.3
+- lib/libcurses/curses_line.3
+- lib/libcurses/curses_pad.3
+- lib/libcurses/curses_print.3
+- lib/libcurses/curses_private.h
+- lib/libcurses/curses_refresh.3
+- lib/libcurses/curses_scanw.3
+- lib/libcurses/curses_screen.3
+- lib/libcurses/curses_scroll.3
+- lib/libcurses/curses_standout.3
+- lib/libcurses/curses_termcap.3
+- lib/libcurses/curses_touch.3
+- lib/libcurses/curses_tty.3
+- lib/libcurses/curses_underscore.3
+- lib/libcurses/curses_window.3
+- lib/libcurses/delch.c
+- lib/libcurses/deleteln.c
+- lib/libcurses/delwin.c
+- lib/libcurses/echo_wchar.c
+- lib/libcurses/echochar.c
+- lib/libcurses/erase.c
+- lib/libcurses/fileio.c
+- lib/libcurses/flushok.c
+- lib/libcurses/fullname.c
+- lib/libcurses/genfileioh.awk
+- lib/libcurses/get_wch.c
+- lib/libcurses/get_wstr.c
+- lib/libcurses/getch.c
+- lib/libcurses/getstr.c
+- lib/libcurses/getyx.c
+- lib/libcurses/id_subwins.c
+- lib/libcurses/idcok.c
+- lib/libcurses/idlok.c
+- lib/libcurses/in_wch.c
+- lib/libcurses/in_wchstr.c
+- lib/libcurses/inch.c
+- lib/libcurses/inchstr.c
+- lib/libcurses/initscr.c
+- lib/libcurses/ins_wch.c
+- lib/libcurses/ins_wstr.c
+- lib/libcurses/insch.c
+- lib/libcurses/insdelln.c
+- lib/libcurses/insertln.c
+- lib/libcurses/insstr.c
+- lib/libcurses/instr.c
+- lib/libcurses/inwstr.c
+- lib/libcurses/keymap.h
+- lib/libcurses/keyname.c
+- lib/libcurses/keypad.c
+- lib/libcurses/leaveok.c
+- lib/libcurses/line.c
+- lib/libcurses/meta.c
+- lib/libcurses/move.c
+- lib/libcurses/mvwin.c
+- lib/libcurses/newwin.c
+- lib/libcurses/nodelay.c
+- lib/libcurses/notimeout.c
+- lib/libcurses/overlay.c
+- lib/libcurses/overwrite.c
+- lib/libcurses/pause.c
+- lib/libcurses/printw.c
+- lib/libcurses/putchar.c
+- lib/libcurses/refresh.c
+- lib/libcurses/resize.c
+- lib/libcurses/scanw.c
+- lib/libcurses/screen.c
+- lib/libcurses/scroll.c
+- lib/libcurses/scrollok.c
+- lib/libcurses/setterm.c
+- lib/libcurses/shlib_version
+- lib/libcurses/standout.c
+- lib/libcurses/timeout.c
+- lib/libcurses/toucholap.c
+- lib/libcurses/touchwin.c
+- lib/libcurses/tscroll.c
+- lib/libcurses/tstp.c
+- lib/libcurses/tty.c
+- lib/libcurses/unctrl.c
+- lib/libcurses/unctrl.h
+- lib/libcurses/underscore.c
+- lib/libedit/Makefile
+- lib/libedit/TEST/Makefile
+- lib/libedit/TEST/rl1.c
+- lib/libedit/TEST/tc1.c
+- lib/libedit/TEST/wtc1.c
+- lib/libedit/chared.c
+- lib/libedit/chared.h
+- lib/libedit/chartype.c
+- lib/libedit/chartype.h
+- lib/libedit/common.c
+- lib/libedit/config.h
+- lib/libedit/editline.3
+- lib/libedit/editrc.5
+- lib/libedit/el.c
+- lib/libedit/el.h
+- lib/libedit/eln.c
+- lib/libedit/emacs.c
+- lib/libedit/filecomplete.c
+- lib/libedit/filecomplete.h
+- lib/libedit/hist.c
+- lib/libedit/hist.h
+- lib/libedit/histedit.h
+- lib/libedit/history.c
+- lib/libedit/keymacro.c
+- lib/libedit/keymacro.h
+- lib/libedit/makelist
+- lib/libedit/map.c
+- lib/libedit/map.h
+- lib/libedit/parse.c
+- lib/libedit/parse.h
+- lib/libedit/prompt.c
+- lib/libedit/prompt.h
+- lib/libedit/read.c
+- lib/libedit/read.h
+- lib/libedit/readline.c
+- lib/libedit/readline/Makefile
+- lib/libedit/readline/readline.h
+- lib/libedit/refresh.c
+- lib/libedit/refresh.h
+- lib/libedit/search.c
+- lib/libedit/search.h
+- lib/libedit/shlib_version
+- lib/libedit/sig.c
+- lib/libedit/sig.h
+- lib/libedit/sys.h
+- lib/libedit/terminal.c
+- lib/libedit/terminal.h
+- lib/libedit/tokenizer.c
+- lib/libedit/tty.c
+- lib/libedit/tty.h
+- lib/libedit/vi.c
+- lib/libexecinfo/Makefile
+- lib/libexecinfo/backtrace.3
+- lib/libexecinfo/backtrace.c
+- lib/libexecinfo/builtin.c
+- lib/libexecinfo/execinfo.h
+- lib/libexecinfo/shlib_version
+- lib/libexecinfo/symtab.c
+- lib/libexecinfo/symtab.h
+- lib/libexecinfo/unwind.c
+- lib/libexecinfo/unwind_arm_ehabi_stub.c
+- lib/libform/Makefile
+- lib/libform/driver.c
+- lib/libform/field.c
+- lib/libform/field_types.c
+- lib/libform/form.c
+- lib/libform/form.h
+- lib/libform/form_cursor.3
+- lib/libform/form_data.3
+- lib/libform/form_driver.3
+- lib/libform/form_field.3
+- lib/libform/form_field_attributes.3
+- lib/libform/form_field_buffer.3
+- lib/libform/form_field_info.3
+- lib/libform/form_field_just.3
+- lib/libform/form_field_new.3
+- lib/libform/form_field_opts.3
+- lib/libform/form_field_userptr.3
+- lib/libform/form_field_validation.3
+- lib/libform/form_fieldtype.3
+- lib/libform/form_hook.3
+- lib/libform/form_new.3
+- lib/libform/form_new_page.3
+- lib/libform/form_opts.3
+- lib/libform/form_page.3
+- lib/libform/form_post.3
+- lib/libform/form_userptr.3
+- lib/libform/form_win.3
+- lib/libform/forms.3
+- lib/libform/gdbinit
+- lib/libform/internals.c
+- lib/libform/internals.h
+- lib/libform/post.c
+- lib/libform/shlib_version
+- lib/libform/std_header.c
+- lib/libform/type_alnum.c
+- lib/libform/type_alpha.c
+- lib/libform/type_enum.c
+- lib/libform/type_integer.c
+- lib/libform/type_ipv4.c
+- lib/libform/type_ipv6.c
+- lib/libform/type_numeric.c
+- lib/libform/type_regex.c
+- lib/libintl/Makefile
+- lib/libintl/gettext.3
+- lib/libintl/gettext.c
+- lib/libintl/gettext_dummy.c
+- lib/libintl/gettext_iconv.c
+- lib/libintl/libintl.h
+- lib/libintl/libintl_local.h
+- lib/libintl/pathnames.h
+- lib/libintl/plural_parser.c
+- lib/libintl/plural_parser.h
+- lib/libintl/shlib_version
+- lib/libintl/strhash.c
+- lib/libintl/sysdep.c
+- lib/libintl/textdomain.c
+- lib/libkvm/Makefile
+- lib/libkvm/kvm.3
+- lib/libkvm/kvm.c
+- lib/libkvm/kvm_aarch64.c
+- lib/libkvm/kvm_alpha.c
+- lib/libkvm/kvm_arm.c
+- lib/libkvm/kvm_dump.3
+- lib/libkvm/kvm_file.c
+- lib/libkvm/kvm_geterr.3
+- lib/libkvm/kvm_getfiles.3
+- lib/libkvm/kvm_getkernelname.3
+- lib/libkvm/kvm_getloadavg.3
+- lib/libkvm/kvm_getloadavg.c
+- lib/libkvm/kvm_getlwps.3
+- lib/libkvm/kvm_getprocs.3
+- lib/libkvm/kvm_hppa.c
+- lib/libkvm/kvm_i386.c
+- lib/libkvm/kvm_i386pae.c
+- lib/libkvm/kvm_ia64.c
+- lib/libkvm/kvm_m68k.c
+- lib/libkvm/kvm_m68k.h
+- lib/libkvm/kvm_m68k_cmn.c
+- lib/libkvm/kvm_mips.c
+- lib/libkvm/kvm_nlist.3
+- lib/libkvm/kvm_open.3
+- lib/libkvm/kvm_or1k.c
+- lib/libkvm/kvm_powerpc.c
+- lib/libkvm/kvm_powerpc64.c
+- lib/libkvm/kvm_private.h
+- lib/libkvm/kvm_proc.c
+- lib/libkvm/kvm_read.3
+- lib/libkvm/kvm_riscv.c
+- lib/libkvm/kvm_sh3.c
+- lib/libkvm/kvm_sparc.c
+- lib/libkvm/kvm_sparc64.c
+- lib/libkvm/kvm_sun2.c
+- lib/libkvm/kvm_sun3.c
+- lib/libkvm/kvm_sun3x.c
+- lib/libkvm/kvm_vax.c
+- lib/libkvm/kvm_x86_64.c
+- lib/libkvm/shlib_version
+- lib/libm/Makefile
+- lib/libm/arch/aarch64/e_sqrt.S
+- lib/libm/arch/aarch64/e_sqrtf.S
+- lib/libm/arch/aarch64/fenv.c
+- lib/libm/arch/aarch64/s_fabsf.S
+- lib/libm/arch/aarch64/s_fma.S
+- lib/libm/arch/aarch64/s_fmaf.S
+- lib/libm/arch/aarch64/s_fmax.S
+- lib/libm/arch/aarch64/s_fmaxf.S
+- lib/libm/arch/aarch64/s_fmin.S
+- lib/libm/arch/aarch64/s_fminf.S
+- lib/libm/arch/alpha/lrint.S
+- lib/libm/arch/alpha/s_copysign.S
+- lib/libm/arch/alpha/s_copysignf.S
+- lib/libm/arch/arm/e_sqrt.S
+- lib/libm/arch/arm/e_sqrtf.S
+- lib/libm/arch/arm/fenv.c
+- lib/libm/arch/arm/lrint.S
+- lib/libm/arch/arm/lrintf.S
+- lib/libm/arch/arm/s_fabsf.S
+- lib/libm/arch/arm/s_fma.S
+- lib/libm/arch/arm/s_fmaf.S
+- lib/libm/arch/hppa/fenv.c
+- lib/libm/arch/i387/Makefile
+- lib/libm/arch/i387/abi.h
+- lib/libm/arch/i387/e_acos.S
+- lib/libm/arch/i387/e_asin.S
+- lib/libm/arch/i387/e_atan2.S
+- lib/libm/arch/i387/e_atan2f.S
+- lib/libm/arch/i387/e_exp.S
+- lib/libm/arch/i387/e_expf.S
+- lib/libm/arch/i387/e_fmod.S
+- lib/libm/arch/i387/e_log.S
+- lib/libm/arch/i387/e_log10.S
+- lib/libm/arch/i387/e_log10f.S
+- lib/libm/arch/i387/e_log2.S
+- lib/libm/arch/i387/e_log2f.S
+- lib/libm/arch/i387/e_logf.S
+- lib/libm/arch/i387/e_remainder.S
+- lib/libm/arch/i387/e_remainderf.S
+- lib/libm/arch/i387/e_scalb.S
+- lib/libm/arch/i387/e_scalbf.S
+- lib/libm/arch/i387/e_sqrt.S
+- lib/libm/arch/i387/e_sqrtf.S
+- lib/libm/arch/i387/empty.S
+- lib/libm/arch/i387/lrint.S
+- lib/libm/arch/i387/s_atan.S
+- lib/libm/arch/i387/s_atanf.S
+- lib/libm/arch/i387/s_ceil.S
+- lib/libm/arch/i387/s_ceilf.S
+- lib/libm/arch/i387/s_copysign.S
+- lib/libm/arch/i387/s_copysignf.S
+- lib/libm/arch/i387/s_finite.S
+- lib/libm/arch/i387/s_finitef.S
+- lib/libm/arch/i387/s_floor.S
+- lib/libm/arch/i387/s_floorf.S
+- lib/libm/arch/i387/s_ilogbl.S
+- lib/libm/arch/i387/s_log1p.S
+- lib/libm/arch/i387/s_log1pf.S
+- lib/libm/arch/i387/s_logb.S
+- lib/libm/arch/i387/s_logbf.S
+- lib/libm/arch/i387/s_logbl.S
+- lib/libm/arch/i387/s_rint.S
+- lib/libm/arch/i387/s_rintf.S
+- lib/libm/arch/i387/s_scalbn.S
+- lib/libm/arch/i387/s_scalbnf.S
+- lib/libm/arch/i387/s_scalbnl.S
+- lib/libm/arch/i387/s_significand.S
+- lib/libm/arch/i387/s_significandf.S
+- lib/libm/arch/i387/shlib_version
+- lib/libm/arch/m68060/Makefile
+- lib/libm/arch/m68060/Makefile.list
+- lib/libm/arch/m68060/Readme.NetBSD
+- lib/libm/arch/m68060/e_acos.S
+- lib/libm/arch/m68060/e_acosf.S
+- lib/libm/arch/m68060/e_asin.S
+- lib/libm/arch/m68060/e_asinf.S
+- lib/libm/arch/m68060/e_atanh.S
+- lib/libm/arch/m68060/e_atanhf.S
+- lib/libm/arch/m68060/e_cosh.S
+- lib/libm/arch/m68060/e_coshf.S
+- lib/libm/arch/m68060/e_exp.S
+- lib/libm/arch/m68060/e_expf.S
+- lib/libm/arch/m68060/e_log.S
+- lib/libm/arch/m68060/e_log10.S
+- lib/libm/arch/m68060/e_log10f.S
+- lib/libm/arch/m68060/e_logf.S
+- lib/libm/arch/m68060/e_sinh.S
+- lib/libm/arch/m68060/e_sinhf.S
+- lib/libm/arch/m68060/e_sqrt.S
+- lib/libm/arch/m68060/e_sqrtf.S
+- lib/libm/arch/m68060/fplsp.hex
+- lib/libm/arch/m68060/fplsp_wrap.S
+- lib/libm/arch/m68060/k_tan.S
+- lib/libm/arch/m68060/k_tanf.S
+- lib/libm/arch/m68060/makeas.sh
+- lib/libm/arch/m68060/makeoffs.awk
+- lib/libm/arch/m68060/s_atan.S
+- lib/libm/arch/m68060/s_atanf.S
+- lib/libm/arch/m68060/s_cos.S
+- lib/libm/arch/m68060/s_cosf.S
+- lib/libm/arch/m68060/s_expm1.S
+- lib/libm/arch/m68060/s_expm1f.S
+- lib/libm/arch/m68060/s_log1p.S
+- lib/libm/arch/m68060/s_log1pf.S
+- lib/libm/arch/m68060/s_logb.S
+- lib/libm/arch/m68060/s_logbf.S
+- lib/libm/arch/m68060/s_sin.S
+- lib/libm/arch/m68060/s_sinf.S
+- lib/libm/arch/m68060/s_tan.S
+- lib/libm/arch/m68060/s_tanf.S
+- lib/libm/arch/m68060/s_tanh.S
+- lib/libm/arch/m68060/s_tanhf.S
+- lib/libm/arch/m68k/s_ceil.S
+- lib/libm/arch/m68k/s_copysign.S
+- lib/libm/arch/m68k/s_finite.S
+- lib/libm/arch/m68k/s_floor.S
+- lib/libm/arch/m68k/s_rint.S
+- lib/libm/arch/mc68881/e_acos.S
+- lib/libm/arch/mc68881/e_asin.S
+- lib/libm/arch/mc68881/e_atanh.S
+- lib/libm/arch/mc68881/e_cosh.S
+- lib/libm/arch/mc68881/e_exp.S
+- lib/libm/arch/mc68881/e_fmod.S
+- lib/libm/arch/mc68881/e_log.S
+- lib/libm/arch/mc68881/e_log10.S
+- lib/libm/arch/mc68881/e_remainder.S
+- lib/libm/arch/mc68881/e_scalb.S
+- lib/libm/arch/mc68881/e_sinh.S
+- lib/libm/arch/mc68881/e_sqrt.S
+- lib/libm/arch/mc68881/s_atan.S
+- lib/libm/arch/mc68881/s_cos.S
+- lib/libm/arch/mc68881/s_expm1.S
+- lib/libm/arch/mc68881/s_log1p.S
+- lib/libm/arch/mc68881/s_logb.S
+- lib/libm/arch/mc68881/s_scalbn.S
+- lib/libm/arch/mc68881/s_sin.S
+- lib/libm/arch/mc68881/s_tan.S
+- lib/libm/arch/mc68881/s_tanh.S
+- lib/libm/arch/riscv/e_sqrt.S
+- lib/libm/arch/riscv/e_sqrtf.S
+- lib/libm/arch/riscv/fenv.c
+- lib/libm/arch/riscv/lrint.S
+- lib/libm/arch/riscv/lrintf.S
+- lib/libm/arch/riscv/s_copysign.S
+- lib/libm/arch/riscv/s_copysignf.S
+- lib/libm/arch/riscv/s_fabs.S
+- lib/libm/arch/riscv/s_fabsf.S
+- lib/libm/arch/riscv/s_fma.S
+- lib/libm/arch/riscv/s_fmaf.S
+- lib/libm/arch/riscv/s_fmax.S
+- lib/libm/arch/riscv/s_fmaxf.S
+- lib/libm/arch/riscv/s_fmin.S
+- lib/libm/arch/riscv/s_fminf.S
+- lib/libm/arch/sparc/fenv.c
+- lib/libm/arch/sparc64/fenv.c
+- lib/libm/arch/vax/n_argred.S
+- lib/libm/arch/vax/n_atan2.S
+- lib/libm/arch/vax/n_cabs.S
+- lib/libm/arch/vax/n_cbrt.S
+- lib/libm/arch/vax/n_infnan.S
+- lib/libm/arch/vax/n_scalbn.S
+- lib/libm/arch/vax/n_sincos.S
+- lib/libm/arch/vax/n_sqrt.S
+- lib/libm/arch/vax/n_support.S
+- lib/libm/arch/vax/n_tan.S
+- lib/libm/arch/x86_64/fenv.c
+- lib/libm/compat/compat_cabs.c
+- lib/libm/compat/compat_cabsf.c
+- lib/libm/compiler_rt/Makefile.inc
+- lib/libm/complex/Makefile.inc
+- lib/libm/complex/cabs.3
+- lib/libm/complex/cabs.c
+- lib/libm/complex/cabsf.c
+- lib/libm/complex/cabsl.c
+- lib/libm/complex/cacos.3
+- lib/libm/complex/cacos.c
+- lib/libm/complex/cacosf.c
+- lib/libm/complex/cacosh.3
+- lib/libm/complex/cacosh.c
+- lib/libm/complex/cacoshf.c
+- lib/libm/complex/cacoshl.c
+- lib/libm/complex/cacosl.c
+- lib/libm/complex/carg.3
+- lib/libm/complex/carg.c
+- lib/libm/complex/cargf.c
+- lib/libm/complex/cargl.c
+- lib/libm/complex/casin.3
+- lib/libm/complex/casin.c
+- lib/libm/complex/casinf.c
+- lib/libm/complex/casinh.3
+- lib/libm/complex/casinh.c
+- lib/libm/complex/casinhf.c
+- lib/libm/complex/casinhl.c
+- lib/libm/complex/casinl.c
+- lib/libm/complex/catan.3
+- lib/libm/complex/catan.c
+- lib/libm/complex/catanf.c
+- lib/libm/complex/catanh.3
+- lib/libm/complex/catanh.c
+- lib/libm/complex/catanhf.c
+- lib/libm/complex/catanhl.c
+- lib/libm/complex/catanl.c
+- lib/libm/complex/ccos.3
+- lib/libm/complex/ccos.c
+- lib/libm/complex/ccosf.c
+- lib/libm/complex/ccosh.3
+- lib/libm/complex/ccosh.c
+- lib/libm/complex/ccoshf.c
+- lib/libm/complex/ccoshl.c
+- lib/libm/complex/ccosl.c
+- lib/libm/complex/cephes_subr.c
+- lib/libm/complex/cephes_subr.h
+- lib/libm/complex/cephes_subrf.c
+- lib/libm/complex/cephes_subrf.h
+- lib/libm/complex/cephes_subrl.c
+- lib/libm/complex/cephes_subrl.h
+- lib/libm/complex/cexp.3
+- lib/libm/complex/cexp.c
+- lib/libm/complex/cexpf.c
+- lib/libm/complex/cexpl.c
+- lib/libm/complex/cimag.3
+- lib/libm/complex/cimag.c
+- lib/libm/complex/cimagf.c
+- lib/libm/complex/cimagl.c
+- lib/libm/complex/clog.3
+- lib/libm/complex/clog.c
+- lib/libm/complex/clogf.c
+- lib/libm/complex/clogl.c
+- lib/libm/complex/conj.3
+- lib/libm/complex/conj.c
+- lib/libm/complex/conjf.c
+- lib/libm/complex/conjl.c
+- lib/libm/complex/cpow.3
+- lib/libm/complex/cpow.c
+- lib/libm/complex/cpowf.c
+- lib/libm/complex/cpowl.c
+- lib/libm/complex/cproj.3
+- lib/libm/complex/cproj.c
+- lib/libm/complex/cprojf.c
+- lib/libm/complex/cprojl.c
+- lib/libm/complex/creal.3
+- lib/libm/complex/creal.c
+- lib/libm/complex/crealf.c
+- lib/libm/complex/creall.c
+- lib/libm/complex/csin.3
+- lib/libm/complex/csin.c
+- lib/libm/complex/csinf.c
+- lib/libm/complex/csinh.3
+- lib/libm/complex/csinh.c
+- lib/libm/complex/csinhf.c
+- lib/libm/complex/csinhl.c
+- lib/libm/complex/csinl.c
+- lib/libm/complex/csqrt.3
+- lib/libm/complex/csqrt.c
+- lib/libm/complex/csqrtf.c
+- lib/libm/complex/csqrtl.c
+- lib/libm/complex/ctan.3
+- lib/libm/complex/ctan.c
+- lib/libm/complex/ctanf.c
+- lib/libm/complex/ctanh.3
+- lib/libm/complex/ctanh.c
+- lib/libm/complex/ctanhf.c
+- lib/libm/complex/ctanhl.c
+- lib/libm/complex/ctanl.c
+- lib/libm/gen/Makefile.inc
+- lib/libm/gen/nan.3
+- lib/libm/gen/nan.c
+- lib/libm/gen/nanf.c
+- lib/libm/gen/nanl.c
+- lib/libm/man/acos.3
+- lib/libm/man/acosh.3
+- lib/libm/man/asin.3
+- lib/libm/man/asinh.3
+- lib/libm/man/atan.3
+- lib/libm/man/atan2.3
+- lib/libm/man/atanh.3
+- lib/libm/man/ceil.3
+- lib/libm/man/copysign.3
+- lib/libm/man/cos.3
+- lib/libm/man/cosh.3
+- lib/libm/man/erf.3
+- lib/libm/man/exp.3
+- lib/libm/man/fabs.3
+- lib/libm/man/fdim.3
+- lib/libm/man/feclearexcept.3
+- lib/libm/man/feenableexcept.3
+- lib/libm/man/fegetenv.3
+- lib/libm/man/fegetround.3
+- lib/libm/man/fenv.3
+- lib/libm/man/finite.3
+- lib/libm/man/fmax.3
+- lib/libm/man/fmod.3
+- lib/libm/man/frexp.3
+- lib/libm/man/hypot.3
+- lib/libm/man/ieee_test.3
+- lib/libm/man/ilogb.3
+- lib/libm/man/isinff.3
+- lib/libm/man/j0.3
+- lib/libm/man/ldexp.3
+- lib/libm/man/lgamma.3
+- lib/libm/man/log.3
+- lib/libm/man/lrint.3
+- lib/libm/man/math.3
+- lib/libm/man/modf.3
+- lib/libm/man/nextafter.3
+- lib/libm/man/pow.3
+- lib/libm/man/remainder.3
+- lib/libm/man/rint.3
+- lib/libm/man/round.3
+- lib/libm/man/scalbn.3
+- lib/libm/man/sin.3
+- lib/libm/man/sinh.3
+- lib/libm/man/sqrt.3
+- lib/libm/man/tan.3
+- lib/libm/man/tanh.3
+- lib/libm/man/trunc.3
+- lib/libm/noieee_src/mathimpl.h
+- lib/libm/noieee_src/n_acosh.c
+- lib/libm/noieee_src/n_asincos.c
+- lib/libm/noieee_src/n_asinh.c
+- lib/libm/noieee_src/n_atan.c
+- lib/libm/noieee_src/n_atan2.c
+- lib/libm/noieee_src/n_atanh.c
+- lib/libm/noieee_src/n_cabs.c
+- lib/libm/noieee_src/n_cbrt.c
+- lib/libm/noieee_src/n_cosh.c
+- lib/libm/noieee_src/n_erf.c
+- lib/libm/noieee_src/n_exp.c
+- lib/libm/noieee_src/n_exp2.c
+- lib/libm/noieee_src/n_exp2f.c
+- lib/libm/noieee_src/n_exp__E.c
+- lib/libm/noieee_src/n_expm1.c
+- lib/libm/noieee_src/n_floor.c
+- lib/libm/noieee_src/n_fmax.c
+- lib/libm/noieee_src/n_fmaxf.c
+- lib/libm/noieee_src/n_fmin.c
+- lib/libm/noieee_src/n_fminf.c
+- lib/libm/noieee_src/n_fmod.c
+- lib/libm/noieee_src/n_gamma.c
+- lib/libm/noieee_src/n_j0.c
+- lib/libm/noieee_src/n_j1.c
+- lib/libm/noieee_src/n_jn.c
+- lib/libm/noieee_src/n_lgamma.c
+- lib/libm/noieee_src/n_log.c
+- lib/libm/noieee_src/n_log10.c
+- lib/libm/noieee_src/n_log1p.c
+- lib/libm/noieee_src/n_log2.c
+- lib/libm/noieee_src/n_log__L.c
+- lib/libm/noieee_src/n_lround.c
+- lib/libm/noieee_src/n_lroundf.c
+- lib/libm/noieee_src/n_pow.c
+- lib/libm/noieee_src/n_round.c
+- lib/libm/noieee_src/n_roundf.c
+- lib/libm/noieee_src/n_sincos.c
+- lib/libm/noieee_src/n_sinh.c
+- lib/libm/noieee_src/n_support.c
+- lib/libm/noieee_src/n_tan.c
+- lib/libm/noieee_src/n_tanh.c
+- lib/libm/noieee_src/trig.h
+- lib/libm/shlib_version
+- lib/libm/src/b_exp.c
+- lib/libm/src/b_log.c
+- lib/libm/src/b_tgamma.c
+- lib/libm/src/e_acos.c
+- lib/libm/src/e_acosf.c
+- lib/libm/src/e_acosh.c
+- lib/libm/src/e_acoshf.c
+- lib/libm/src/e_asin.c
+- lib/libm/src/e_asinf.c
+- lib/libm/src/e_atan2.c
+- lib/libm/src/e_atan2f.c
+- lib/libm/src/e_atanh.c
+- lib/libm/src/e_atanhf.c
+- lib/libm/src/e_cosh.c
+- lib/libm/src/e_coshf.c
+- lib/libm/src/e_exp.c
+- lib/libm/src/e_expf.c
+- lib/libm/src/e_fmod.c
+- lib/libm/src/e_fmodf.c
+- lib/libm/src/e_fmodl.c
+- lib/libm/src/e_hypot.c
+- lib/libm/src/e_hypotf.c
+- lib/libm/src/e_j0.c
+- lib/libm/src/e_j0f.c
+- lib/libm/src/e_j1.c
+- lib/libm/src/e_j1f.c
+- lib/libm/src/e_jn.c
+- lib/libm/src/e_jnf.c
+- lib/libm/src/e_lgamma_r.c
+- lib/libm/src/e_lgammaf_r.c
+- lib/libm/src/e_log.c
+- lib/libm/src/e_log10.c
+- lib/libm/src/e_log10f.c
+- lib/libm/src/e_log2.c
+- lib/libm/src/e_log2f.c
+- lib/libm/src/e_logf.c
+- lib/libm/src/e_pow.c
+- lib/libm/src/e_powf.c
+- lib/libm/src/e_rem_pio2.c
+- lib/libm/src/e_rem_pio2f.c
+- lib/libm/src/e_remainder.c
+- lib/libm/src/e_remainderf.c
+- lib/libm/src/e_scalb.c
+- lib/libm/src/e_scalbf.c
+- lib/libm/src/e_sinh.c
+- lib/libm/src/e_sinhf.c
+- lib/libm/src/e_sqrt.c
+- lib/libm/src/e_sqrtf.c
+- lib/libm/src/e_sqrtl.c
+- lib/libm/src/k_cos.c
+- lib/libm/src/k_cosf.c
+- lib/libm/src/k_rem_pio2.c
+- lib/libm/src/k_rem_pio2f.c
+- lib/libm/src/k_sin.c
+- lib/libm/src/k_sinf.c
+- lib/libm/src/k_standard.c
+- lib/libm/src/k_tan.c
+- lib/libm/src/k_tanf.c
+- lib/libm/src/math_private.h
+- lib/libm/src/namespace.h
+- lib/libm/src/s_asinh.c
+- lib/libm/src/s_asinhf.c
+- lib/libm/src/s_atan.c
+- lib/libm/src/s_atanf.c
+- lib/libm/src/s_cbrt.c
+- lib/libm/src/s_cbrtf.c
+- lib/libm/src/s_cbrtl.c
+- lib/libm/src/s_ceil.c
+- lib/libm/src/s_ceilf.c
+- lib/libm/src/s_ceill.c
+- lib/libm/src/s_copysign.c
+- lib/libm/src/s_copysignf.c
+- lib/libm/src/s_copysignl.c
+- lib/libm/src/s_cos.c
+- lib/libm/src/s_cosf.c
+- lib/libm/src/s_erf.c
+- lib/libm/src/s_erff.c
+- lib/libm/src/s_exp2.c
+- lib/libm/src/s_exp2f.c
+- lib/libm/src/s_expm1.c
+- lib/libm/src/s_expm1f.c
+- lib/libm/src/s_fabs.c
+- lib/libm/src/s_fabsf.c
+- lib/libm/src/s_fabsl.c
+- lib/libm/src/s_fdim.c
+- lib/libm/src/s_finite.c
+- lib/libm/src/s_finitef.c
+- lib/libm/src/s_floor.c
+- lib/libm/src/s_floorf.c
+- lib/libm/src/s_floorl.c
+- lib/libm/src/s_fma.c
+- lib/libm/src/s_fmaf.c
+- lib/libm/src/s_fmal.c
+- lib/libm/src/s_fmax.c
+- lib/libm/src/s_fmaxf.c
+- lib/libm/src/s_fmaxl.c
+- lib/libm/src/s_fmin.c
+- lib/libm/src/s_fminf.c
+- lib/libm/src/s_fminl.c
+- lib/libm/src/s_frexp.c
+- lib/libm/src/s_frexpf.c
+- lib/libm/src/s_frexpl.c
+- lib/libm/src/s_ilogb.c
+- lib/libm/src/s_ilogbf.c
+- lib/libm/src/s_ilogbl.c
+- lib/libm/src/s_infinity.c
+- lib/libm/src/s_isinf.c
+- lib/libm/src/s_isinff.c
+- lib/libm/src/s_isnan.c
+- lib/libm/src/s_isnanf.c
+- lib/libm/src/s_lib_version.c
+- lib/libm/src/s_log1p.c
+- lib/libm/src/s_log1pf.c
+- lib/libm/src/s_logb.c
+- lib/libm/src/s_logbf.c
+- lib/libm/src/s_logbl.c
+- lib/libm/src/s_matherr.c
+- lib/libm/src/s_modf.c
+- lib/libm/src/s_modff.c
+- lib/libm/src/s_modfl.c
+- lib/libm/src/s_nan.c
+- lib/libm/src/s_nearbyint.c
+- lib/libm/src/s_nextafter.c
+- lib/libm/src/s_nextafterf.c
+- lib/libm/src/s_nextafterl.c
+- lib/libm/src/s_nexttoward.c
+- lib/libm/src/s_nexttowardf.c
+- lib/libm/src/s_remquo.c
+- lib/libm/src/s_remquof.c
+- lib/libm/src/s_rint.c
+- lib/libm/src/s_rintf.c
+- lib/libm/src/s_rintl.c
+- lib/libm/src/s_round.c
+- lib/libm/src/s_roundf.c
+- lib/libm/src/s_roundl.c
+- lib/libm/src/s_scalbn.c
+- lib/libm/src/s_scalbnf.c
+- lib/libm/src/s_scalbnl.c
+- lib/libm/src/s_signgam.c
+- lib/libm/src/s_significand.c
+- lib/libm/src/s_significandf.c
+- lib/libm/src/s_sin.c
+- lib/libm/src/s_sinf.c
+- lib/libm/src/s_tan.c
+- lib/libm/src/s_tanf.c
+- lib/libm/src/s_tanh.c
+- lib/libm/src/s_tanhf.c
+- lib/libm/src/s_tgammaf.c
+- lib/libm/src/s_trunc.c
+- lib/libm/src/s_truncf.c
+- lib/libm/src/s_truncl.c
+- lib/libm/src/w_acos.c
+- lib/libm/src/w_acosf.c
+- lib/libm/src/w_acosh.c
+- lib/libm/src/w_acoshf.c
+- lib/libm/src/w_asin.c
+- lib/libm/src/w_asinf.c
+- lib/libm/src/w_atan2.c
+- lib/libm/src/w_atan2f.c
+- lib/libm/src/w_atanh.c
+- lib/libm/src/w_atanhf.c
+- lib/libm/src/w_cosh.c
+- lib/libm/src/w_coshf.c
+- lib/libm/src/w_drem.c
+- lib/libm/src/w_dremf.c
+- lib/libm/src/w_exp.c
+- lib/libm/src/w_expf.c
+- lib/libm/src/w_fmod.c
+- lib/libm/src/w_fmodf.c
+- lib/libm/src/w_fmodl.c
+- lib/libm/src/w_gamma.c
+- lib/libm/src/w_gamma_r.c
+- lib/libm/src/w_gammaf.c
+- lib/libm/src/w_gammaf_r.c
+- lib/libm/src/w_hypot.c
+- lib/libm/src/w_hypotf.c
+- lib/libm/src/w_j0.c
+- lib/libm/src/w_j0f.c
+- lib/libm/src/w_j1.c
+- lib/libm/src/w_j1f.c
+- lib/libm/src/w_jn.c
+- lib/libm/src/w_jnf.c
+- lib/libm/src/w_lgamma.c
+- lib/libm/src/w_lgamma_r.c
+- lib/libm/src/w_lgammaf.c
+- lib/libm/src/w_lgammaf_r.c
+- lib/libm/src/w_log.c
+- lib/libm/src/w_log10.c
+- lib/libm/src/w_log10f.c
+- lib/libm/src/w_log2.c
+- lib/libm/src/w_log2f.c
+- lib/libm/src/w_logf.c
+- lib/libm/src/w_pow.c
+- lib/libm/src/w_powf.c
+- lib/libm/src/w_remainder.c
+- lib/libm/src/w_remainderf.c
+- lib/libm/src/w_scalb.c
+- lib/libm/src/w_scalbf.c
+- lib/libm/src/w_sinh.c
+- lib/libm/src/w_sinhf.c
+- lib/libm/src/w_sqrt.c
+- lib/libm/src/w_sqrtf.c
+- lib/libm/src/w_sqrtl.c
+- lib/libmenu/Makefile
+- lib/libmenu/attributes.c
+- lib/libmenu/driver.c
+- lib/libmenu/eti.h
+- lib/libmenu/internals.c
+- lib/libmenu/internals.h
+- lib/libmenu/item.c
+- lib/libmenu/menu.c
+- lib/libmenu/menu.h
+- lib/libmenu/menu_attributes.3
+- lib/libmenu/menu_cursor.3
+- lib/libmenu/menu_driver.3
+- lib/libmenu/menu_format.3
+- lib/libmenu/menu_hook.3
+- lib/libmenu/menu_item_current.3
+- lib/libmenu/menu_item_name.3
+- lib/libmenu/menu_item_new.3
+- lib/libmenu/menu_item_opts.3
+- lib/libmenu/menu_item_userptr.3
+- lib/libmenu/menu_item_value.3
+- lib/libmenu/menu_item_visible.3
+- lib/libmenu/menu_items.3
+- lib/libmenu/menu_mark.3
+- lib/libmenu/menu_new.3
+- lib/libmenu/menu_opts.3
+- lib/libmenu/menu_pattern.3
+- lib/libmenu/menu_post.3
+- lib/libmenu/menu_userptr.3
+- lib/libmenu/menu_win.3
+- lib/libmenu/menus.3
+- lib/libmenu/post.c
+- lib/libmenu/shlib_version
+- lib/libmenu/userptr.c
+- lib/libpci/Makefile
+- lib/libpci/pci.3
+- lib/libpci/pci.h
+- lib/libpci/pci_bus.c
+- lib/libpci/pci_device.c
+- lib/libpci/pci_drvname.c
+- lib/libpci/shlib_version
+- lib/libprop/shlib_version
+- lib/libpuffs/TODO
+- lib/libpuffs/creds.c
+- lib/libpuffs/dispatcher.c
+- lib/libpuffs/flush.c
+- lib/libpuffs/framebuf.c
+- lib/libpuffs/null.c
+- lib/libpuffs/opdump.c
+- lib/libpuffs/paths.c
+- lib/libpuffs/puffs.3
+- lib/libpuffs/puffs.c
+- lib/libpuffs/puffs_cc.3
+- lib/libpuffs/puffs_cred.3
+- lib/libpuffs/puffs_flush.3
+- lib/libpuffs/puffs_framebuf.3
+- lib/libpuffs/puffs_node.3
+- lib/libpuffs/puffs_ops.3
+- lib/libpuffs/puffs_path.3
+- lib/libpuffs/puffsdump.h
+- lib/libpuffs/requests.c
+- lib/libpuffs/shlib_version
+- lib/libpuffs/subr.c
+- lib/libpuffs/suspend.c
+- lib/librefuse/Makefile
+- lib/librefuse/TODO
+- lib/librefuse/fuse.h
+- lib/librefuse/fuse_opt.h
+- lib/librefuse/refuse.3
+- lib/librefuse/refuse.c
+- lib/librefuse/refuse_opt.c
+- lib/librefuse/shlib_version
+- lib/librmt/README
+- lib/librmt/pathnames.h
+- lib/librmt/rmtlib.c
+- lib/librmt/rmtops.3
+- lib/libtelnet/Makefile
+- lib/libtelnet/auth-proto.h
+- lib/libtelnet/auth.c
+- lib/libtelnet/auth.h
+- lib/libtelnet/enc-proto.h
+- lib/libtelnet/enc_des.c
+- lib/libtelnet/encrypt.c
+- lib/libtelnet/encrypt.h
+- lib/libtelnet/forward.c
+- lib/libtelnet/genget.c
+- lib/libtelnet/getent.c
+- lib/libtelnet/kerberos5.c
+- lib/libtelnet/key-proto.h
+- lib/libtelnet/misc-proto.h
+- lib/libtelnet/misc.c
+- lib/libtelnet/misc.h
+- lib/libtelnet/pk.c
+- lib/libtelnet/pk.h
+- lib/libtelnet/shlib_version
+- lib/libtelnet/sra.c
+- lib/libterminfo/Makefile
+- lib/libterminfo/Makefile.hash
+- lib/libterminfo/compile.c
+- lib/libterminfo/curterm.c
+- lib/libterminfo/genhash
+- lib/libterminfo/genman
+- lib/libterminfo/genthash
+- lib/libterminfo/setupterm.c
+- lib/libterminfo/shlib_version
+- lib/libterminfo/term.c
+- lib/libterminfo/term.h
+- lib/libterminfo/term_private.h
+- lib/libterminfo/termcap.3
+- lib/libterminfo/termcap.c
+- lib/libterminfo/termcap.h
+- lib/libterminfo/termcap_map.c
+- lib/libterminfo/terminfo.3
+- lib/libterminfo/terminfo.5.in
+- lib/libterminfo/ti.c
+- lib/libterminfo/tparm.c
+- lib/libterminfo/tputs.c
+- lib/libutil/compat/Makefile.inc
+- lib/libutil/compat/compat_gepwconf.c
+- lib/libutil/compat/compat_login.c
+- lib/libutil/compat/compat_login_cap.c
+- lib/libutil/compat/compat_loginx.c
+- lib/libutil/compat/compat_logoutx.c
+- lib/libutil/compat/compat_parsedate.c
+- lib/libutil/compat/compat_passwd.c
+- lib/libutil/compat/login_cap.h
+- lib/libutil/compat/util.h
+- lib/libutil/disklabel_dkcksum.3
+- lib/libutil/disklabel_dkcksum.c
+- lib/libutil/disklabel_scan.3
+- lib/libutil/disklabel_scan.c
+- lib/libutil/efun.3
+- lib/libutil/efun.c
+- lib/libutil/getbootfile.3
+- lib/libutil/getbootfile.c
+- lib/libutil/getbyteorder.3
+- lib/libutil/getbyteorder.c
+- lib/libutil/getdiskrawname.3
+- lib/libutil/getdiskrawname.c
+- lib/libutil/getfsspecname.3
+- lib/libutil/getfstypename.3
+- lib/libutil/getlabelsector.3
+- lib/libutil/getlabelsector.c
+- lib/libutil/getmaxpartitions.3
+- lib/libutil/getmaxpartitions.c
+- lib/libutil/getmntopts.3
+- lib/libutil/getmntopts.c
+- lib/libutil/getrawpartition.3
+- lib/libutil/getrawpartition.c
+- lib/libutil/if_media.c
+- lib/libutil/kinfo_getvmmap.3
+- lib/libutil/kinfo_getvmmap.c
+- lib/libutil/login.3
+- lib/libutil/login.c
+- lib/libutil/login_cap.3
+- lib/libutil/login_tty.c
+- lib/libutil/loginx.3
+- lib/libutil/loginx.c
+- lib/libutil/logout.c
+- lib/libutil/logoutx.c
+- lib/libutil/logwtmp.c
+- lib/libutil/logwtmpx.c
+- lib/libutil/opendisk.3
+- lib/libutil/opendisk.c
+- lib/libutil/openpty.3
+- lib/libutil/parsedate.3
+- lib/libutil/parsedate.y
+- lib/libutil/passwd.c
+- lib/libutil/pidfile.3
+- lib/libutil/pidfile.c
+- lib/libutil/pidlock.3
+- lib/libutil/pidlock.c
+- lib/libutil/proc_compare.3
+- lib/libutil/pw_getconf.3
+- lib/libutil/pw_init.3
+- lib/libutil/pw_lock.3
+- lib/libutil/raise_default_signal.3
+- lib/libutil/raise_default_signal.c
+- lib/libutil/secure_path.3
+- lib/libutil/secure_path.c
+- lib/libutil/shlib_version
+- lib/libutil/snprintb.3
+- lib/libutil/sockaddr_snprintf.3
+- lib/libutil/sockaddr_snprintf.c
+- lib/libutil/stat_flags.3
+- lib/libutil/stat_flags.c
+- lib/libutil/strpct.3
+- lib/libutil/strpct.c
+- lib/libutil/ttyaction.3
+- lib/libutil/ttyaction.c
+- lib/libutil/ttymsg.3
+- lib/libutil/ttymsg.c
+- lib/libutil/util.3
+- lib/libwrap/DISCLAIMER
+- lib/libwrap/Makefile
+- lib/libwrap/Makefile.cflags
+- lib/libwrap/clean_exit.c
+- lib/libwrap/diag.c
+- lib/libwrap/eval.c
+- lib/libwrap/fix_options.c
+- lib/libwrap/hosts_access.3
+- lib/libwrap/hosts_access.5
+- lib/libwrap/hosts_access.c
+- lib/libwrap/hosts_ctl.c
+- lib/libwrap/hosts_options.5
+- lib/libwrap/libwrap2netbsd
+- lib/libwrap/misc.c
+- lib/libwrap/mystdarg.h
+- lib/libwrap/options.c
+- lib/libwrap/percent_x.c
+- lib/libwrap/refuse.c
+- lib/libwrap/rfc931.c
+- lib/libwrap/shell_cmd.c
+- lib/libwrap/shlib_version
+- lib/libwrap/socket.c
+- lib/libwrap/tcpd.h
+- lib/libwrap/update.c
+- lib/libz/Makefile
+- lib/libz/shlib_version
+- lib/libz/zlib.3
+- lib/libz/zlib.pc
+- lib/lua/Makefile
+- lib/lua/Makefile.inc
+- lib/lua/gpio/Makefile
+- lib/lua/gpio/gpio.c
+- lib/lua/sqlite/Makefile
+- lib/lua/sqlite/sqlite.c
+- lib/lua/syslog/Makefile
+- lib/lua/syslog/syslog.c
+- libexec/ld.elf_so/Makefile
+- libexec/ld.elf_so/README.TLS
+- libexec/ld.elf_so/TODO
+- libexec/ld.elf_so/arch/aarch64/Makefile.inc
+- libexec/ld.elf_so/arch/aarch64/mdreloc.c
+- libexec/ld.elf_so/arch/aarch64/rtld_start.S
+- libexec/ld.elf_so/arch/alpha/Makefile.inc
+- libexec/ld.elf_so/arch/alpha/alpha_reloc.c
+- libexec/ld.elf_so/arch/alpha/rtld_start.S
+- libexec/ld.elf_so/arch/arm/Makefile.inc
+- libexec/ld.elf_so/arch/arm/find_exidx.c
+- libexec/ld.elf_so/arch/arm/rtld_start.S
+- libexec/ld.elf_so/arch/hppa/Makefile.inc
+- libexec/ld.elf_so/arch/hppa/hppa_reloc.c
+- libexec/ld.elf_so/arch/hppa/rtld_start.S
+- libexec/ld.elf_so/arch/i386/Makefile.inc
+- libexec/ld.elf_so/arch/i386/rtld_start.S
+- libexec/ld.elf_so/arch/m68k/Makefile.inc
+- libexec/ld.elf_so/arch/m68k/mdreloc.c
+- libexec/ld.elf_so/arch/m68k/rtld_start.S
+- libexec/ld.elf_so/arch/mips/Makefile.inc
+- libexec/ld.elf_so/arch/mips/mips_reloc.c
+- libexec/ld.elf_so/arch/mips/rtld_start.S
+- libexec/ld.elf_so/arch/or1k/Makefile.inc
+- libexec/ld.elf_so/arch/or1k/mdreloc.c
+- libexec/ld.elf_so/arch/or1k/rtld_start.S
+- libexec/ld.elf_so/arch/powerpc/Makefile.inc
+- libexec/ld.elf_so/arch/powerpc/ppc_reloc.c
+- libexec/ld.elf_so/arch/powerpc/rtld_start.S
+- libexec/ld.elf_so/arch/powerpc/rtld_start64.S
+- libexec/ld.elf_so/arch/riscv/Makefile.inc
+- libexec/ld.elf_so/arch/riscv/mdreloc.c
+- libexec/ld.elf_so/arch/riscv/rtld_start.S
+- libexec/ld.elf_so/arch/sh3/Makefile.inc
+- libexec/ld.elf_so/arch/sh3/mdreloc.c
+- libexec/ld.elf_so/arch/sh3/rtld_start.S
+- libexec/ld.elf_so/arch/sparc/Makefile.inc
+- libexec/ld.elf_so/arch/sparc/mdreloc.c
+- libexec/ld.elf_so/arch/sparc/rtld_start.S
+- libexec/ld.elf_so/arch/sparc64/Makefile.inc
+- libexec/ld.elf_so/arch/sparc64/mdreloc.c
+- libexec/ld.elf_so/arch/sparc64/rtld_start.S
+- libexec/ld.elf_so/arch/vax/Makefile.inc
+- libexec/ld.elf_so/arch/vax/mdreloc.c
+- libexec/ld.elf_so/arch/vax/rtld_start.S
+- libexec/ld.elf_so/arch/x86_64/Makefile.inc
+- libexec/ld.elf_so/arch/x86_64/mdreloc.c
+- libexec/ld.elf_so/arch/x86_64/rtld_start.S
+- libexec/ld.elf_so/debug.c
+- libexec/ld.elf_so/debug.h
+- libexec/ld.elf_so/diagassert.c
+- libexec/ld.elf_so/expand.c
+- libexec/ld.elf_so/headers.c
+- libexec/ld.elf_so/ld.elf_so.1
+- libexec/ld.elf_so/load.c
+- libexec/ld.elf_so/map_object.c
+- libexec/ld.elf_so/paths.c
+- libexec/ld.elf_so/reloc.c
+- libexec/ld.elf_so/rtld.c
+- libexec/ld.elf_so/rtld.h
+- libexec/ld.elf_so/rtldenv.h
+- libexec/ld.elf_so/search.c
+- libexec/ld.elf_so/symbol.c
+- libexec/ld.elf_so/symver.c
+- libexec/ld.elf_so/sysident.h
+- libexec/ld.elf_so/tls.c
+- libexec/ld.elf_so/xmalloc.c
+- libexec/ld.elf_so/xprintf.c
+- sys/lib/libsa/Makefile
+- sys/lib/libsa/Makefile.inc
+- sys/lib/libsa/alloc.c
+- sys/lib/libsa/arp.c
+- sys/lib/libsa/atoi.c
+- sys/lib/libsa/bootcfg.c
+- sys/lib/libsa/bootcfg.h
+- sys/lib/libsa/bootp.c
+- sys/lib/libsa/bootp.h
+- sys/lib/libsa/bootparam.c
+- sys/lib/libsa/bootparam.h
+- sys/lib/libsa/byteorder.c
+- sys/lib/libsa/byteorder.h
+- sys/lib/libsa/cd9660.h
+- sys/lib/libsa/checkpasswd.c
+- sys/lib/libsa/close.c
+- sys/lib/libsa/closeall.c
+- sys/lib/libsa/cread.c
+- sys/lib/libsa/dev.c
+- sys/lib/libsa/dev_net.c
+- sys/lib/libsa/dev_net.h
+- sys/lib/libsa/disklabel.c
+- sys/lib/libsa/dosfs.h
+- sys/lib/libsa/errno.c
+- sys/lib/libsa/ether.c
+- sys/lib/libsa/ether_sprintf.c
+- sys/lib/libsa/exit.c
+- sys/lib/libsa/ext2fs.h
+- sys/lib/libsa/files.c
+- sys/lib/libsa/fnmatch.c
+- sys/lib/libsa/fstat.c
+- sys/lib/libsa/getfile.c
+- sys/lib/libsa/gets.c
+- sys/lib/libsa/globals.c
+- sys/lib/libsa/ioctl.c
+- sys/lib/libsa/iodesc.h
+- sys/lib/libsa/ip.c
+- sys/lib/libsa/ip_cksum.c
+- sys/lib/libsa/lfs.h
+- sys/lib/libsa/loadfile.c
+- sys/lib/libsa/loadfile.h
+- sys/lib/libsa/loadfile_aout.c
+- sys/lib/libsa/loadfile_ecoff.c
+- sys/lib/libsa/loadfile_elf32.c
+- sys/lib/libsa/loadfile_elf64.c
+- sys/lib/libsa/lookup_elf32.c
+- sys/lib/libsa/lookup_elf64.c
+- sys/lib/libsa/lseek.c
+- sys/lib/libsa/net.c
+- sys/lib/libsa/net.h
+- sys/lib/libsa/netif.c
+- sys/lib/libsa/netif.h
+- sys/lib/libsa/nfs.c
+- sys/lib/libsa/nfs.h
+- sys/lib/libsa/nfsv2.h
+- sys/lib/libsa/nullfs.c
+- sys/lib/libsa/open.c
+- sys/lib/libsa/panic.c
+- sys/lib/libsa/printf.c
+- sys/lib/libsa/qsort.c
+- sys/lib/libsa/rarp.c
+- sys/lib/libsa/read.c
+- sys/lib/libsa/rpc.c
+- sys/lib/libsa/rpc.h
+- sys/lib/libsa/rpcv2.h
+- sys/lib/libsa/saerrno.h
+- sys/lib/libsa/saioctl.h
+- sys/lib/libsa/snprintf.c
+- sys/lib/libsa/stand.h
+- sys/lib/libsa/stat.c
+- sys/lib/libsa/strerror.c
+- sys/lib/libsa/subr_prf.c
+- sys/lib/libsa/tftp.c
+- sys/lib/libsa/tftp.h
+- sys/lib/libsa/twiddle.c
+- sys/lib/libsa/udp.c
+- sys/lib/libsa/ufs.h
+- sys/lib/libsa/ustarfs.h
+- sys/lib/libsa/write.c
+- sys/lib/libunwind/CREDITS.TXT
+- sys/lib/libunwind/DwarfInstructions.hpp
+- sys/lib/libunwind/DwarfParser.hpp
+- sys/lib/libunwind/LICENSE.TXT
+- sys/lib/libunwind/Makefile.inc
+- sys/lib/libunwind/Registers.hpp
+- sys/lib/libunwind/dwarf2.h
+- sys/lib/libunwind/libunwind.cxx
+- sys/lib/libunwind/unwind.h
+- sys/lib/libunwind/unwind_registers.S
+- sys/lib/libz/Makefile
+- sys/lib/libz/Makefile.inc
+- sys/lib/libz/libz.h
+- sys/lib/libz/zalloc.c
+
+New upstream files imported:
+
+- common/include/libc/extern.h
+- common/include/rpc/Makefile
+- common/include/rpc/types.h
+- common/include/rpc/xdr.h
+- common/include/x86emu/x86emu.h
+- common/include/x86emu/x86emu_i8254.h
+- common/include/x86emu/x86emu_regs.h
+- lib/csu/common/csu-common.h
+- lib/libbz2/bz2.expsym
+- lib/libc/arch/arm/genassym.cf
+- lib/libc/arch/i386/genassym.cf
+- lib/libc/arch/ia64/gen/fpgetsticky.c
+- lib/libc/arch/ia64/gen/fpsetsticky.c
+- lib/libc/arch/ia64/gen/getcontext.S
+- lib/libc/arch/ia64/gen/makecontext.c
+- lib/libc/arch/ia64/gen/swapcontext.S
+- lib/libc/arch/sh3/genassym.cf
+- lib/libc/arch/sparc/gen/sparc_longjmp.h
+- lib/libc/arch/sparc/genassym.cf
+- lib/libc/arch/vax/gen/fabsf.S
+- lib/libc/arch/x86_64/genassym.cf
+- lib/libc/compat/arch/aarch64/sys/Makefile.inc
+- lib/libc/compat/arch/aarch64/sys/compat_Ovfork.S
+- lib/libc/compat/arch/aarch64/sys/compat___semctl.S
+- lib/libc/compat/arch/aarch64/sys/compat___sigreturn14.S
+- lib/libc/compat/arch/aarch64/sys/compat_msgctl.S
+- lib/libc/compat/arch/aarch64/sys/compat_quotactl.S
+- lib/libc/compat/arch/aarch64/sys/compat_shmctl.S
+- lib/libc/compat/arch/aarch64/sys/compat_sigaction.S
+- lib/libc/compat/arch/aarch64/sys/compat_sigpending.S
+- lib/libc/compat/arch/aarch64/sys/compat_sigprocmask.S
+- lib/libc/compat/arch/aarch64/sys/compat_sigreturn.S
+- lib/libc/compat/arch/aarch64/sys/compat_sigsuspend.S
+- lib/libc/compat/arch/hppa/sys/compat___sigtramp1.S
+- lib/libc/compat/arch/ia64/sys/compat_Ovfork.S
+- lib/libc/compat/arch/ia64/sys/compat_sigprocmask.S
+- lib/libc/compat/arch/ia64/sys/compat_sigsuspend.S
+- lib/libc/compat/arch/powerpc64/sys/compat_missing.c
+- lib/libc/compat/arch/riscv/sys/Makefile.inc
+- lib/libc/compat/arch/riscv/sys/compat_Ovfork.S
+- lib/libc/compat/arch/riscv/sys/compat_msgctl.S
+- lib/libc/compat/arch/riscv/sys/compat_quotactl.S
+- lib/libc/compat/arch/riscv/sys/compat_shmctl.S
+- lib/libc/compat/arch/riscv/sys/compat_sigaction.S
+- lib/libc/compat/arch/riscv/sys/compat_sigpending.S
+- lib/libc/compat/arch/riscv/sys/compat_sigprocmask.S
+- lib/libc/compat/arch/riscv/sys/compat_sigreturn.S
+- lib/libc/compat/arch/riscv/sys/compat_sigsuspend.S
+- lib/libc/compat/gen/compat___getmntinfo13.c
+- lib/libc/compat/include/errno.h
+- lib/libc/compat/include/extern.h
+- lib/libc/compat/include/sched.h
+- lib/libc/compat/sys/compat___fhstatvfs140.c
+- lib/libc/compat/sys/compat___fhstatvfs40.c
+- lib/libc/compat/sys/compat___sigaction14_sigtramp.c
+- lib/libc/compat/sys/compat_dup3.c
+- lib/libc/compat/sys/compat_statvfs.c
+- lib/libc/compat/time/compat_asctime.c
+- lib/libc/gen/bsd_signal.3
+- lib/libc/gen/ctype_guard.h
+- lib/libc/gen/endutent.3
+- lib/libc/gen/errno_private.h
+- lib/libc/gen/exect.c
+- lib/libc/gen/getdevmajor_private.h
+- lib/libc/gen/getentropy.3
+- lib/libc/gen/getentropy.c
+- lib/libc/gen/posix_spawn_file_actions_addchdir.3
+- lib/libc/gen/signalname.3
+- lib/libc/gen/signalname.c
+- lib/libc/gen/signalnext.c
+- lib/libc/gen/signalnumber.c
+- lib/libc/gen/syslog_private.h
+- lib/libc/gen/syslog_ss.c
+- lib/libc/gen/timespec_get.3
+- lib/libc/gen/timespec_get.c
+- lib/libc/gen/timespec_getres.c
+- lib/libc/gen/waitid.c
+- lib/libc/gen/xsyslog.c
+- lib/libc/hash/hmac.3
+- lib/libc/hash/hmac.c
+- lib/libc/hash/sha3/Makefile.inc
+- lib/libc/hash/sha3/SHA3_Selftest.3
+- lib/libc/hash/sha3/SHAKE.3
+- lib/libc/hash/sha3/keccak.3
+- lib/libc/hash/sha3/sha3.3
+- lib/libc/include/__sysctl.h
+- lib/libc/include/arc4random.h
+- lib/libc/include/atexit.h
+- lib/libc/include/futex_private.h
+- lib/libc/include/tsd.h
+- lib/libc/locale/c16rtomb.3
+- lib/libc/locale/c16rtomb.c
+- lib/libc/locale/c32rtomb.3
+- lib/libc/locale/c32rtomb.c
+- lib/libc/locale/c32rtomb.h
+- lib/libc/locale/c8rtomb.3
+- lib/libc/locale/c8rtomb.c
+- lib/libc/locale/duplocale.3
+- lib/libc/locale/freelocale.3
+- lib/libc/locale/mbrtoc16.3
+- lib/libc/locale/mbrtoc16.c
+- lib/libc/locale/mbrtoc32.3
+- lib/libc/locale/mbrtoc32.c
+- lib/libc/locale/mbrtoc32.h
+- lib/libc/locale/mbrtoc8.3
+- lib/libc/locale/mbrtoc8.c
+- lib/libc/locale/newlocale.3
+- lib/libc/net/sctp_bindx.3
+- lib/libc/net/sctp_connectx.3
+- lib/libc/net/sctp_freepaddrs.3
+- lib/libc/net/sctp_getaddrlen.3
+- lib/libc/net/sctp_getassocid.3
+- lib/libc/net/sctp_getpaddrs.3
+- lib/libc/net/sctp_opt_info.3
+- lib/libc/net/sctp_peeloff.3
+- lib/libc/net/sctp_recvmsg.3
+- lib/libc/net/sctp_send.3
+- lib/libc/net/sctp_sendmsg.3
+- lib/libc/net/sctp_sys_calls.c
+- lib/libc/posix1e/Makefile.inc
+- lib/libc/posix1e/acl.3
+- lib/libc/posix1e/acl_add_flag_np.3
+- lib/libc/posix1e/acl_add_perm.3
+- lib/libc/posix1e/acl_branding.c
+- lib/libc/posix1e/acl_calc_mask.3
+- lib/libc/posix1e/acl_calc_mask.c
+- lib/libc/posix1e/acl_clear_flags_np.3
+- lib/libc/posix1e/acl_clear_perms.3
+- lib/libc/posix1e/acl_compat.c
+- lib/libc/posix1e/acl_copy.c
+- lib/libc/posix1e/acl_copy_entry.3
+- lib/libc/posix1e/acl_create_entry.3
+- lib/libc/posix1e/acl_delete.3
+- lib/libc/posix1e/acl_delete.c
+- lib/libc/posix1e/acl_delete_entry.3
+- lib/libc/posix1e/acl_delete_entry.c
+- lib/libc/posix1e/acl_delete_flag_np.3
+- lib/libc/posix1e/acl_delete_perm.3
+- lib/libc/posix1e/acl_dup.3
+- lib/libc/posix1e/acl_entry.c
+- lib/libc/posix1e/acl_flag.c
+- lib/libc/posix1e/acl_free.3
+- lib/libc/posix1e/acl_free.c
+- lib/libc/posix1e/acl_from_text.3
+- lib/libc/posix1e/acl_from_text.c
+- lib/libc/posix1e/acl_from_text_nfs4.c
+- lib/libc/posix1e/acl_get.3
+- lib/libc/posix1e/acl_get.c
+- lib/libc/posix1e/acl_get_brand_np.3
+- lib/libc/posix1e/acl_get_entry.3
+- lib/libc/posix1e/acl_get_entry_type_np.3
+- lib/libc/posix1e/acl_get_flag_np.3
+- lib/libc/posix1e/acl_get_flagset_np.3
+- lib/libc/posix1e/acl_get_perm_np.3
+- lib/libc/posix1e/acl_get_permset.3
+- lib/libc/posix1e/acl_get_qualifier.3
+- lib/libc/posix1e/acl_get_tag_type.3
+- lib/libc/posix1e/acl_id_to_name.c
+- lib/libc/posix1e/acl_init.3
+- lib/libc/posix1e/acl_init.c
+- lib/libc/posix1e/acl_is_trivial_np.3
+- lib/libc/posix1e/acl_perm.c
+- lib/libc/posix1e/acl_set.3
+- lib/libc/posix1e/acl_set.c
+- lib/libc/posix1e/acl_set_entry_type_np.3
+- lib/libc/posix1e/acl_set_flagset_np.3
+- lib/libc/posix1e/acl_set_permset.3
+- lib/libc/posix1e/acl_set_qualifier.3
+- lib/libc/posix1e/acl_set_tag_type.3
+- lib/libc/posix1e/acl_strip.c
+- lib/libc/posix1e/acl_strip_np.3
+- lib/libc/posix1e/acl_support.c
+- lib/libc/posix1e/acl_support.h
+- lib/libc/posix1e/acl_support_nfs4.c
+- lib/libc/posix1e/acl_to_text.3
+- lib/libc/posix1e/acl_to_text.c
+- lib/libc/posix1e/acl_to_text_nfs4.c
+- lib/libc/posix1e/acl_valid.3
+- lib/libc/posix1e/acl_valid.c
+- lib/libc/posix1e/extattr.3
+- lib/libc/posix1e/posix1e.3
+- lib/libc/regex/regsub.c
+- lib/libc/ssp/ssp_redirect.c
+- lib/libc/stdio/printf_l.3
+- lib/libc/stdio/scanf_l.3
+- lib/libc/stdlib/aligned_alloc.c
+- lib/libc/stdlib/cxa_thread_atexit.c
+- lib/libc/string/mempcpy.c
+- lib/libc/string/strerror_ss.c
+- lib/libc/string/strncpy.3
+- lib/libc/string/wcsnlen.c
+- lib/libc/string/wmempcpy.c
+- lib/libc/sys/Lint___sigaction_siginfo.c
+- lib/libc/sys/__sigaction_siginfo.c
+- lib/libc/sys/_ksem.2
+- lib/libc/sys/accept4.c
+- lib/libc/sys/clock_getcpuclockid.c
+- lib/libc/sys/clock_getcpuclockid2.2
+- lib/libc/sys/epoll.2
+- lib/libc/sys/epoll.c
+- lib/libc/sys/eventfd.2
+- lib/libc/sys/eventfd_read.c
+- lib/libc/sys/eventfd_write.c
+- lib/libc/sys/extattrctl.2
+- lib/libc/sys/getrandom.2
+- lib/libc/sys/memfd_create.2
+- lib/libc/sys/ppoll.c
+- lib/libc/sys/timerfd.2
+- lib/libc/sys/vadvise.c
+- lib/libc/termios/tcgetwinsize.3
+- lib/libc/termios/tcgetwinsize.c
+- lib/libc/termios/tcsetwinsize.c
+- lib/libc/time/CONTRIBUTING
+- lib/libc/time/LICENSE
+- lib/libc/time/SECURITY
+- lib/libc/time/calendars
+- lib/libc/time/theory.html
+- lib/libc/time/tz-art.html
+- lib/libc/time/tz-how-to.html
+- lib/libc/time/tz-link.html
+- lib/libc/time/version
+- lib/libcrypt/crypt-argon2.c
+- lib/libcrypt/crypt.expsym
+- lib/libcrypt/namespace.h
+- lib/libcrypt/pw_gensalt.3
+- lib/libcurses/curses.expsym
+- lib/libcurses/curses_cchar.3
+- lib/libcurses/curses_insch.3
+- lib/libcurses/curses_mouse.3
+- lib/libcurses/curses_slk.3
+- lib/libcurses/curses_version.3
+- lib/libcurses/immedok.c
+- lib/libcurses/mouse.c
+- lib/libcurses/ripoffline.c
+- lib/libcurses/slk.c
+- lib/libcurses/syncok.c
+- lib/libcurses/version.c
+- lib/libedit/ChangeLog
+- lib/libedit/TEST/fuzz1.c
+- lib/libedit/TEST/test_filecompletion.c
+- lib/libedit/edit.expsym
+- lib/libedit/editline.7
+- lib/libedit/historyn.c
+- lib/libedit/libedit.pc
+- lib/libedit/literal.c
+- lib/libedit/literal.h
+- lib/libedit/tokenizern.c
+- lib/libexecinfo/execinfo.common.expsym
+- lib/libexecinfo/execinfo.hppa.expsym
+- lib/libexecinfo/symbol.h
+- lib/libexecinfo/symbol_hppa.c
+- lib/libform/form.expsym
+- lib/libintl/intl.expsym
+- lib/libm/arch/alpha/fenv.c
+- lib/libm/arch/i387/m387.expsym
+- lib/libm/arch/i387/s_rintl.S
+- lib/libm/arch/ia64/fenv.c
+- lib/libm/arch/m68k/fenv.c
+- lib/libm/arch/mips/fenv.c
+- lib/libm/arch/powerpc/fenv.c
+- lib/libm/arch/powerpc/s_fma.S
+- lib/libm/arch/powerpc/s_fmaf.S
+- lib/libm/arch/sh3/fenv.c
+- lib/libm/complex/catrig.c
+- lib/libm/complex/catrigf.c
+- lib/libm/complex/catrigl.c
+- lib/libm/convertFreeBSD
+- lib/libm/ld128/b_expl.c
+- lib/libm/ld128/b_logl.c
+- lib/libm/ld128/b_tgammal.c
+- lib/libm/ld128/e_lgammal_r.c
+- lib/libm/ld128/e_powl.c
+- lib/libm/ld128/e_rem_pio2l.h
+- lib/libm/ld128/invtrig.c
+- lib/libm/ld128/invtrig.h
+- lib/libm/ld128/k_cosl.c
+- lib/libm/ld128/k_cospil.h
+- lib/libm/ld128/k_expl.h
+- lib/libm/ld128/k_sinl.c
+- lib/libm/ld128/k_sinpil.h
+- lib/libm/ld128/k_tanl.c
+- lib/libm/ld128/s_cexpl.c
+- lib/libm/ld128/s_cospil.c
+- lib/libm/ld128/s_erfl.c
+- lib/libm/ld128/s_exp2l.c
+- lib/libm/ld128/s_expl.c
+- lib/libm/ld128/s_logl.c
+- lib/libm/ld128/s_nanl.c
+- lib/libm/ld128/s_sinpil.c
+- lib/libm/ld128/s_tanpil.c
+- lib/libm/ld80/b_expl.c
+- lib/libm/ld80/b_logl.c
+- lib/libm/ld80/b_tgammal.c
+- lib/libm/ld80/e_lgammal_r.c
+- lib/libm/ld80/e_powl.c
+- lib/libm/ld80/e_rem_pio2l.h
+- lib/libm/ld80/invtrig.c
+- lib/libm/ld80/invtrig.h
+- lib/libm/ld80/k_cosl.c
+- lib/libm/ld80/k_cospil.h
+- lib/libm/ld80/k_expl.h
+- lib/libm/ld80/k_sinl.c
+- lib/libm/ld80/k_sinpil.h
+- lib/libm/ld80/k_tanl.c
+- lib/libm/ld80/s_cexpl.c
+- lib/libm/ld80/s_cospil.c
+- lib/libm/ld80/s_erfl.c
+- lib/libm/ld80/s_exp2l.c
+- lib/libm/ld80/s_expl.c
+- lib/libm/ld80/s_logl.c
+- lib/libm/ld80/s_nanl.c
+- lib/libm/ld80/s_sinpil.c
+- lib/libm/ld80/s_tanpil.c
+- lib/libm/m.aarch64.expsym
+- lib/libm/m.alpha.expsym
+- lib/libm/m.arm.expsym
+- lib/libm/m.armhf.expsym
+- lib/libm/m.common.expsym
+- lib/libm/m.fenv.expsym
+- lib/libm/m.hppa.expsym
+- lib/libm/m.i386.expsym
+- lib/libm/m.ia64.expsym
+- lib/libm/m.ieee754.expsym
+- lib/libm/m.m68k.expsym
+- lib/libm/m.mips.expsym
+- lib/libm/m.mips64.expsym
+- lib/libm/m.mipshf.expsym
+- lib/libm/m.powerpc.expsym
+- lib/libm/m.powerpc64.expsym
+- lib/libm/m.riscv.expsym
+- lib/libm/m.sh3.expsym
+- lib/libm/m.sparc.expsym
+- lib/libm/m.sparc64.expsym
+- lib/libm/m.vax.expsym
+- lib/libm/m.x86_64.expsym
+- lib/libm/man/fma.3
+- lib/libm/man/sincos.3
+- lib/libm/noieee_src/n_atanhf.c
+- lib/libm/noieee_src/n_frexpf.c
+- lib/libm/noieee_src/n_frexpl.c
+- lib/libm/noieee_src/n_ilogb.c
+- lib/libm/noieee_src/n_sincos1.c
+- lib/libm/softfloat/feclearexcept.c
+- lib/libm/softfloat/fedisableexcept.c
+- lib/libm/softfloat/feenableexcept.c
+- lib/libm/softfloat/fegetenv.c
+- lib/libm/softfloat/fegetexcept.c
+- lib/libm/softfloat/fegetexceptflag.c
+- lib/libm/softfloat/fegetround.c
+- lib/libm/softfloat/feholdexcept.c
+- lib/libm/softfloat/feraiseexcept.c
+- lib/libm/softfloat/fesetenv.c
+- lib/libm/softfloat/fesetexceptflag.c
+- lib/libm/softfloat/fesetround.c
+- lib/libm/softfloat/fetestexcept.c
+- lib/libm/softfloat/feupdateenv.c
+- lib/libm/src/b_tgammal.c
+- lib/libm/src/e_acoshl.c
+- lib/libm/src/e_acosl.c
+- lib/libm/src/e_asinl.c
+- lib/libm/src/e_atan2l.c
+- lib/libm/src/e_atanhl.c
+- lib/libm/src/e_coshl.c
+- lib/libm/src/e_hypotl.c
+- lib/libm/src/e_lgammal.c
+- lib/libm/src/e_lgammal_r.c
+- lib/libm/src/e_powl.c
+- lib/libm/src/e_rem_pio2f.h
+- lib/libm/src/e_rem_pio2l.h
+- lib/libm/src/e_remainderl.c
+- lib/libm/src/e_sinhl.c
+- lib/libm/src/invtrig.c
+- lib/libm/src/k_cosdf.c
+- lib/libm/src/k_cospi.h
+- lib/libm/src/k_sincos.h
+- lib/libm/src/k_sincosf.h
+- lib/libm/src/k_sincosl.h
+- lib/libm/src/k_sindf.c
+- lib/libm/src/k_sinpi.h
+- lib/libm/src/k_tandf.c
+- lib/libm/src/s_asinhl.c
+- lib/libm/src/s_atanl.c
+- lib/libm/src/s_cargl.c
+- lib/libm/src/s_clogl.c
+- lib/libm/src/s_cosl.c
+- lib/libm/src/s_cospi.c
+- lib/libm/src/s_cospif.c
+- lib/libm/src/s_cospil.c
+- lib/libm/src/s_erfl.c
+- lib/libm/src/s_exp2l.c
+- lib/libm/src/s_expl.c
+- lib/libm/src/s_llrint.c
+- lib/libm/src/s_llrintf.c
+- lib/libm/src/s_llrintl.c
+- lib/libm/src/s_llround.c
+- lib/libm/src/s_llroundf.c
+- lib/libm/src/s_llroundl.c
+- lib/libm/src/s_logl.c
+- lib/libm/src/s_lrint.c
+- lib/libm/src/s_lrintf.c
+- lib/libm/src/s_lrintl.c
+- lib/libm/src/s_lround.c
+- lib/libm/src/s_lroundf.c
+- lib/libm/src/s_lroundl.c
+- lib/libm/src/s_remquol.c
+- lib/libm/src/s_sincos.c
+- lib/libm/src/s_sincosf.c
+- lib/libm/src/s_sincosl.c
+- lib/libm/src/s_sinl.c
+- lib/libm/src/s_sinpi.c
+- lib/libm/src/s_sinpif.c
+- lib/libm/src/s_sinpil.c
+- lib/libm/src/s_tanhl.c
+- lib/libm/src/s_tanl.c
+- lib/libm/src/s_tanpi.c
+- lib/libm/src/s_tanpif.c
+- lib/libm/src/s_tanpil.c
+- lib/libmenu/menu.expsym
+- lib/libpci/pci.expsym
+- lib/libprop/prop.expsym
+- lib/libpuffs/puffs.expsym
+- lib/librefuse/HACKING.md
+- lib/librefuse/fuse_internal.h
+- lib/librefuse/fuse_log.h
+- lib/librefuse/fuse_lowlevel.h
+- lib/librefuse/refuse.expsym
+- lib/librefuse/refuse/Makefile.inc
+- lib/librefuse/refuse/buf.c
+- lib/librefuse/refuse/buf.h
+- lib/librefuse/refuse/chan.c
+- lib/librefuse/refuse/chan.h
+- lib/librefuse/refuse/fs.c
+- lib/librefuse/refuse/fs.h
+- lib/librefuse/refuse/legacy.c
+- lib/librefuse/refuse/legacy.h
+- lib/librefuse/refuse/poll.c
+- lib/librefuse/refuse/poll.h
+- lib/librefuse/refuse/session.c
+- lib/librefuse/refuse/session.h
+- lib/librefuse/refuse/v11.c
+- lib/librefuse/refuse/v11.h
+- lib/librefuse/refuse/v21.c
+- lib/librefuse/refuse/v21.h
+- lib/librefuse/refuse/v22.c
+- lib/librefuse/refuse/v22.h
+- lib/librefuse/refuse/v23.h
+- lib/librefuse/refuse/v25.c
+- lib/librefuse/refuse/v25.h
+- lib/librefuse/refuse/v26.c
+- lib/librefuse/refuse/v26.h
+- lib/librefuse/refuse/v28.h
+- lib/librefuse/refuse/v29.h
+- lib/librefuse/refuse/v30.c
+- lib/librefuse/refuse/v30.h
+- lib/librefuse/refuse/v32.c
+- lib/librefuse/refuse/v32.h
+- lib/librefuse/refuse/v34.h
+- lib/librefuse/refuse/v35.h
+- lib/librefuse/refuse/v38.h
+- lib/librefuse/refuse_compat.c
+- lib/librefuse/refuse_log.c
+- lib/librefuse/refuse_lowlevel.c
+- lib/librefuse/refuse_signals.c
+- lib/libterminfo/terminfo.expsym
+- lib/libutil/util.expsym
+- lib/libwrap/expandm.c
+- lib/libwrap/expandm.h
+- lib/libwrap/wrap.expsym
+- lib/libz/z.expsym
+- lib/lua/bozohttpd/Makefile
+- lib/lua/libm/Makefile
+- lib/lua/libm/libm.c
+- libexec/ld.elf_so/arch/powerpc/fixup.c
+- libexec/ld.elf_so/compat.c
+- libexec/ld.elf_so/hash.c
+- libexec/ld.elf_so/hash.h
+- libexec/ld.elf_so/symbols.map
+- sbin/efi/Makefile
+- sbin/efi/bootvar.c
+- sbin/efi/bootvar.h
+- sbin/efi/certs.c
+- sbin/efi/certs.h
+- sbin/efi/defs.h
+- sbin/efi/devpath.c
+- sbin/efi/devpath.h
+- sbin/efi/devpath1.c
+- sbin/efi/devpath1.h
+- sbin/efi/devpath2.c
+- sbin/efi/devpath2.h
+- sbin/efi/devpath3.c
+- sbin/efi/devpath3.h
+- sbin/efi/devpath4.c
+- sbin/efi/devpath4.h
+- sbin/efi/devpath5.c
+- sbin/efi/devpath5.h
+- sbin/efi/efi.8
+- sbin/efi/efiio.c
+- sbin/efi/efiio.h
+- sbin/efi/getvars.c
+- sbin/efi/getvars.h
+- sbin/efi/gptsubr.c
+- sbin/efi/gptsubr.h
+- sbin/efi/main.c
+- sbin/efi/setvar.c
+- sbin/efi/setvar.h
+- sbin/efi/showvar.c
+- sbin/efi/showvar.h
+- sbin/efi/utils.c
+- sbin/efi/utils.h
+- sys/arch/i386/stand/efiboot/Makefile
+- sys/arch/i386/stand/efiboot/Makefile.efiboot
+- sys/arch/i386/stand/efiboot/TODO.efiboot
+- sys/arch/i386/stand/efiboot/boot.c
+- sys/arch/i386/stand/efiboot/bootia32/Makefile
+- sys/arch/i386/stand/efiboot/bootia32/efiboot_machdep.h
+- sys/arch/i386/stand/efiboot/bootia32/efibootia32.c
+- sys/arch/i386/stand/efiboot/bootia32/ldscript
+- sys/arch/i386/stand/efiboot/bootia32/multiboot32.S
+- sys/arch/i386/stand/efiboot/bootia32/start.S
+- sys/arch/i386/stand/efiboot/bootia32/startprog32.S
+- sys/arch/i386/stand/efiboot/bootx64/Makefile
+- sys/arch/i386/stand/efiboot/bootx64/efiboot_machdep.h
+- sys/arch/i386/stand/efiboot/bootx64/efibootx64.c
+- sys/arch/i386/stand/efiboot/bootx64/ldscript
+- sys/arch/i386/stand/efiboot/bootx64/multiboot64.S
+- sys/arch/i386/stand/efiboot/bootx64/start.S
+- sys/arch/i386/stand/efiboot/bootx64/startprog64.S
+- sys/arch/i386/stand/efiboot/conf.c
+- sys/arch/i386/stand/efiboot/dev_net.c
+- sys/arch/i386/stand/efiboot/devopen.c
+- sys/arch/i386/stand/efiboot/devopen.h
+- sys/arch/i386/stand/efiboot/efiboot.c
+- sys/arch/i386/stand/efiboot/efiboot.h
+- sys/arch/i386/stand/efiboot/efichar.c
+- sys/arch/i386/stand/efiboot/eficons.c
+- sys/arch/i386/stand/efiboot/eficpufunc.c
+- sys/arch/i386/stand/efiboot/eficpufunc.h
+- sys/arch/i386/stand/efiboot/efidelay.c
+- sys/arch/i386/stand/efiboot/efidev.c
+- sys/arch/i386/stand/efiboot/efidisk.c
+- sys/arch/i386/stand/efiboot/efidisk.h
+- sys/arch/i386/stand/efiboot/efidisk_ll.c
+- sys/arch/i386/stand/efiboot/efigetsecs.c
+- sys/arch/i386/stand/efiboot/efimemory.c
+- sys/arch/i386/stand/efiboot/efinet.c
+- sys/arch/i386/stand/efiboot/efinet.h
+- sys/arch/i386/stand/efiboot/efipxe.c
+- sys/arch/i386/stand/efiboot/panic.c
+- sys/arch/i386/stand/efiboot/self_reloc.c
+- sys/arch/i386/stand/efiboot/version
+- sys/external/bsd/gnu-efi/dist/.gitignore
+- sys/external/bsd/gnu-efi/dist/ChangeLog
+- sys/external/bsd/gnu-efi/dist/Make.defaults
+- sys/external/bsd/gnu-efi/dist/Make.rules
+- sys/external/bsd/gnu-efi/dist/Makefile
+- sys/external/bsd/gnu-efi/dist/README.efilib
+- sys/external/bsd/gnu-efi/dist/README.elilo
+- sys/external/bsd/gnu-efi/dist/README.git
+- sys/external/bsd/gnu-efi/dist/README.gnuefi
+- sys/external/bsd/gnu-efi/dist/apps/AllocPages.c
+- sys/external/bsd/gnu-efi/dist/apps/FreePages.c
+- sys/external/bsd/gnu-efi/dist/apps/Makefile
+- sys/external/bsd/gnu-efi/dist/apps/bltgrid.c
+- sys/external/bsd/gnu-efi/dist/apps/debughook.c
+- sys/external/bsd/gnu-efi/dist/apps/drv0.c
+- sys/external/bsd/gnu-efi/dist/apps/drv0.h
+- sys/external/bsd/gnu-efi/dist/apps/drv0_use.c
+- sys/external/bsd/gnu-efi/dist/apps/exit.c
+- sys/external/bsd/gnu-efi/dist/apps/lfbgrid.c
+- sys/external/bsd/gnu-efi/dist/apps/modelist.c
+- sys/external/bsd/gnu-efi/dist/apps/printenv.c
+- sys/external/bsd/gnu-efi/dist/apps/route80h.c
+- sys/external/bsd/gnu-efi/dist/apps/setdbg.c
+- sys/external/bsd/gnu-efi/dist/apps/setjmp.c
+- sys/external/bsd/gnu-efi/dist/apps/t.c
+- sys/external/bsd/gnu-efi/dist/apps/t2.c
+- sys/external/bsd/gnu-efi/dist/apps/t3.c
+- sys/external/bsd/gnu-efi/dist/apps/t4.c
+- sys/external/bsd/gnu-efi/dist/apps/t5.c
+- sys/external/bsd/gnu-efi/dist/apps/t6.c
+- sys/external/bsd/gnu-efi/dist/apps/t7.c
+- sys/external/bsd/gnu-efi/dist/apps/t8.c
+- sys/external/bsd/gnu-efi/dist/apps/tcc.c
+- sys/external/bsd/gnu-efi/dist/apps/tpause.c
+- sys/external/bsd/gnu-efi/dist/apps/trivial.S
+- sys/external/bsd/gnu-efi/dist/apps/unsetdbg.c
+- sys/external/bsd/gnu-efi/dist/gnuefi/Makefile
+- sys/external/bsd/gnu-efi/dist/gnuefi/crt0-efi-aarch64.S
+- sys/external/bsd/gnu-efi/dist/gnuefi/crt0-efi-arm.S
+- sys/external/bsd/gnu-efi/dist/gnuefi/crt0-efi-ia32.S
+- sys/external/bsd/gnu-efi/dist/gnuefi/crt0-efi-ia64.S
+- sys/external/bsd/gnu-efi/dist/gnuefi/crt0-efi-mips64el.S
+- sys/external/bsd/gnu-efi/dist/gnuefi/crt0-efi-riscv64.S
+- sys/external/bsd/gnu-efi/dist/gnuefi/crt0-efi-x86_64.S
+- sys/external/bsd/gnu-efi/dist/gnuefi/elf_aarch64_efi.lds
+- sys/external/bsd/gnu-efi/dist/gnuefi/elf_arm_efi.lds
+- sys/external/bsd/gnu-efi/dist/gnuefi/elf_ia32_efi.lds
+- sys/external/bsd/gnu-efi/dist/gnuefi/elf_ia32_fbsd_efi.lds
+- sys/external/bsd/gnu-efi/dist/gnuefi/elf_ia64_efi.lds
+- sys/external/bsd/gnu-efi/dist/gnuefi/elf_mips64el_efi.lds
+- sys/external/bsd/gnu-efi/dist/gnuefi/elf_riscv64_efi.lds
+- sys/external/bsd/gnu-efi/dist/gnuefi/elf_x86_64_efi.lds
+- sys/external/bsd/gnu-efi/dist/gnuefi/elf_x86_64_fbsd_efi.lds
+- sys/external/bsd/gnu-efi/dist/gnuefi/reloc_aarch64.c
+- sys/external/bsd/gnu-efi/dist/gnuefi/reloc_arm.c
+- sys/external/bsd/gnu-efi/dist/gnuefi/reloc_ia32.c
+- sys/external/bsd/gnu-efi/dist/gnuefi/reloc_ia64.S
+- sys/external/bsd/gnu-efi/dist/gnuefi/reloc_mips64el.c
+- sys/external/bsd/gnu-efi/dist/gnuefi/reloc_riscv64.c
+- sys/external/bsd/gnu-efi/dist/gnuefi/reloc_x86_64.c
+- sys/external/bsd/gnu-efi/dist/inc/Makefile
+- sys/external/bsd/gnu-efi/dist/inc/aarch64/efibind.h
+- sys/external/bsd/gnu-efi/dist/inc/aarch64/efilibplat.h
+- sys/external/bsd/gnu-efi/dist/inc/aarch64/efisetjmp_arch.h
+- sys/external/bsd/gnu-efi/dist/inc/arm/efibind.h
+- sys/external/bsd/gnu-efi/dist/inc/arm/efilibplat.h
+- sys/external/bsd/gnu-efi/dist/inc/arm/efisetjmp_arch.h
+- sys/external/bsd/gnu-efi/dist/inc/efi.h
+- sys/external/bsd/gnu-efi/dist/inc/efi_nii.h
+- sys/external/bsd/gnu-efi/dist/inc/efi_pxe.h
+- sys/external/bsd/gnu-efi/dist/inc/efiapi.h
+- sys/external/bsd/gnu-efi/dist/inc/eficompiler.h
+- sys/external/bsd/gnu-efi/dist/inc/eficon.h
+- sys/external/bsd/gnu-efi/dist/inc/eficonex.h
+- sys/external/bsd/gnu-efi/dist/inc/efidebug.h
+- sys/external/bsd/gnu-efi/dist/inc/efidef.h
+- sys/external/bsd/gnu-efi/dist/inc/efidevp.h
+- sys/external/bsd/gnu-efi/dist/inc/efierr.h
+- sys/external/bsd/gnu-efi/dist/inc/efifpswa.h
+- sys/external/bsd/gnu-efi/dist/inc/efifs.h
+- sys/external/bsd/gnu-efi/dist/inc/efigpt.h
+- sys/external/bsd/gnu-efi/dist/inc/efiip.h
+- sys/external/bsd/gnu-efi/dist/inc/efilib.h
+- sys/external/bsd/gnu-efi/dist/inc/efilink.h
+- sys/external/bsd/gnu-efi/dist/inc/efinet.h
+- sys/external/bsd/gnu-efi/dist/inc/efipart.h
+- sys/external/bsd/gnu-efi/dist/inc/efipciio.h
+- sys/external/bsd/gnu-efi/dist/inc/efipoint.h
+- sys/external/bsd/gnu-efi/dist/inc/efiprot.h
+- sys/external/bsd/gnu-efi/dist/inc/efipxebc.h
+- sys/external/bsd/gnu-efi/dist/inc/efirtlib.h
+- sys/external/bsd/gnu-efi/dist/inc/efiser.h
+- sys/external/bsd/gnu-efi/dist/inc/efisetjmp.h
+- sys/external/bsd/gnu-efi/dist/inc/efishell.h
+- sys/external/bsd/gnu-efi/dist/inc/efishellintf.h
+- sys/external/bsd/gnu-efi/dist/inc/efistdarg.h
+- sys/external/bsd/gnu-efi/dist/inc/efitcp.h
+- sys/external/bsd/gnu-efi/dist/inc/efiudp.h
+- sys/external/bsd/gnu-efi/dist/inc/efiui.h
+- sys/external/bsd/gnu-efi/dist/inc/ia32/efibind.h
+- sys/external/bsd/gnu-efi/dist/inc/ia32/efilibplat.h
+- sys/external/bsd/gnu-efi/dist/inc/ia32/efisetjmp_arch.h
+- sys/external/bsd/gnu-efi/dist/inc/ia32/pe.h
+- sys/external/bsd/gnu-efi/dist/inc/ia64/efibind.h
+- sys/external/bsd/gnu-efi/dist/inc/ia64/efilibplat.h
+- sys/external/bsd/gnu-efi/dist/inc/ia64/efisetjmp_arch.h
+- sys/external/bsd/gnu-efi/dist/inc/ia64/pe.h
+- sys/external/bsd/gnu-efi/dist/inc/ia64/salproc.h
+- sys/external/bsd/gnu-efi/dist/inc/inc.mak
+- sys/external/bsd/gnu-efi/dist/inc/lib.h
+- sys/external/bsd/gnu-efi/dist/inc/libsmbios.h
+- sys/external/bsd/gnu-efi/dist/inc/make.inf
+- sys/external/bsd/gnu-efi/dist/inc/makefile.hdr
+- sys/external/bsd/gnu-efi/dist/inc/mips64el/efibind.h
+- sys/external/bsd/gnu-efi/dist/inc/mips64el/efilibplat.h
+- sys/external/bsd/gnu-efi/dist/inc/mips64el/efisetjmp_arch.h
+- sys/external/bsd/gnu-efi/dist/inc/pci22.h
+- sys/external/bsd/gnu-efi/dist/inc/protocol/adapterdebug.h
+- sys/external/bsd/gnu-efi/dist/inc/protocol/eficonsplit.h
+- sys/external/bsd/gnu-efi/dist/inc/protocol/efidbg.h
+- sys/external/bsd/gnu-efi/dist/inc/protocol/efivar.h
+- sys/external/bsd/gnu-efi/dist/inc/protocol/ia64/eficontext.h
+- sys/external/bsd/gnu-efi/dist/inc/protocol/intload.h
+- sys/external/bsd/gnu-efi/dist/inc/protocol/legacyboot.h
+- sys/external/bsd/gnu-efi/dist/inc/protocol/make.inf
+- sys/external/bsd/gnu-efi/dist/inc/protocol/makefile.hdr
+- sys/external/bsd/gnu-efi/dist/inc/protocol/piflash64.h
+- sys/external/bsd/gnu-efi/dist/inc/protocol/readme.txt
+- sys/external/bsd/gnu-efi/dist/inc/protocol/vgaclass.h
+- sys/external/bsd/gnu-efi/dist/inc/riscv64/efibind.h
+- sys/external/bsd/gnu-efi/dist/inc/riscv64/efilibplat.h
+- sys/external/bsd/gnu-efi/dist/inc/riscv64/efisetjmp_arch.h
+- sys/external/bsd/gnu-efi/dist/inc/romload.h
+- sys/external/bsd/gnu-efi/dist/inc/x86_64/efibind.h
+- sys/external/bsd/gnu-efi/dist/inc/x86_64/efilibplat.h
+- sys/external/bsd/gnu-efi/dist/inc/x86_64/efisetjmp_arch.h
+- sys/external/bsd/gnu-efi/dist/inc/x86_64/pe.h
+- sys/external/bsd/gnu-efi/dist/lib/Makefile
+- sys/external/bsd/gnu-efi/dist/lib/aarch64/efi_stub.S
+- sys/external/bsd/gnu-efi/dist/lib/aarch64/initplat.c
+- sys/external/bsd/gnu-efi/dist/lib/aarch64/math.c
+- sys/external/bsd/gnu-efi/dist/lib/aarch64/setjmp.S
+- sys/external/bsd/gnu-efi/dist/lib/arm/div.S
+- sys/external/bsd/gnu-efi/dist/lib/arm/edk2asm.h
+- sys/external/bsd/gnu-efi/dist/lib/arm/efi_stub.S
+- sys/external/bsd/gnu-efi/dist/lib/arm/initplat.c
+- sys/external/bsd/gnu-efi/dist/lib/arm/ldivmod.S
+- sys/external/bsd/gnu-efi/dist/lib/arm/llsl.S
+- sys/external/bsd/gnu-efi/dist/lib/arm/llsr.S
+- sys/external/bsd/gnu-efi/dist/lib/arm/math.c
+- sys/external/bsd/gnu-efi/dist/lib/arm/mullu.S
+- sys/external/bsd/gnu-efi/dist/lib/arm/setjmp.S
+- sys/external/bsd/gnu-efi/dist/lib/arm/uldiv.S
+- sys/external/bsd/gnu-efi/dist/lib/boxdraw.c
+- sys/external/bsd/gnu-efi/dist/lib/cmdline.c
+- sys/external/bsd/gnu-efi/dist/lib/console.c
+- sys/external/bsd/gnu-efi/dist/lib/crc.c
+- sys/external/bsd/gnu-efi/dist/lib/data.c
+- sys/external/bsd/gnu-efi/dist/lib/debug.c
+- sys/external/bsd/gnu-efi/dist/lib/dpath.c
+- sys/external/bsd/gnu-efi/dist/lib/error.c
+- sys/external/bsd/gnu-efi/dist/lib/event.c
+- sys/external/bsd/gnu-efi/dist/lib/exit.c
+- sys/external/bsd/gnu-efi/dist/lib/guid.c
+- sys/external/bsd/gnu-efi/dist/lib/hand.c
+- sys/external/bsd/gnu-efi/dist/lib/hw.c
+- sys/external/bsd/gnu-efi/dist/lib/ia32/efi_stub.S
+- sys/external/bsd/gnu-efi/dist/lib/ia32/initplat.c
+- sys/external/bsd/gnu-efi/dist/lib/ia32/math.c
+- sys/external/bsd/gnu-efi/dist/lib/ia32/setjmp.S
+- sys/external/bsd/gnu-efi/dist/lib/ia64/initplat.c
+- sys/external/bsd/gnu-efi/dist/lib/ia64/math.c
+- sys/external/bsd/gnu-efi/dist/lib/ia64/palproc.S
+- sys/external/bsd/gnu-efi/dist/lib/ia64/palproc.h
+- sys/external/bsd/gnu-efi/dist/lib/ia64/salpal.c
+- sys/external/bsd/gnu-efi/dist/lib/ia64/setjmp.S
+- sys/external/bsd/gnu-efi/dist/lib/init.c
+- sys/external/bsd/gnu-efi/dist/lib/lock.c
+- sys/external/bsd/gnu-efi/dist/lib/mips64el/efi_stub.S
+- sys/external/bsd/gnu-efi/dist/lib/mips64el/initplat.c
+- sys/external/bsd/gnu-efi/dist/lib/mips64el/math.c
+- sys/external/bsd/gnu-efi/dist/lib/mips64el/setjmp.S
+- sys/external/bsd/gnu-efi/dist/lib/misc.c
+- sys/external/bsd/gnu-efi/dist/lib/pause.c
+- sys/external/bsd/gnu-efi/dist/lib/print.c
+- sys/external/bsd/gnu-efi/dist/lib/riscv64/initplat.c
+- sys/external/bsd/gnu-efi/dist/lib/riscv64/math.c
+- sys/external/bsd/gnu-efi/dist/lib/riscv64/setjmp.S
+- sys/external/bsd/gnu-efi/dist/lib/runtime/efirtlib.c
+- sys/external/bsd/gnu-efi/dist/lib/runtime/rtdata.c
+- sys/external/bsd/gnu-efi/dist/lib/runtime/rtlock.c
+- sys/external/bsd/gnu-efi/dist/lib/runtime/rtstr.c
+- sys/external/bsd/gnu-efi/dist/lib/runtime/vm.c
+- sys/external/bsd/gnu-efi/dist/lib/smbios.c
+- sys/external/bsd/gnu-efi/dist/lib/sread.c
+- sys/external/bsd/gnu-efi/dist/lib/str.c
+- sys/external/bsd/gnu-efi/dist/lib/x86_64/callwrap.c
+- sys/external/bsd/gnu-efi/dist/lib/x86_64/efi_stub.S
+- sys/external/bsd/gnu-efi/dist/lib/x86_64/initplat.c
+- sys/external/bsd/gnu-efi/dist/lib/x86_64/math.c
+- sys/external/bsd/gnu-efi/dist/lib/x86_64/setjmp.S
+- sys/external/bsd/gnu-efi/gnu-efi2netbsd
+- sys/lib/libsa/ffs_bswap.c
+- sys/lib/libsa/nfsv3.h
+- sys/stand/efiboot/Makefile.efiboot
+- sys/stand/efiboot/boot.c
+- sys/stand/efiboot/bootaa64/Makefile
+- sys/stand/efiboot/bootaa64/cache.S
+- sys/stand/efiboot/bootaa64/efibootaa64.c
+- sys/stand/efiboot/bootarm/Makefile
+- sys/stand/efiboot/bootarm/cache.S
+- sys/stand/efiboot/bootarm/efibootarm.c
+- sys/stand/efiboot/bootmenu.c
+- sys/stand/efiboot/bootmenu.h
+- sys/stand/efiboot/bootriscv64/Makefile
+- sys/stand/efiboot/bootriscv64/efibootriscv64.c
+- sys/stand/efiboot/conf.c
+- sys/stand/efiboot/console.c
+- sys/stand/efiboot/dev_net.c
+- sys/stand/efiboot/devopen.c
+- sys/stand/efiboot/devopen.h
+- sys/stand/efiboot/efiacpi.c
+- sys/stand/efiboot/efiacpi.h
+- sys/stand/efiboot/efiblock.c
+- sys/stand/efiboot/efiblock.h
+- sys/stand/efiboot/efiboot.c
+- sys/stand/efiboot/efiboot.h
+- sys/stand/efiboot/efiboot_machdep.h
+- sys/stand/efiboot/efichar.c
+- sys/stand/efiboot/efidev.c
+- sys/stand/efiboot/efifdt.c
+- sys/stand/efiboot/efifdt.h
+- sys/stand/efiboot/efifile.c
+- sys/stand/efiboot/efifile.h
+- sys/stand/efiboot/efigetsecs.c
+- sys/stand/efiboot/efigop.c
+- sys/stand/efiboot/efinet.c
+- sys/stand/efiboot/efinet.h
+- sys/stand/efiboot/efipxe.c
+- sys/stand/efiboot/efirng.c
+- sys/stand/efiboot/efirng.h
+- sys/stand/efiboot/efiwatchdog.c
+- sys/stand/efiboot/exec.c
+- sys/stand/efiboot/module.c
+- sys/stand/efiboot/module.h
+- sys/stand/efiboot/overlay.c
+- sys/stand/efiboot/overlay.h
+- sys/stand/efiboot/panic.c
+- sys/stand/efiboot/prompt.c
+- sys/stand/efiboot/smbios.c
+- sys/stand/efiboot/smbios.h
+- sys/stand/efiboot/userconf.c
+- sys/stand/efiboot/version
+
+## Slouceno
+
+- lib/csu/Makefile
+- lib/csu/common/sysident.S
+- lib/libc/Makefile
+- lib/libc/arch/arm/gen/Makefile.inc
+- lib/libc/arch/i386/gen/Makefile.inc
+- lib/libc/compat-43/Makefile.inc
+- lib/libc/compat/Makefile
+- lib/libc/compat/Makefile.inc
+- lib/libc/gen/errlist.awk
+- lib/libc/gen/fts.c
+- lib/libc/gen/getlogin.c
+- lib/libc/gen/gr_private.h
+- lib/libc/gen/initdir.c
+- lib/libc/gen/opendir.c
+- lib/libc/gen/ttyslot.c
+- lib/libc/gen/vis.c
+- lib/libc/gmon/gmon.c
+- lib/libc/include/namespace.h
+- lib/libc/misc/stack_protector.c
+- lib/libc/net/rcmd.c
+- lib/libc/resolv/res_comp.c
+- lib/libc/softfloat/Makefile.inc
+- lib/libc/softfloat/eqdf2.c
+- lib/libc/softfloat/eqsf2.c
+- lib/libc/softfloat/gedf2.c
+- lib/libc/softfloat/gesf2.c
+- lib/libc/softfloat/ledf2.c
+- lib/libc/softfloat/lesf2.c
+- lib/libc/stdio/findfp.c
+- lib/libc/stdlib/abort.c
+- lib/libc/uuid/uuid_create.c
+- lib/libm/arch/i387/fenv.c
+- lib/libprop/Makefile
+- lib/libpuffs/Makefile
+- lib/libpuffs/callcontext.c
+- lib/libpuffs/pnode.c
+- lib/libpuffs/puffs.h
+- lib/libpuffs/puffs_priv.h
+- lib/librmt/Makefile
+- lib/libterminfo/genterms
+- lib/libutil/Makefile
+- lib/libutil/getfsspecname.c
+- lib/libutil/login_cap.c
+- lib/libutil/pty.c
+- libexec/ld.elf_so/arch/arm/mdreloc.c
+- libexec/ld.elf_so/arch/i386/mdreloc.c
+- sys/lib/libsa/cd9660.c
+- sys/lib/libsa/dosfs.c
+- sys/lib/libsa/ext2fs.c
+- sys/lib/libsa/ffsv1.c
+- sys/lib/libsa/ffsv2.c
+- sys/lib/libsa/lfsv1.c
+- sys/lib/libsa/lfsv2.c
+- sys/lib/libsa/ls.c
+- sys/lib/libsa/ls.h
+- sys/lib/libsa/minixfs3.c
+- sys/lib/libsa/minixfs3.h
+- sys/lib/libsa/ufs.c
+- sys/lib/libsa/ustarfs.c
+- sys/lib/libunwind/AddressSpace.hpp
+- sys/lib/libunwind/UnwindCursor.hpp
+
+## Konflikty
+
+(none)
+
+## Rizika
+
+### MINIX guards
+
+- no guard decreases detected
+
+### MISSING_SYSCALLS usage in changed code
+
+- no usage of missing syscalls detected
+
+### Removed upstream files
+
+- lib/libc/arch/aarch64/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/aarch64/sys/exect.S
+- lib/libc/arch/alpha/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/alpha/sys/exect.S
+- lib/libc/arch/arm/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/arm/sys/exect.S
+- lib/libc/arch/hppa/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/hppa/sys/exect.S
+- lib/libc/arch/i386/gen/signbitl.c
+- lib/libc/arch/i386/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/i386/sys/exect.S
+- lib/libc/arch/ia64/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/ia64/sys/exect.S
+- lib/libc/arch/m68k/gen/signbitl.c
+- lib/libc/arch/m68k/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/m68k/sys/exect.S
+- lib/libc/arch/mips/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/mips/sys/exect.S
+- lib/libc/arch/or1k/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/or1k/sys/exect.S
+- lib/libc/arch/powerpc/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/powerpc/sys/exect.S
+- lib/libc/arch/powerpc64/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/powerpc64/sys/exect.S
+- lib/libc/arch/riscv/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/riscv/sys/exect.S
+- lib/libc/arch/sh3/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/sh3/sys/exect.S
+- lib/libc/arch/sparc/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/sparc/sys/exect.S
+- lib/libc/arch/sparc64/gen/signbitl.c
+- lib/libc/arch/sparc64/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/sparc64/sys/exect.S
+- lib/libc/arch/vax/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/vax/sys/exect.S
+- lib/libc/arch/x86_64/gen/signbitl.c
+- lib/libc/arch/x86_64/sys/__sigaction14_sigtramp.c
+- lib/libc/arch/x86_64/sys/exect.S
+- lib/libc/gen/extattr_namespace_to_string.3
+- lib/libc/gen/ldexp_ieee754.c
+- lib/libc/gen/modf_ieee754.c
+- lib/libc/regex/cclass.h
+- lib/libc/rpc/xdr.c
+- lib/libc/rpc/xdr_array.c
+- lib/libc/rpc/xdr_mem.c
+- lib/libc/stdlib/atexit.h
+- lib/libc/stdlib/getopt.c
+- lib/libc/stdlib/strtou.3
+- lib/libc/string/memmem.c
+- lib/libc/sys/Lint___sigaction14.c
+- lib/libc/sys/Lint_exect.c
+- lib/libc/sys/pmc_control.2
+- lib/libc/time/tz-art.htm
+- lib/libc/time/tz-link.htm
+- lib/libc/time/version.h
+- lib/libcurses/curses_insertch.3
+- lib/libcurses/fileio.h
+- lib/libexecinfo/unwind.h
+- lib/libm/arch/i387/s_cos.S
+- lib/libm/arch/i387/s_cosf.S
+- lib/libm/arch/i387/s_ilogb.S
+- lib/libm/arch/i387/s_ilogbf.S
+- lib/libm/arch/i387/s_modf.S
+- lib/libm/arch/i387/s_sin.S
+- lib/libm/arch/i387/s_sinf.S
+- lib/libm/arch/i387/s_tan.S
+- lib/libm/arch/i387/s_tanf.S
+- lib/libm/src/ldbl_dummy.c
+- lib/libm/src/llrint.c
+- lib/libm/src/llrintf.c
+- lib/libm/src/llround.c
+- lib/libm/src/llroundf.c
+- lib/libm/src/lrint.c
+- lib/libm/src/lrintf.c
+- lib/libm/src/lround.c
+- lib/libm/src/lroundf.c
+- lib/libtelnet/spx.c
+- libexec/ld.elf_so/arch/powerpc/ld.so.script
+- sys/lib/libsa/dkcksum.c
+
+### Data files (candidates for direct replacement)
+
+- none
+
+## Bookkeeping
+
+### docs/UPDATING
+
+Proposed entry:
+
+    20261024: Upgrade NetBSD userland libraries (csu, i18n_module, libc, libbz2, libcrypt, libcurses, libedit, libexecinfo, libform, libintl, libkvm, libm, libmenu, libpci, libprop, libpuffs, librefuse, librmt, libtelnet, libterminfo, libutil, libwrap, libz, lua, libsa, libunwind, sys_libz, ld_elf_so) to reference
+    nbsd-11.0 (previous: db4f849365101385d6667256568616131bac8ee7). 4341 files synced
+    automatically, 61 three-way merged, 0 conflicts
+    quarantined in nbsd-upgrade-conflicts (manual resolution required).
+
+### releasetools/nbsd_ports
+
+releasetools/nbsd_ports does not exist in the repo; nothing to update.
+
+### distrib/sets/lists
+
+Review install set lists; new upstream files may need new entries:
+
+    - common/include/libc/extern.h
+    - common/include/rpc/Makefile
+    - common/include/rpc/types.h
+    - common/include/rpc/xdr.h
+    - common/include/x86emu/x86emu.h
+    - common/include/x86emu/x86emu_i8254.h
+    - common/include/x86emu/x86emu_regs.h
+    - lib/csu/common/csu-common.h
+    - lib/libbz2/bz2.expsym
+    - lib/libc/arch/arm/genassym.cf
+    - lib/libc/arch/i386/genassym.cf
+    - lib/libc/arch/ia64/gen/fpgetsticky.c
+    - lib/libc/arch/ia64/gen/fpsetsticky.c
+    - lib/libc/arch/ia64/gen/getcontext.S
+    - lib/libc/arch/ia64/gen/makecontext.c
+    - lib/libc/arch/ia64/gen/swapcontext.S
+    - lib/libc/arch/sh3/genassym.cf
+    - lib/libc/arch/sparc/gen/sparc_longjmp.h
+    - lib/libc/arch/sparc/genassym.cf
+    - lib/libc/arch/vax/gen/fabsf.S
+    - lib/libc/arch/x86_64/genassym.cf
+    - lib/libc/compat/arch/aarch64/sys/Makefile.inc
+    - lib/libc/compat/arch/aarch64/sys/compat_Ovfork.S
+    - lib/libc/compat/arch/aarch64/sys/compat___semctl.S
+    - lib/libc/compat/arch/aarch64/sys/compat___sigreturn14.S
+    - lib/libc/compat/arch/aarch64/sys/compat_msgctl.S
+    - lib/libc/compat/arch/aarch64/sys/compat_quotactl.S
+    - lib/libc/compat/arch/aarch64/sys/compat_shmctl.S
+    - lib/libc/compat/arch/aarch64/sys/compat_sigaction.S
+    - lib/libc/compat/arch/aarch64/sys/compat_sigpending.S
+    - lib/libc/compat/arch/aarch64/sys/compat_sigprocmask.S
+    - lib/libc/compat/arch/aarch64/sys/compat_sigreturn.S
+    - lib/libc/compat/arch/aarch64/sys/compat_sigsuspend.S
+    - lib/libc/compat/arch/hppa/sys/compat___sigtramp1.S
+    - lib/libc/compat/arch/ia64/sys/compat_Ovfork.S
+    - lib/libc/compat/arch/ia64/sys/compat_sigprocmask.S
+    - lib/libc/compat/arch/ia64/sys/compat_sigsuspend.S
+    - lib/libc/compat/arch/powerpc64/sys/compat_missing.c
+    - lib/libc/compat/arch/riscv/sys/Makefile.inc
+    - lib/libc/compat/arch/riscv/sys/compat_Ovfork.S
+    - lib/libc/compat/arch/riscv/sys/compat_msgctl.S
+    - lib/libc/compat/arch/riscv/sys/compat_quotactl.S
+    - lib/libc/compat/arch/riscv/sys/compat_shmctl.S
+    - lib/libc/compat/arch/riscv/sys/compat_sigaction.S
+    - lib/libc/compat/arch/riscv/sys/compat_sigpending.S
+    - lib/libc/compat/arch/riscv/sys/compat_sigprocmask.S
+    - lib/libc/compat/arch/riscv/sys/compat_sigreturn.S
+    - lib/libc/compat/arch/riscv/sys/compat_sigsuspend.S
+    - lib/libc/compat/gen/compat___getmntinfo13.c
+    - lib/libc/compat/include/errno.h
+    - lib/libc/compat/include/extern.h
+    - lib/libc/compat/include/sched.h
+    - lib/libc/compat/sys/compat___fhstatvfs140.c
+    - lib/libc/compat/sys/compat___fhstatvfs40.c
+    - lib/libc/compat/sys/compat___sigaction14_sigtramp.c
+    - lib/libc/compat/sys/compat_dup3.c
+    - lib/libc/compat/sys/compat_statvfs.c
+    - lib/libc/compat/time/compat_asctime.c
+    - lib/libc/gen/bsd_signal.3
+    - lib/libc/gen/ctype_guard.h
+    - lib/libc/gen/endutent.3
+    - lib/libc/gen/errno_private.h
+    - lib/libc/gen/exect.c
+    - lib/libc/gen/getdevmajor_private.h
+    - lib/libc/gen/getentropy.3
+    - lib/libc/gen/getentropy.c
+    - lib/libc/gen/posix_spawn_file_actions_addchdir.3
+    - lib/libc/gen/signalname.3
+    - lib/libc/gen/signalname.c
+    - lib/libc/gen/signalnext.c
+    - lib/libc/gen/signalnumber.c
+    - lib/libc/gen/syslog_private.h
+    - lib/libc/gen/syslog_ss.c
+    - lib/libc/gen/timespec_get.3
+    - lib/libc/gen/timespec_get.c
+    - lib/libc/gen/timespec_getres.c
+    - lib/libc/gen/waitid.c
+    - lib/libc/gen/xsyslog.c
+    - lib/libc/hash/hmac.3
+    - lib/libc/hash/hmac.c
+    - lib/libc/hash/sha3/Makefile.inc
+    - lib/libc/hash/sha3/SHA3_Selftest.3
+    - lib/libc/hash/sha3/SHAKE.3
+    - lib/libc/hash/sha3/keccak.3
+    - lib/libc/hash/sha3/sha3.3
+    - lib/libc/include/__sysctl.h
+    - lib/libc/include/arc4random.h
+    - lib/libc/include/atexit.h
+    - lib/libc/include/futex_private.h
+    - lib/libc/include/tsd.h
+    - lib/libc/locale/c16rtomb.3
+    - lib/libc/locale/c16rtomb.c
+    - lib/libc/locale/c32rtomb.3
+    - lib/libc/locale/c32rtomb.c
+    - lib/libc/locale/c32rtomb.h
+    - lib/libc/locale/c8rtomb.3
+    - lib/libc/locale/c8rtomb.c
+    - lib/libc/locale/duplocale.3
+    - lib/libc/locale/freelocale.3
+    - lib/libc/locale/mbrtoc16.3
+    - lib/libc/locale/mbrtoc16.c
+    - lib/libc/locale/mbrtoc32.3
+    - lib/libc/locale/mbrtoc32.c
+    - lib/libc/locale/mbrtoc32.h
+    - lib/libc/locale/mbrtoc8.3
+    - lib/libc/locale/mbrtoc8.c
+    - lib/libc/locale/newlocale.3
+    - lib/libc/net/sctp_bindx.3
+    - lib/libc/net/sctp_connectx.3
+    - lib/libc/net/sctp_freepaddrs.3
+    - lib/libc/net/sctp_getaddrlen.3
+    - lib/libc/net/sctp_getassocid.3
+    - lib/libc/net/sctp_getpaddrs.3
+    - lib/libc/net/sctp_opt_info.3
+    - lib/libc/net/sctp_peeloff.3
+    - lib/libc/net/sctp_recvmsg.3
+    - lib/libc/net/sctp_send.3
+    - lib/libc/net/sctp_sendmsg.3
+    - lib/libc/net/sctp_sys_calls.c
+    - lib/libc/posix1e/Makefile.inc
+    - lib/libc/posix1e/acl.3
+    - lib/libc/posix1e/acl_add_flag_np.3
+    - lib/libc/posix1e/acl_add_perm.3
+    - lib/libc/posix1e/acl_branding.c
+    - lib/libc/posix1e/acl_calc_mask.3
+    - lib/libc/posix1e/acl_calc_mask.c
+    - lib/libc/posix1e/acl_clear_flags_np.3
+    - lib/libc/posix1e/acl_clear_perms.3
+    - lib/libc/posix1e/acl_compat.c
+    - lib/libc/posix1e/acl_copy.c
+    - lib/libc/posix1e/acl_copy_entry.3
+    - lib/libc/posix1e/acl_create_entry.3
+    - lib/libc/posix1e/acl_delete.3
+    - lib/libc/posix1e/acl_delete.c
+    - lib/libc/posix1e/acl_delete_entry.3
+    - lib/libc/posix1e/acl_delete_entry.c
+    - lib/libc/posix1e/acl_delete_flag_np.3
+    - lib/libc/posix1e/acl_delete_perm.3
+    - lib/libc/posix1e/acl_dup.3
+    - lib/libc/posix1e/acl_entry.c
+    - lib/libc/posix1e/acl_flag.c
+    - lib/libc/posix1e/acl_free.3
+    - lib/libc/posix1e/acl_free.c
+    - lib/libc/posix1e/acl_from_text.3
+    - lib/libc/posix1e/acl_from_text.c
+    - lib/libc/posix1e/acl_from_text_nfs4.c
+    - lib/libc/posix1e/acl_get.3
+    - lib/libc/posix1e/acl_get.c
+    - lib/libc/posix1e/acl_get_brand_np.3
+    - lib/libc/posix1e/acl_get_entry.3
+    - lib/libc/posix1e/acl_get_entry_type_np.3
+    - lib/libc/posix1e/acl_get_flag_np.3
+    - lib/libc/posix1e/acl_get_flagset_np.3
+    - lib/libc/posix1e/acl_get_perm_np.3
+    - lib/libc/posix1e/acl_get_permset.3
+    - lib/libc/posix1e/acl_get_qualifier.3
+    - lib/libc/posix1e/acl_get_tag_type.3
+    - lib/libc/posix1e/acl_id_to_name.c
+    - lib/libc/posix1e/acl_init.3
+    - lib/libc/posix1e/acl_init.c
+    - lib/libc/posix1e/acl_is_trivial_np.3
+    - lib/libc/posix1e/acl_perm.c
+    - lib/libc/posix1e/acl_set.3
+    - lib/libc/posix1e/acl_set.c
+    - lib/libc/posix1e/acl_set_entry_type_np.3
+    - lib/libc/posix1e/acl_set_flagset_np.3
+    - lib/libc/posix1e/acl_set_permset.3
+    - lib/libc/posix1e/acl_set_qualifier.3
+    - lib/libc/posix1e/acl_set_tag_type.3
+    - lib/libc/posix1e/acl_strip.c
+    - lib/libc/posix1e/acl_strip_np.3
+    - lib/libc/posix1e/acl_support.c
+    - lib/libc/posix1e/acl_support.h
+    - lib/libc/posix1e/acl_support_nfs4.c
+    - lib/libc/posix1e/acl_to_text.3
+    - lib/libc/posix1e/acl_to_text.c
+    - lib/libc/posix1e/acl_to_text_nfs4.c
+    - lib/libc/posix1e/acl_valid.3
+    - lib/libc/posix1e/acl_valid.c
+    - lib/libc/posix1e/extattr.3
+    - lib/libc/posix1e/posix1e.3
+    - lib/libc/regex/regsub.c
+    - lib/libc/ssp/ssp_redirect.c
+    - lib/libc/stdio/printf_l.3
+    - lib/libc/stdio/scanf_l.3
+    - lib/libc/stdlib/aligned_alloc.c
+    - lib/libc/stdlib/cxa_thread_atexit.c
+    - lib/libc/string/mempcpy.c
+    - lib/libc/string/strerror_ss.c
+    - lib/libc/string/strncpy.3
+    - lib/libc/string/wcsnlen.c
+    - lib/libc/string/wmempcpy.c
+    - lib/libc/sys/Lint___sigaction_siginfo.c
+    - lib/libc/sys/__sigaction_siginfo.c
+    - lib/libc/sys/_ksem.2
+    - lib/libc/sys/accept4.c
+    - lib/libc/sys/clock_getcpuclockid.c
+    - lib/libc/sys/clock_getcpuclockid2.2
+    - lib/libc/sys/epoll.2
+    - lib/libc/sys/epoll.c
+    - lib/libc/sys/eventfd.2
+    - lib/libc/sys/eventfd_read.c
+    - lib/libc/sys/eventfd_write.c
+    - lib/libc/sys/extattrctl.2
+    - lib/libc/sys/getrandom.2
+    - lib/libc/sys/memfd_create.2
+    - lib/libc/sys/ppoll.c
+    - lib/libc/sys/timerfd.2
+    - lib/libc/sys/vadvise.c
+    - lib/libc/termios/tcgetwinsize.3
+    - lib/libc/termios/tcgetwinsize.c
+    - lib/libc/termios/tcsetwinsize.c
+    - lib/libc/time/CONTRIBUTING
+    - lib/libc/time/LICENSE
+    - lib/libc/time/SECURITY
+    - lib/libc/time/calendars
+    - lib/libc/time/theory.html
+    - lib/libc/time/tz-art.html
+    - lib/libc/time/tz-how-to.html
+    - lib/libc/time/tz-link.html
+    - lib/libc/time/version
+    - lib/libcrypt/crypt-argon2.c
+    - lib/libcrypt/crypt.expsym
+    - lib/libcrypt/namespace.h
+    - lib/libcrypt/pw_gensalt.3
+    - lib/libcurses/curses.expsym
+    - lib/libcurses/curses_cchar.3
+    - lib/libcurses/curses_insch.3
+    - lib/libcurses/curses_mouse.3
+    - lib/libcurses/curses_slk.3
+    - lib/libcurses/curses_version.3
+    - lib/libcurses/immedok.c
+    - lib/libcurses/mouse.c
+    - lib/libcurses/ripoffline.c
+    - lib/libcurses/slk.c
+    - lib/libcurses/syncok.c
+    - lib/libcurses/version.c
+    - lib/libedit/ChangeLog
+    - lib/libedit/TEST/fuzz1.c
+    - lib/libedit/TEST/test_filecompletion.c
+    - lib/libedit/edit.expsym
+    - lib/libedit/editline.7
+    - lib/libedit/historyn.c
+    - lib/libedit/libedit.pc
+    - lib/libedit/literal.c
+    - lib/libedit/literal.h
+    - lib/libedit/tokenizern.c
+    - lib/libexecinfo/execinfo.common.expsym
+    - lib/libexecinfo/execinfo.hppa.expsym
+    - lib/libexecinfo/symbol.h
+    - lib/libexecinfo/symbol_hppa.c
+    - lib/libform/form.expsym
+    - lib/libintl/intl.expsym
+    - lib/libm/arch/alpha/fenv.c
+    - lib/libm/arch/i387/m387.expsym
+    - lib/libm/arch/i387/s_rintl.S
+    - lib/libm/arch/ia64/fenv.c
+    - lib/libm/arch/m68k/fenv.c
+    - lib/libm/arch/mips/fenv.c
+    - lib/libm/arch/powerpc/fenv.c
+    - lib/libm/arch/powerpc/s_fma.S
+    - lib/libm/arch/powerpc/s_fmaf.S
+    - lib/libm/arch/sh3/fenv.c
+    - lib/libm/complex/catrig.c
+    - lib/libm/complex/catrigf.c
+    - lib/libm/complex/catrigl.c
+    - lib/libm/convertFreeBSD
+    - lib/libm/ld128/b_expl.c
+    - lib/libm/ld128/b_logl.c
+    - lib/libm/ld128/b_tgammal.c
+    - lib/libm/ld128/e_lgammal_r.c
+    - lib/libm/ld128/e_powl.c
+    - lib/libm/ld128/e_rem_pio2l.h
+    - lib/libm/ld128/invtrig.c
+    - lib/libm/ld128/invtrig.h
+    - lib/libm/ld128/k_cosl.c
+    - lib/libm/ld128/k_cospil.h
+    - lib/libm/ld128/k_expl.h
+    - lib/libm/ld128/k_sinl.c
+    - lib/libm/ld128/k_sinpil.h
+    - lib/libm/ld128/k_tanl.c
+    - lib/libm/ld128/s_cexpl.c
+    - lib/libm/ld128/s_cospil.c
+    - lib/libm/ld128/s_erfl.c
+    - lib/libm/ld128/s_exp2l.c
+    - lib/libm/ld128/s_expl.c
+    - lib/libm/ld128/s_logl.c
+    - lib/libm/ld128/s_nanl.c
+    - lib/libm/ld128/s_sinpil.c
+    - lib/libm/ld128/s_tanpil.c
+    - lib/libm/ld80/b_expl.c
+    - lib/libm/ld80/b_logl.c
+    - lib/libm/ld80/b_tgammal.c
+    - lib/libm/ld80/e_lgammal_r.c
+    - lib/libm/ld80/e_powl.c
+    - lib/libm/ld80/e_rem_pio2l.h
+    - lib/libm/ld80/invtrig.c
+    - lib/libm/ld80/invtrig.h
+    - lib/libm/ld80/k_cosl.c
+    - lib/libm/ld80/k_cospil.h
+    - lib/libm/ld80/k_expl.h
+    - lib/libm/ld80/k_sinl.c
+    - lib/libm/ld80/k_sinpil.h
+    - lib/libm/ld80/k_tanl.c
+    - lib/libm/ld80/s_cexpl.c
+    - lib/libm/ld80/s_cospil.c
+    - lib/libm/ld80/s_erfl.c
+    - lib/libm/ld80/s_exp2l.c
+    - lib/libm/ld80/s_expl.c
+    - lib/libm/ld80/s_logl.c
+    - lib/libm/ld80/s_nanl.c
+    - lib/libm/ld80/s_sinpil.c
+    - lib/libm/ld80/s_tanpil.c
+    - lib/libm/m.aarch64.expsym
+    - lib/libm/m.alpha.expsym
+    - lib/libm/m.arm.expsym
+    - lib/libm/m.armhf.expsym
+    - lib/libm/m.common.expsym
+    - lib/libm/m.fenv.expsym
+    - lib/libm/m.hppa.expsym
+    - lib/libm/m.i386.expsym
+    - lib/libm/m.ia64.expsym
+    - lib/libm/m.ieee754.expsym
+    - lib/libm/m.m68k.expsym
+    - lib/libm/m.mips.expsym
+    - lib/libm/m.mips64.expsym
+    - lib/libm/m.mipshf.expsym
+    - lib/libm/m.powerpc.expsym
+    - lib/libm/m.powerpc64.expsym
+    - lib/libm/m.riscv.expsym
+    - lib/libm/m.sh3.expsym
+    - lib/libm/m.sparc.expsym
+    - lib/libm/m.sparc64.expsym
+    - lib/libm/m.vax.expsym
+    - lib/libm/m.x86_64.expsym
+    - lib/libm/man/fma.3
+    - lib/libm/man/sincos.3
+    - lib/libm/noieee_src/n_atanhf.c
+    - lib/libm/noieee_src/n_frexpf.c
+    - lib/libm/noieee_src/n_frexpl.c
+    - lib/libm/noieee_src/n_ilogb.c
+    - lib/libm/noieee_src/n_sincos1.c
+    - lib/libm/softfloat/feclearexcept.c
+    - lib/libm/softfloat/fedisableexcept.c
+    - lib/libm/softfloat/feenableexcept.c
+    - lib/libm/softfloat/fegetenv.c
+    - lib/libm/softfloat/fegetexcept.c
+    - lib/libm/softfloat/fegetexceptflag.c
+    - lib/libm/softfloat/fegetround.c
+    - lib/libm/softfloat/feholdexcept.c
+    - lib/libm/softfloat/feraiseexcept.c
+    - lib/libm/softfloat/fesetenv.c
+    - lib/libm/softfloat/fesetexceptflag.c
+    - lib/libm/softfloat/fesetround.c
+    - lib/libm/softfloat/fetestexcept.c
+    - lib/libm/softfloat/feupdateenv.c
+    - lib/libm/src/b_tgammal.c
+    - lib/libm/src/e_acoshl.c
+    - lib/libm/src/e_acosl.c
+    - lib/libm/src/e_asinl.c
+    - lib/libm/src/e_atan2l.c
+    - lib/libm/src/e_atanhl.c
+    - lib/libm/src/e_coshl.c
+    - lib/libm/src/e_hypotl.c
+    - lib/libm/src/e_lgammal.c
+    - lib/libm/src/e_lgammal_r.c
+    - lib/libm/src/e_powl.c
+    - lib/libm/src/e_rem_pio2f.h
+    - lib/libm/src/e_rem_pio2l.h
+    - lib/libm/src/e_remainderl.c
+    - lib/libm/src/e_sinhl.c
+    - lib/libm/src/invtrig.c
+    - lib/libm/src/k_cosdf.c
+    - lib/libm/src/k_cospi.h
+    - lib/libm/src/k_sincos.h
+    - lib/libm/src/k_sincosf.h
+    - lib/libm/src/k_sincosl.h
+    - lib/libm/src/k_sindf.c
+    - lib/libm/src/k_sinpi.h
+    - lib/libm/src/k_tandf.c
+    - lib/libm/src/s_asinhl.c
+    - lib/libm/src/s_atanl.c
+    - lib/libm/src/s_cargl.c
+    - lib/libm/src/s_clogl.c
+    - lib/libm/src/s_cosl.c
+    - lib/libm/src/s_cospi.c
+    - lib/libm/src/s_cospif.c
+    - lib/libm/src/s_cospil.c
+    - lib/libm/src/s_erfl.c
+    - lib/libm/src/s_exp2l.c
+    - lib/libm/src/s_expl.c
+    - lib/libm/src/s_llrint.c
+    - lib/libm/src/s_llrintf.c
+    - lib/libm/src/s_llrintl.c
+    - lib/libm/src/s_llround.c
+    - lib/libm/src/s_llroundf.c
+    - lib/libm/src/s_llroundl.c
+    - lib/libm/src/s_logl.c
+    - lib/libm/src/s_lrint.c
+    - lib/libm/src/s_lrintf.c
+    - lib/libm/src/s_lrintl.c
+    - lib/libm/src/s_lround.c
+    - lib/libm/src/s_lroundf.c
+    - lib/libm/src/s_lroundl.c
+    - lib/libm/src/s_remquol.c
+    - lib/libm/src/s_sincos.c
+    - lib/libm/src/s_sincosf.c
+    - lib/libm/src/s_sincosl.c
+    - lib/libm/src/s_sinl.c
+    - lib/libm/src/s_sinpi.c
+    - lib/libm/src/s_sinpif.c
+    - lib/libm/src/s_sinpil.c
+    - lib/libm/src/s_tanhl.c
+    - lib/libm/src/s_tanl.c
+    - lib/libm/src/s_tanpi.c
+    - lib/libm/src/s_tanpif.c
+    - lib/libm/src/s_tanpil.c
+    - lib/libmenu/menu.expsym
+    - lib/libpci/pci.expsym
+    - lib/libprop/prop.expsym
+    - lib/libpuffs/puffs.expsym
+    - lib/librefuse/HACKING.md
+    - lib/librefuse/fuse_internal.h
+    - lib/librefuse/fuse_log.h
+    - lib/librefuse/fuse_lowlevel.h
+    - lib/librefuse/refuse.expsym
+    - lib/librefuse/refuse/Makefile.inc
+    - lib/librefuse/refuse/buf.c
+    - lib/librefuse/refuse/buf.h
+    - lib/librefuse/refuse/chan.c
+    - lib/librefuse/refuse/chan.h
+    - lib/librefuse/refuse/fs.c
+    - lib/librefuse/refuse/fs.h
+    - lib/librefuse/refuse/legacy.c
+    - lib/librefuse/refuse/legacy.h
+    - lib/librefuse/refuse/poll.c
+    - lib/librefuse/refuse/poll.h
+    - lib/librefuse/refuse/session.c
+    - lib/librefuse/refuse/session.h
+    - lib/librefuse/refuse/v11.c
+    - lib/librefuse/refuse/v11.h
+    - lib/librefuse/refuse/v21.c
+    - lib/librefuse/refuse/v21.h
+    - lib/librefuse/refuse/v22.c
+    - lib/librefuse/refuse/v22.h
+    - lib/librefuse/refuse/v23.h
+    - lib/librefuse/refuse/v25.c
+    - lib/librefuse/refuse/v25.h
+    - lib/librefuse/refuse/v26.c
+    - lib/librefuse/refuse/v26.h
+    - lib/librefuse/refuse/v28.h
+    - lib/librefuse/refuse/v29.h
+    - lib/librefuse/refuse/v30.c
+    - lib/librefuse/refuse/v30.h
+    - lib/librefuse/refuse/v32.c
+    - lib/librefuse/refuse/v32.h
+    - lib/librefuse/refuse/v34.h
+    - lib/librefuse/refuse/v35.h
+    - lib/librefuse/refuse/v38.h
+    - lib/librefuse/refuse_compat.c
+    - lib/librefuse/refuse_log.c
+    - lib/librefuse/refuse_lowlevel.c
+    - lib/librefuse/refuse_signals.c
+    - lib/libterminfo/terminfo.expsym
+    - lib/libutil/util.expsym
+    - lib/libwrap/expandm.c
+    - lib/libwrap/expandm.h
+    - lib/libwrap/wrap.expsym
+    - lib/libz/z.expsym
+    - lib/lua/bozohttpd/Makefile
+    - lib/lua/libm/Makefile
+    - lib/lua/libm/libm.c
+    - libexec/ld.elf_so/arch/powerpc/fixup.c
+    - libexec/ld.elf_so/compat.c
+    - libexec/ld.elf_so/hash.c
+    - libexec/ld.elf_so/hash.h
+    - libexec/ld.elf_so/symbols.map
+    - sbin/efi/Makefile
+    - sbin/efi/bootvar.c
+    - sbin/efi/bootvar.h
+    - sbin/efi/certs.c
+    - sbin/efi/certs.h
+    - sbin/efi/defs.h
+    - sbin/efi/devpath.c
+    - sbin/efi/devpath.h
+    - sbin/efi/devpath1.c
+    - sbin/efi/devpath1.h
+    - sbin/efi/devpath2.c
+    - sbin/efi/devpath2.h
+    - sbin/efi/devpath3.c
+    - sbin/efi/devpath3.h
+    - sbin/efi/devpath4.c
+    - sbin/efi/devpath4.h
+    - sbin/efi/devpath5.c
+    - sbin/efi/devpath5.h
+    - sbin/efi/efi.8
+    - sbin/efi/efiio.c
+    - sbin/efi/efiio.h
+    - sbin/efi/getvars.c
+    - sbin/efi/getvars.h
+    - sbin/efi/gptsubr.c
+    - sbin/efi/gptsubr.h
+    - sbin/efi/main.c
+    - sbin/efi/setvar.c
+    - sbin/efi/setvar.h
+    - sbin/efi/showvar.c
+    - sbin/efi/showvar.h
+    - sbin/efi/utils.c
+    - sbin/efi/utils.h
+    - sys/arch/i386/stand/efiboot/Makefile
+    - sys/arch/i386/stand/efiboot/Makefile.efiboot
+    - sys/arch/i386/stand/efiboot/TODO.efiboot
+    - sys/arch/i386/stand/efiboot/boot.c
+    - sys/arch/i386/stand/efiboot/bootia32/Makefile
+    - sys/arch/i386/stand/efiboot/bootia32/efiboot_machdep.h
+    - sys/arch/i386/stand/efiboot/bootia32/efibootia32.c
+    - sys/arch/i386/stand/efiboot/bootia32/ldscript
+    - sys/arch/i386/stand/efiboot/bootia32/multiboot32.S
+    - sys/arch/i386/stand/efiboot/bootia32/start.S
+    - sys/arch/i386/stand/efiboot/bootia32/startprog32.S
+    - sys/arch/i386/stand/efiboot/bootx64/Makefile
+    - sys/arch/i386/stand/efiboot/bootx64/efiboot_machdep.h
+    - sys/arch/i386/stand/efiboot/bootx64/efibootx64.c
+    - sys/arch/i386/stand/efiboot/bootx64/ldscript
+    - sys/arch/i386/stand/efiboot/bootx64/multiboot64.S
+    - sys/arch/i386/stand/efiboot/bootx64/start.S
+    - sys/arch/i386/stand/efiboot/bootx64/startprog64.S
+    - sys/arch/i386/stand/efiboot/conf.c
+    - sys/arch/i386/stand/efiboot/dev_net.c
+    - sys/arch/i386/stand/efiboot/devopen.c
+    - sys/arch/i386/stand/efiboot/devopen.h
+    - sys/arch/i386/stand/efiboot/efiboot.c
+    - sys/arch/i386/stand/efiboot/efiboot.h
+    - sys/arch/i386/stand/efiboot/efichar.c
+    - sys/arch/i386/stand/efiboot/eficons.c
+    - sys/arch/i386/stand/efiboot/eficpufunc.c
+    - sys/arch/i386/stand/efiboot/eficpufunc.h
+    - sys/arch/i386/stand/efiboot/efidelay.c
+    - sys/arch/i386/stand/efiboot/efidev.c
+    - sys/arch/i386/stand/efiboot/efidisk.c
+    - sys/arch/i386/stand/efiboot/efidisk.h
+    - sys/arch/i386/stand/efiboot/efidisk_ll.c
+    - sys/arch/i386/stand/efiboot/efigetsecs.c
+    - sys/arch/i386/stand/efiboot/efimemory.c
+    - sys/arch/i386/stand/efiboot/efinet.c
+    - sys/arch/i386/stand/efiboot/efinet.h
+    - sys/arch/i386/stand/efiboot/efipxe.c
+    - sys/arch/i386/stand/efiboot/panic.c
+    - sys/arch/i386/stand/efiboot/self_reloc.c
+    - sys/arch/i386/stand/efiboot/version
+    - sys/external/bsd/gnu-efi/dist/.gitignore
+    - sys/external/bsd/gnu-efi/dist/ChangeLog
+    - sys/external/bsd/gnu-efi/dist/Make.defaults
+    - sys/external/bsd/gnu-efi/dist/Make.rules
+    - sys/external/bsd/gnu-efi/dist/Makefile
+    - sys/external/bsd/gnu-efi/dist/README.efilib
+    - sys/external/bsd/gnu-efi/dist/README.elilo
+    - sys/external/bsd/gnu-efi/dist/README.git
+    - sys/external/bsd/gnu-efi/dist/README.gnuefi
+    - sys/external/bsd/gnu-efi/dist/apps/AllocPages.c
+    - sys/external/bsd/gnu-efi/dist/apps/FreePages.c
+    - sys/external/bsd/gnu-efi/dist/apps/Makefile
+    - sys/external/bsd/gnu-efi/dist/apps/bltgrid.c
+    - sys/external/bsd/gnu-efi/dist/apps/debughook.c
+    - sys/external/bsd/gnu-efi/dist/apps/drv0.c
+    - sys/external/bsd/gnu-efi/dist/apps/drv0.h
+    - sys/external/bsd/gnu-efi/dist/apps/drv0_use.c
+    - sys/external/bsd/gnu-efi/dist/apps/exit.c
+    - sys/external/bsd/gnu-efi/dist/apps/lfbgrid.c
+    - sys/external/bsd/gnu-efi/dist/apps/modelist.c
+    - sys/external/bsd/gnu-efi/dist/apps/printenv.c
+    - sys/external/bsd/gnu-efi/dist/apps/route80h.c
+    - sys/external/bsd/gnu-efi/dist/apps/setdbg.c
+    - sys/external/bsd/gnu-efi/dist/apps/setjmp.c
+    - sys/external/bsd/gnu-efi/dist/apps/t.c
+    - sys/external/bsd/gnu-efi/dist/apps/t2.c
+    - sys/external/bsd/gnu-efi/dist/apps/t3.c
+    - sys/external/bsd/gnu-efi/dist/apps/t4.c
+    - sys/external/bsd/gnu-efi/dist/apps/t5.c
+    - sys/external/bsd/gnu-efi/dist/apps/t6.c
+    - sys/external/bsd/gnu-efi/dist/apps/t7.c
+    - sys/external/bsd/gnu-efi/dist/apps/t8.c
+    - sys/external/bsd/gnu-efi/dist/apps/tcc.c
+    - sys/external/bsd/gnu-efi/dist/apps/tpause.c
+    - sys/external/bsd/gnu-efi/dist/apps/trivial.S
+    - sys/external/bsd/gnu-efi/dist/apps/unsetdbg.c
+    - sys/external/bsd/gnu-efi/dist/gnuefi/Makefile
+    - sys/external/bsd/gnu-efi/dist/gnuefi/crt0-efi-aarch64.S
+    - sys/external/bsd/gnu-efi/dist/gnuefi/crt0-efi-arm.S
+    - sys/external/bsd/gnu-efi/dist/gnuefi/crt0-efi-ia32.S
+    - sys/external/bsd/gnu-efi/dist/gnuefi/crt0-efi-ia64.S
+    - sys/external/bsd/gnu-efi/dist/gnuefi/crt0-efi-mips64el.S
+    - sys/external/bsd/gnu-efi/dist/gnuefi/crt0-efi-riscv64.S
+    - sys/external/bsd/gnu-efi/dist/gnuefi/crt0-efi-x86_64.S
+    - sys/external/bsd/gnu-efi/dist/gnuefi/elf_aarch64_efi.lds
+    - sys/external/bsd/gnu-efi/dist/gnuefi/elf_arm_efi.lds
+    - sys/external/bsd/gnu-efi/dist/gnuefi/elf_ia32_efi.lds
+    - sys/external/bsd/gnu-efi/dist/gnuefi/elf_ia32_fbsd_efi.lds
+    - sys/external/bsd/gnu-efi/dist/gnuefi/elf_ia64_efi.lds
+    - sys/external/bsd/gnu-efi/dist/gnuefi/elf_mips64el_efi.lds
+    - sys/external/bsd/gnu-efi/dist/gnuefi/elf_riscv64_efi.lds
+    - sys/external/bsd/gnu-efi/dist/gnuefi/elf_x86_64_efi.lds
+    - sys/external/bsd/gnu-efi/dist/gnuefi/elf_x86_64_fbsd_efi.lds
+    - sys/external/bsd/gnu-efi/dist/gnuefi/reloc_aarch64.c
+    - sys/external/bsd/gnu-efi/dist/gnuefi/reloc_arm.c
+    - sys/external/bsd/gnu-efi/dist/gnuefi/reloc_ia32.c
+    - sys/external/bsd/gnu-efi/dist/gnuefi/reloc_ia64.S
+    - sys/external/bsd/gnu-efi/dist/gnuefi/reloc_mips64el.c
+    - sys/external/bsd/gnu-efi/dist/gnuefi/reloc_riscv64.c
+    - sys/external/bsd/gnu-efi/dist/gnuefi/reloc_x86_64.c
+    - sys/external/bsd/gnu-efi/dist/inc/Makefile
+    - sys/external/bsd/gnu-efi/dist/inc/aarch64/efibind.h
+    - sys/external/bsd/gnu-efi/dist/inc/aarch64/efilibplat.h
+    - sys/external/bsd/gnu-efi/dist/inc/aarch64/efisetjmp_arch.h
+    - sys/external/bsd/gnu-efi/dist/inc/arm/efibind.h
+    - sys/external/bsd/gnu-efi/dist/inc/arm/efilibplat.h
+    - sys/external/bsd/gnu-efi/dist/inc/arm/efisetjmp_arch.h
+    - sys/external/bsd/gnu-efi/dist/inc/efi.h
+    - sys/external/bsd/gnu-efi/dist/inc/efi_nii.h
+    - sys/external/bsd/gnu-efi/dist/inc/efi_pxe.h
+    - sys/external/bsd/gnu-efi/dist/inc/efiapi.h
+    - sys/external/bsd/gnu-efi/dist/inc/eficompiler.h
+    - sys/external/bsd/gnu-efi/dist/inc/eficon.h
+    - sys/external/bsd/gnu-efi/dist/inc/eficonex.h
+    - sys/external/bsd/gnu-efi/dist/inc/efidebug.h
+    - sys/external/bsd/gnu-efi/dist/inc/efidef.h
+    - sys/external/bsd/gnu-efi/dist/inc/efidevp.h
+    - sys/external/bsd/gnu-efi/dist/inc/efierr.h
+    - sys/external/bsd/gnu-efi/dist/inc/efifpswa.h
+    - sys/external/bsd/gnu-efi/dist/inc/efifs.h
+    - sys/external/bsd/gnu-efi/dist/inc/efigpt.h
+    - sys/external/bsd/gnu-efi/dist/inc/efiip.h
+    - sys/external/bsd/gnu-efi/dist/inc/efilib.h
+    - sys/external/bsd/gnu-efi/dist/inc/efilink.h
+    - sys/external/bsd/gnu-efi/dist/inc/efinet.h
+    - sys/external/bsd/gnu-efi/dist/inc/efipart.h
+    - sys/external/bsd/gnu-efi/dist/inc/efipciio.h
+    - sys/external/bsd/gnu-efi/dist/inc/efipoint.h
+    - sys/external/bsd/gnu-efi/dist/inc/efiprot.h
+    - sys/external/bsd/gnu-efi/dist/inc/efipxebc.h
+    - sys/external/bsd/gnu-efi/dist/inc/efirtlib.h
+    - sys/external/bsd/gnu-efi/dist/inc/efiser.h
+    - sys/external/bsd/gnu-efi/dist/inc/efisetjmp.h
+    - sys/external/bsd/gnu-efi/dist/inc/efishell.h
+    - sys/external/bsd/gnu-efi/dist/inc/efishellintf.h
+    - sys/external/bsd/gnu-efi/dist/inc/efistdarg.h
+    - sys/external/bsd/gnu-efi/dist/inc/efitcp.h
+    - sys/external/bsd/gnu-efi/dist/inc/efiudp.h
+    - sys/external/bsd/gnu-efi/dist/inc/efiui.h
+    - sys/external/bsd/gnu-efi/dist/inc/ia32/efibind.h
+    - sys/external/bsd/gnu-efi/dist/inc/ia32/efilibplat.h
+    - sys/external/bsd/gnu-efi/dist/inc/ia32/efisetjmp_arch.h
+    - sys/external/bsd/gnu-efi/dist/inc/ia32/pe.h
+    - sys/external/bsd/gnu-efi/dist/inc/ia64/efibind.h
+    - sys/external/bsd/gnu-efi/dist/inc/ia64/efilibplat.h
+    - sys/external/bsd/gnu-efi/dist/inc/ia64/efisetjmp_arch.h
+    - sys/external/bsd/gnu-efi/dist/inc/ia64/pe.h
+    - sys/external/bsd/gnu-efi/dist/inc/ia64/salproc.h
+    - sys/external/bsd/gnu-efi/dist/inc/inc.mak
+    - sys/external/bsd/gnu-efi/dist/inc/lib.h
+    - sys/external/bsd/gnu-efi/dist/inc/libsmbios.h
+    - sys/external/bsd/gnu-efi/dist/inc/make.inf
+    - sys/external/bsd/gnu-efi/dist/inc/makefile.hdr
+    - sys/external/bsd/gnu-efi/dist/inc/mips64el/efibind.h
+    - sys/external/bsd/gnu-efi/dist/inc/mips64el/efilibplat.h
+    - sys/external/bsd/gnu-efi/dist/inc/mips64el/efisetjmp_arch.h
+    - sys/external/bsd/gnu-efi/dist/inc/pci22.h
+    - sys/external/bsd/gnu-efi/dist/inc/protocol/adapterdebug.h
+    - sys/external/bsd/gnu-efi/dist/inc/protocol/eficonsplit.h
+    - sys/external/bsd/gnu-efi/dist/inc/protocol/efidbg.h
+    - sys/external/bsd/gnu-efi/dist/inc/protocol/efivar.h
+    - sys/external/bsd/gnu-efi/dist/inc/protocol/ia64/eficontext.h
+    - sys/external/bsd/gnu-efi/dist/inc/protocol/intload.h
+    - sys/external/bsd/gnu-efi/dist/inc/protocol/legacyboot.h
+    - sys/external/bsd/gnu-efi/dist/inc/protocol/make.inf
+    - sys/external/bsd/gnu-efi/dist/inc/protocol/makefile.hdr
+    - sys/external/bsd/gnu-efi/dist/inc/protocol/piflash64.h
+    - sys/external/bsd/gnu-efi/dist/inc/protocol/readme.txt
+    - sys/external/bsd/gnu-efi/dist/inc/protocol/vgaclass.h
+    - sys/external/bsd/gnu-efi/dist/inc/riscv64/efibind.h
+    - sys/external/bsd/gnu-efi/dist/inc/riscv64/efilibplat.h
+    - sys/external/bsd/gnu-efi/dist/inc/riscv64/efisetjmp_arch.h
+    - sys/external/bsd/gnu-efi/dist/inc/romload.h
+    - sys/external/bsd/gnu-efi/dist/inc/x86_64/efibind.h
+    - sys/external/bsd/gnu-efi/dist/inc/x86_64/efilibplat.h
+    - sys/external/bsd/gnu-efi/dist/inc/x86_64/efisetjmp_arch.h
+    - sys/external/bsd/gnu-efi/dist/inc/x86_64/pe.h
+    - sys/external/bsd/gnu-efi/dist/lib/Makefile
+    - sys/external/bsd/gnu-efi/dist/lib/aarch64/efi_stub.S
+    - sys/external/bsd/gnu-efi/dist/lib/aarch64/initplat.c
+    - sys/external/bsd/gnu-efi/dist/lib/aarch64/math.c
+    - sys/external/bsd/gnu-efi/dist/lib/aarch64/setjmp.S
+    - sys/external/bsd/gnu-efi/dist/lib/arm/div.S
+    - sys/external/bsd/gnu-efi/dist/lib/arm/edk2asm.h
+    - sys/external/bsd/gnu-efi/dist/lib/arm/efi_stub.S
+    - sys/external/bsd/gnu-efi/dist/lib/arm/initplat.c
+    - sys/external/bsd/gnu-efi/dist/lib/arm/ldivmod.S
+    - sys/external/bsd/gnu-efi/dist/lib/arm/llsl.S
+    - sys/external/bsd/gnu-efi/dist/lib/arm/llsr.S
+    - sys/external/bsd/gnu-efi/dist/lib/arm/math.c
+    - sys/external/bsd/gnu-efi/dist/lib/arm/mullu.S
+    - sys/external/bsd/gnu-efi/dist/lib/arm/setjmp.S
+    - sys/external/bsd/gnu-efi/dist/lib/arm/uldiv.S
+    - sys/external/bsd/gnu-efi/dist/lib/boxdraw.c
+    - sys/external/bsd/gnu-efi/dist/lib/cmdline.c
+    - sys/external/bsd/gnu-efi/dist/lib/console.c
+    - sys/external/bsd/gnu-efi/dist/lib/crc.c
+    - sys/external/bsd/gnu-efi/dist/lib/data.c
+    - sys/external/bsd/gnu-efi/dist/lib/debug.c
+    - sys/external/bsd/gnu-efi/dist/lib/dpath.c
+    - sys/external/bsd/gnu-efi/dist/lib/error.c
+    - sys/external/bsd/gnu-efi/dist/lib/event.c
+    - sys/external/bsd/gnu-efi/dist/lib/exit.c
+    - sys/external/bsd/gnu-efi/dist/lib/guid.c
+    - sys/external/bsd/gnu-efi/dist/lib/hand.c
+    - sys/external/bsd/gnu-efi/dist/lib/hw.c
+    - sys/external/bsd/gnu-efi/dist/lib/ia32/efi_stub.S
+    - sys/external/bsd/gnu-efi/dist/lib/ia32/initplat.c
+    - sys/external/bsd/gnu-efi/dist/lib/ia32/math.c
+    - sys/external/bsd/gnu-efi/dist/lib/ia32/setjmp.S
+    - sys/external/bsd/gnu-efi/dist/lib/ia64/initplat.c
+    - sys/external/bsd/gnu-efi/dist/lib/ia64/math.c
+    - sys/external/bsd/gnu-efi/dist/lib/ia64/palproc.S
+    - sys/external/bsd/gnu-efi/dist/lib/ia64/palproc.h
+    - sys/external/bsd/gnu-efi/dist/lib/ia64/salpal.c
+    - sys/external/bsd/gnu-efi/dist/lib/ia64/setjmp.S
+    - sys/external/bsd/gnu-efi/dist/lib/init.c
+    - sys/external/bsd/gnu-efi/dist/lib/lock.c
+    - sys/external/bsd/gnu-efi/dist/lib/mips64el/efi_stub.S
+    - sys/external/bsd/gnu-efi/dist/lib/mips64el/initplat.c
+    - sys/external/bsd/gnu-efi/dist/lib/mips64el/math.c
+    - sys/external/bsd/gnu-efi/dist/lib/mips64el/setjmp.S
+    - sys/external/bsd/gnu-efi/dist/lib/misc.c
+    - sys/external/bsd/gnu-efi/dist/lib/pause.c
+    - sys/external/bsd/gnu-efi/dist/lib/print.c
+    - sys/external/bsd/gnu-efi/dist/lib/riscv64/initplat.c
+    - sys/external/bsd/gnu-efi/dist/lib/riscv64/math.c
+    - sys/external/bsd/gnu-efi/dist/lib/riscv64/setjmp.S
+    - sys/external/bsd/gnu-efi/dist/lib/runtime/efirtlib.c
+    - sys/external/bsd/gnu-efi/dist/lib/runtime/rtdata.c
+    - sys/external/bsd/gnu-efi/dist/lib/runtime/rtlock.c
+    - sys/external/bsd/gnu-efi/dist/lib/runtime/rtstr.c
+    - sys/external/bsd/gnu-efi/dist/lib/runtime/vm.c
+    - sys/external/bsd/gnu-efi/dist/lib/smbios.c
+    - sys/external/bsd/gnu-efi/dist/lib/sread.c
+    - sys/external/bsd/gnu-efi/dist/lib/str.c
+    - sys/external/bsd/gnu-efi/dist/lib/x86_64/callwrap.c
+    - sys/external/bsd/gnu-efi/dist/lib/x86_64/efi_stub.S
+    - sys/external/bsd/gnu-efi/dist/lib/x86_64/initplat.c
+    - sys/external/bsd/gnu-efi/dist/lib/x86_64/math.c
+    - sys/external/bsd/gnu-efi/dist/lib/x86_64/setjmp.S
+    - sys/external/bsd/gnu-efi/gnu-efi2netbsd
+    - sys/lib/libsa/ffs_bswap.c
+    - sys/lib/libsa/nfsv3.h
+    - sys/stand/efiboot/Makefile.efiboot
+    - sys/stand/efiboot/boot.c
+    - sys/stand/efiboot/bootaa64/Makefile
+    - sys/stand/efiboot/bootaa64/cache.S
+    - sys/stand/efiboot/bootaa64/efibootaa64.c
+    - sys/stand/efiboot/bootarm/Makefile
+    - sys/stand/efiboot/bootarm/cache.S
+    - sys/stand/efiboot/bootarm/efibootarm.c
+    - sys/stand/efiboot/bootmenu.c
+    - sys/stand/efiboot/bootmenu.h
+    - sys/stand/efiboot/bootriscv64/Makefile
+    - sys/stand/efiboot/bootriscv64/efibootriscv64.c
+    - sys/stand/efiboot/conf.c
+    - sys/stand/efiboot/console.c
+    - sys/stand/efiboot/dev_net.c
+    - sys/stand/efiboot/devopen.c
+    - sys/stand/efiboot/devopen.h
+    - sys/stand/efiboot/efiacpi.c
+    - sys/stand/efiboot/efiacpi.h
+    - sys/stand/efiboot/efiblock.c
+    - sys/stand/efiboot/efiblock.h
+    - sys/stand/efiboot/efiboot.c
+    - sys/stand/efiboot/efiboot.h
+    - sys/stand/efiboot/efiboot_machdep.h
+    - sys/stand/efiboot/efichar.c
+    - sys/stand/efiboot/efidev.c
+    - sys/stand/efiboot/efifdt.c
+    - sys/stand/efiboot/efifdt.h
+    - sys/stand/efiboot/efifile.c
+    - sys/stand/efiboot/efifile.h
+    - sys/stand/efiboot/efigetsecs.c
+    - sys/stand/efiboot/efigop.c
+    - sys/stand/efiboot/efinet.c
+    - sys/stand/efiboot/efinet.h
+    - sys/stand/efiboot/efipxe.c
+    - sys/stand/efiboot/efirng.c
+    - sys/stand/efiboot/efirng.h
+    - sys/stand/efiboot/efiwatchdog.c
+    - sys/stand/efiboot/exec.c
+    - sys/stand/efiboot/module.c
+    - sys/stand/efiboot/module.h
+    - sys/stand/efiboot/overlay.c
+    - sys/stand/efiboot/overlay.h
+    - sys/stand/efiboot/panic.c
+    - sys/stand/efiboot/prompt.c
+    - sys/stand/efiboot/smbios.c
+    - sys/stand/efiboot/smbios.h
+    - sys/stand/efiboot/userconf.c
+    - sys/stand/efiboot/version
+
+Removed upstream files: consider marking the corresponding set list
+entries obsolete (NetBSD convention: obsolete keyword):
+
+    - lib/libc/arch/aarch64/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/aarch64/sys/exect.S (obsolete)
+    - lib/libc/arch/alpha/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/alpha/sys/exect.S (obsolete)
+    - lib/libc/arch/arm/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/arm/sys/exect.S (obsolete)
+    - lib/libc/arch/hppa/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/hppa/sys/exect.S (obsolete)
+    - lib/libc/arch/i386/gen/signbitl.c (obsolete)
+    - lib/libc/arch/i386/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/i386/sys/exect.S (obsolete)
+    - lib/libc/arch/ia64/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/ia64/sys/exect.S (obsolete)
+    - lib/libc/arch/m68k/gen/signbitl.c (obsolete)
+    - lib/libc/arch/m68k/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/m68k/sys/exect.S (obsolete)
+    - lib/libc/arch/mips/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/mips/sys/exect.S (obsolete)
+    - lib/libc/arch/or1k/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/or1k/sys/exect.S (obsolete)
+    - lib/libc/arch/powerpc/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/powerpc/sys/exect.S (obsolete)
+    - lib/libc/arch/powerpc64/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/powerpc64/sys/exect.S (obsolete)
+    - lib/libc/arch/riscv/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/riscv/sys/exect.S (obsolete)
+    - lib/libc/arch/sh3/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/sh3/sys/exect.S (obsolete)
+    - lib/libc/arch/sparc/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/sparc/sys/exect.S (obsolete)
+    - lib/libc/arch/sparc64/gen/signbitl.c (obsolete)
+    - lib/libc/arch/sparc64/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/sparc64/sys/exect.S (obsolete)
+    - lib/libc/arch/vax/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/vax/sys/exect.S (obsolete)
+    - lib/libc/arch/x86_64/gen/signbitl.c (obsolete)
+    - lib/libc/arch/x86_64/sys/__sigaction14_sigtramp.c (obsolete)
+    - lib/libc/arch/x86_64/sys/exect.S (obsolete)
+    - lib/libc/gen/extattr_namespace_to_string.3 (obsolete)
+    - lib/libc/gen/ldexp_ieee754.c (obsolete)
+    - lib/libc/gen/modf_ieee754.c (obsolete)
+    - lib/libc/regex/cclass.h (obsolete)
+    - lib/libc/rpc/xdr.c (obsolete)
+    - lib/libc/rpc/xdr_array.c (obsolete)
+    - lib/libc/rpc/xdr_mem.c (obsolete)
+    - lib/libc/stdlib/atexit.h (obsolete)
+    - lib/libc/stdlib/getopt.c (obsolete)
+    - lib/libc/stdlib/strtou.3 (obsolete)
+    - lib/libc/string/memmem.c (obsolete)
+    - lib/libc/sys/Lint___sigaction14.c (obsolete)
+    - lib/libc/sys/Lint_exect.c (obsolete)
+    - lib/libc/sys/pmc_control.2 (obsolete)
+    - lib/libc/time/tz-art.htm (obsolete)
+    - lib/libc/time/tz-link.htm (obsolete)
+    - lib/libc/time/version.h (obsolete)
+    - lib/libcurses/curses_insertch.3 (obsolete)
+    - lib/libcurses/fileio.h (obsolete)
+    - lib/libexecinfo/unwind.h (obsolete)
+    - lib/libm/arch/i387/s_cos.S (obsolete)
+    - lib/libm/arch/i387/s_cosf.S (obsolete)
+    - lib/libm/arch/i387/s_ilogb.S (obsolete)
+    - lib/libm/arch/i387/s_ilogbf.S (obsolete)
+    - lib/libm/arch/i387/s_modf.S (obsolete)
+    - lib/libm/arch/i387/s_sin.S (obsolete)
+    - lib/libm/arch/i387/s_sinf.S (obsolete)
+    - lib/libm/arch/i387/s_tan.S (obsolete)
+    - lib/libm/arch/i387/s_tanf.S (obsolete)
+    - lib/libm/src/ldbl_dummy.c (obsolete)
+    - lib/libm/src/llrint.c (obsolete)
+    - lib/libm/src/llrintf.c (obsolete)
+    - lib/libm/src/llround.c (obsolete)
+    - lib/libm/src/llroundf.c (obsolete)
+    - lib/libm/src/lrint.c (obsolete)
+    - lib/libm/src/lrintf.c (obsolete)
+    - lib/libm/src/lround.c (obsolete)
+    - lib/libm/src/lroundf.c (obsolete)
+    - lib/libtelnet/spx.c (obsolete)
+    - libexec/ld.elf_so/arch/powerpc/ld.so.script (obsolete)
+    - sys/lib/libsa/dkcksum.c (obsolete)
+
+Sets-list entries pointing to missing paths (verify warnings):
+
+- libexec/ld.elf_so-eabi (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/ad.aarch64)
+- libexec/ld.elf_so-eabihf (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/ad.aarch64)
+- libexec/ld.elf_so-oabi (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/ad.aarch64)
+- libexec/ld.elf_so-oabi (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/ad.arm)
+- lib/libc_vfp.so (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/ad.arm.shl)
+- lib/libc_vfp.so.0 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/ad.arm.shl)
+- lib/libc_vfp.so.0.0 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/ad.arm.shl)
+- libexec/ld.elf_so-64 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/ad.mips)
+- libexec/ld.elf_so-o32 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/ad.mips)
+- libexec/ld.elf_so-powerpc (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/ad.powerpc)
+- libexec/ld.elf_so-rv32 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/ad.riscv)
+- libexec/ld.elf_so-i386 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/md.amd64)
+- lib/libm387.so (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/md.i386)
+- lib/libm387.so.0 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/md.i386)
+- lib/libm387.so.0.1 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/md.i386)
+- libexec/ld.elf_so-sparc (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/md.sparc64)
+- lib/libc.so (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libc.so.12 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libc.so.12.197 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libcrypt.so (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libcrypt.so.1 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libcrypt.so.1.0 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libcrypto.so (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libcrypto.so.8 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libcrypto.so.8.4 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libedit.so (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libedit.so.3 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libedit.so.3.1 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libkvm.so (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libkvm.so.6 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libkvm.so.6.0 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libm.so (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libm.so.0 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libm.so.0.11 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libprop.so (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libprop.so.1 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libprop.so.1.1 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libterminfo.so (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libterminfo.so.1 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libterminfo.so.1.0 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libutil.so (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libutil.so.7 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libutil.so.7.23 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libz.so (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libz.so.1 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+- lib/libz.so.1.0 (listed in /usr/home/cerluk/Projekty/minix3/distrib/sets/lists/base/shl.mi)
+
+## Doporucene rucni kroky
+
+1. Resolve conflicted files in nbsd-upgrade-conflicts (use .ours/.theirs/.ancestor), copy the result over the repo file and git add it.
+2. Review guard risks (see Rizika) and re-add lost __MINIX conditions where needed.
+3. Review MISSING_SYSCALLS hits: implement the syscall, provide a MINIX replacement, or guard the new code.
+4. Decide about removed upstream files (delete or keep + mark obsolete in distrib/sets/lists).
+5. Apply the docs/UPDATING and nbsd_ports proposals above.
+6. Run: tclsh nbsd-upgrade.tcl verify --components csu,i18n_module,libc,libbz2,libcrypt,libcurses,libedit,libexecinfo,libform,libintl,libkvm,libm,libmenu,libpci,libprop,libpuffs,librefuse,librmt,libtelnet,libterminfo,libutil,libwrap,libz,lua,libsa,libunwind,sys_libz,ld_elf_so --build
+7. Review staged changes (git diff --cached) and commit manually.
+
+## Navrh commit message
+
+    sync(nbsd): resync migrated NetBSD libraries to NetBSD nbsd-11.0
+
+    Suggested body:
+
+    - reference moved from db4f849365101385d6667256568616131bac8ee7 to nbsd-11.0
+    - 4341 files auto-updated, 61 merged, 0 conflicts resolved manually
+    - see docs/UPDATING entry and the nbsd-upgrade report

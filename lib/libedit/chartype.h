@@ -33,6 +33,7 @@
  * supports non-BMP code points without requiring UTF-16, but nothing
  * seems to actually advertise this properly, despite Unicode 3.1 having
  * been around since 2001... */
+#if !defined(__minix)
 #if	!defined(__NetBSD__) && \
 	!defined(__sun) && \
 	!defined(__osf__) && \
@@ -47,6 +48,7 @@
 	#error wchar_t must store ISO 10646 characters
 #endif
 #endif
+#endif /* !defined(__minix) */
 
 /* Oh for a <uchar.h> with char32_t and __STDC_UTF_32__ in it...
  * ref: ISO/IEC DTR 19769

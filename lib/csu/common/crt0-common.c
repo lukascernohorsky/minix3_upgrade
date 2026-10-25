@@ -41,7 +41,11 @@ __RCSID("$NetBSD: crt0-common.c,v 1.30 2025/05/02 23:04:06 riastradh Exp $");
 #include <sys/types.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#if !defined(__minix)
 #include <sys/syscall.h>
+#else
+#include <string.h>
+#endif /* !defined(__minix) */
 
 #include <machine/profile.h>
 
@@ -82,7 +86,11 @@ char		*__progname __common = empty_string;
 
 __dead __dso_hidden void ___start(void (*)(void), struct ps_strings *);
 
+#if !defined(__minix)
 #define	write(fd, s, n)	__syscall(SYS_write, (fd), (s), (n))
+#else
+#define	write(fd, s, n) /* NO write() from here on minix */
+#endif /* !defined(__minix) */
 
 #define	_FATAL(str)				\
 do {						\

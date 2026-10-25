@@ -2,7 +2,7 @@
 
 .include <bsd.own.mk>
 
-.if ${RUMPRUN} != "yes"
+.if ${RUMPRUN} != "yes" && !defined(__MINIX)
 SRCS+=	__aeabi_read_tp.S __sigtramp2.S
 .endif
 

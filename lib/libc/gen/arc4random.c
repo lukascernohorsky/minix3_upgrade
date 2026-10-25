@@ -59,6 +59,9 @@ __RCSID("$NetBSD: arc4random.c,v 1.50.2.1 2026/06/27 19:17:28 martin Exp $");
 #include <sys/bitops.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
+#if defined(__minix)
+#include <sys/fcntl.h>
+#endif
 #include <sys/mman.h>
 #include <sys/sysctl.h>
 
@@ -528,7 +531,9 @@ static void
 arc4random_prng_addrandom(struct arc4random_prng *prng, const void *data,
     size_t datalen)
 {
+#if !defined(__minix)
 	const int mib[] = { CTL_KERN, KERN_ARND };
+#endif /* !defined(__minix) */
 	SHA256_CTX ctx;
 	uint8_t buf[crypto_prng_SEEDBYTES];
 	size_t buflen = sizeof buf;
@@ -541,8 +546,23 @@ arc4random_prng_addrandom(struct arc4random_prng *prng, const void *data,
 	crypto_prng_buf(&prng->arc4_prng, buf, sizeof buf);
 	SHA256_Update(&ctx, buf, sizeof buf);
 
+#if defined(__minix)
+	/* LSC: We do not have a compatibility layer for the 
+	 * KERN_ARND call, so do it the old way... */
+	int fd;
+
+	fd = open("/dev/urandom", O_RDONLY);
+	if (fd != -1) {
+		(void)read(fd, buf, buflen);
+		close(fd);
+	}
+
+        /* fd < 0 or failed sysctl ?  Ah, what the heck. We will just take
+         * whatever was on the stack... */
+#else
 	if (sysctl(mib, (u_int)__arraycount(mib), buf, &buflen, NULL, 0) == -1)
 		abort();
+#endif /* !defined(__minix) */
 	if (buflen != sizeof buf)
 		abort();
 	SHA256_Update(&ctx, buf, sizeof buf);
@@ -654,10 +674,12 @@ arc4random_initialize(void)
 	 * PRNG state on the stack reinitialized from the kernel
 	 * entropy pool at every call.
 	 */
+#if !defined(__minix)
 	if (pthread_atfork(&arc4random_atfork_prepare,
 		&arc4random_atfork_parent, &arc4random_atfork_child)
 	    == 0)
 		arc4random_global.forksafe = true;
+#endif /* !defined(__minix) */
 
 	/*
 	 * For multithreaded builds, try to allocate a per-thread PRNG

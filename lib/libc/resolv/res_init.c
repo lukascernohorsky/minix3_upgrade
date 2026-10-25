@@ -84,7 +84,9 @@ __RCSID("$NetBSD: res_init.c,v 1.32 2021/09/30 12:35:55 christos Exp $");
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#if !defined(__minix)
 #include <sys/event.h>
+#endif /* !defined(__minix) */
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -156,7 +158,9 @@ static uint32_t net_mask(struct in_addr);
 #endif
 
 static struct timespec __res_conf_time;
+#if !defined(__minix)
 static const struct timespec ts = { 0, 0 };
+#endif /* !defined(__minix) */
 
 const char *__res_conf_name = _PATH_RESCONF;
 
@@ -190,6 +194,7 @@ res_ninit(res_state statp) {
 	return (__res_vinit(statp, 0));
 }
 
+#if !defined(__minix)
 static int
 __res_kqinit(res_state statp)
 {
@@ -204,6 +209,7 @@ __res_kqinit(res_state statp)
 	(void)kevent(ext->kq, &kc, 1, NULL, 0, &ts);
 	return ext->kq;
 }
+#endif /* !defined(__minix) */
 
 /*% This function has to be reachable by res_data.c but not publically. */
 int
@@ -514,7 +520,11 @@ __res_vinit(res_state statp, int preinit) {
 	    if (fstat(statp->_u._ext.ext->resfd, &st) != -1)
 		    __res_conf_time = statp->_u._ext.ext->res_conf_time =
 			st.st_mtimespec;
+#if !defined(__minix)
 	    __res_kqinit(statp);
+#else
+	    statp->_u._ext.ext->kq = -1;
+#endif /* !defined(__minix) */
 	} else {
 	    statp->_u._ext.ext->kq = -1;
 	    statp->_u._ext.ext->resfd = -1;
@@ -571,6 +581,12 @@ __res_vinit(res_state statp, int preinit) {
 int
 res_check(res_state statp, struct timespec *mtime)
 {
+#if defined(__minix)
+	/*
+	 * XXX: No update on change.
+	 */
+	return 0;
+#else
 	/*
 	 * If the times are equal, then we check if there
 	 * was a kevent related to resolv.conf and reload.
@@ -602,6 +618,7 @@ out:
 	if (mtime)
 		*mtime = __res_conf_time;
 	return 1;
+#endif /* defined(__minix) */
 }
 
 static void

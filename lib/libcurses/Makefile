@@ -3,7 +3,12 @@
 
 .include <bsd.own.mk>
 
+.if defined(__MINIX)
+# /usr/minix/src-clang/lib/libcurses/get_wch.c:646:15: error: comparison of unsigned expression < 0 is always false [-Werror,-Wtautological-compare]
+WARNS=0
+.else
 WARNS=	2
+.endif
 
 CPPFLAGS+=-I${.CURDIR} -I${NETBSDSRCDIR}/lib/libterminfo -I.
 .if defined(DEBUG_CURSES)
@@ -214,7 +219,9 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_mouse.3 mouse_trafo.3 curses_mouse.3 wmouse_trafo.3 \
 	 curses_mouse.3 wenclose.3 curses_mouse.3 mouseinterval.3
 
+.if !defined(__MINIX)
 SUBDIR.roff+= PSD.doc
+.endif # !defined(__MINIX)
 
 DPSRCS+=	fileio.h
 CLEANFILES+=	fileio.h

@@ -1,5 +1,6 @@
 #	$NetBSD: Makefile.inc,v 1.18 2019/09/22 22:59:38 christos Exp $
 
+#__MINIX: Not all supported yet
 .PATH: ${COMPATDIR}/gen
 SRCS+=compat_errlist.c compat_fts.c compat___fts13.c compat___fts30.c \
     compat___fts31.c compat_getmntinfo.c compat_glob.c compat___glob13.c \

@@ -12,6 +12,18 @@
  *
  */
 
+#if defined(__minix)
+#include "extern.h"
+#ifdef _LIBSYS
+#include <minix/sysutil.h>
+#include <machine/param.h>
+#include <machine/vmparam.h>
+#define MALLOC_NO_SYSCALLS
+#define wrtwarning(w) printf("libminc malloc warning: %s\n", w)
+#define wrterror(w) panic("libminc malloc error: %s\n", w)
+#endif
+#endif /* defined(__minix) */
+
 /*
  * Defining MALLOC_EXTRA_SANITY will enable extra checks which are related
  * to internal conditions and consistency in malloc.c. This has a
@@ -82,6 +94,15 @@ void utrace(struct ut *, int);
 #   define _MALLOC_UNLOCK()		if (__isthreaded) _SPINUNLOCK(&thread_lock);
 #   define _MALLOC_REINIT()		if (__isthreaded) thread_lock = (spinlock_t)_SPINLOCK_INITIALIZER;
 #endif /* __FreeBSD__ */
+
+#if defined(__minix)
+/* #undef these things so that malloc uses the non-internal symbols.
+ * This is necessary for VM to be able to define its own versions, and
+ * use this malloc.
+ */
+#undef mmap
+#undef munmap
+#endif /* defined(__minix) */
 
 #include <sys/types.h>
 #if defined(__NetBSD__)
@@ -223,8 +244,12 @@ static size_t malloc_pagemask;
 #define INIT_MMAP()
 #endif
 
+#if !defined(__minix)
 #ifndef MADV_FREE
 #define MADV_FREE MADV_DONTNEED
+#else
+#undef MADV_FREE
+#endif /* !defined(__minix) */
 #endif
 
 /* Number of free pages we cache */
@@ -500,7 +525,9 @@ malloc_init(void)
 		case '<': malloc_cache   >>= 1; break;
 		case 'a': malloc_abort   = 0; break;
 		case 'A': malloc_abort   = 1; break;
+#if !defined(__minix)
 		case 'h': malloc_hint    = 0; break;
+#endif /* !defined(__minix) */
 		case 'H': malloc_hint    = 1; break;
 		case 'r': malloc_realloc = 0; break;
 		case 'R': malloc_realloc = 1; break;
@@ -798,7 +825,9 @@ imalloc(size_t size)
 
     if ((size + malloc_pagesize) < size)	/* Check for overflow */
 	result = NULL;
+#ifndef __minix
     else if ((size + malloc_pagesize) >= (uintptr_t)page_dir)
+#endif /* !__minix */
 	result = NULL;
     else if (size <= malloc_maxsize)
 	result = malloc_bytes(size);
@@ -947,7 +976,9 @@ free_pages(void *ptr, size_t idx, struct pginfo *info)
     if (malloc_junk)
 	memset(ptr, SOME_JUNK, l);
 
+#if !defined(__minix)
     if (malloc_hint)
+#endif /* !defined(__minix) */
 	madvise(ptr, l, MADV_FREE);
 
     tail = (char *)ptr+l;

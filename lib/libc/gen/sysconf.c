@@ -354,7 +354,10 @@ sysconf(int name)
 		return _POSIX_SHARED_MEMORY_OBJECTS;
 	case _SC_SHELL:
 		return _POSIX_SHELL;
+#ifndef __minix
 	case _SC_SPAWN:
+		return _POSIX_SPAWN;
+#endif /* !__minix */
 		return _POSIX_SPAWN;
 	case _SC_SYMLOOP_MAX:
 		return MAXSYMLINKS;

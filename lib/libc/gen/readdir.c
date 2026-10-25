@@ -93,7 +93,10 @@ _readdir_unlocked(DIR *dirp, int skipdeleted)
 		dirp->dd_loc += dp->d_reclen;
 		if (dp->d_ino == 0 && skipdeleted)
 			continue;
+#if !defined(__minix)
 		if (dp->d_type == DT_WHT && (dirp->dd_flags & DTF_HIDEW))
+			continue;
+#endif /* !defined(__minix) */
 			continue;
 		return dp;
 	}

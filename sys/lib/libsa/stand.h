@@ -93,9 +93,17 @@ struct open_file;
 	extern __compactcall int	__CONCAT(fs,_stat)(struct open_file *, struct stat *)
 
 #if defined(LIBSA_ENABLE_LS_OP)
+#  if defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP
+#define FS_DEF(fs) \
+	FS_DEF_BASE(fs);\
+	extern __compactcall void	__CONCAT(fs,_ls)(struct open_file *, const char *); \
+	extern __compactcall void	__CONCAT(fs,_load_mods)(struct open_file *, const char *, \
+								void (*)(char *), char *)
+#  else
 #define FS_DEF(fs) \
 	FS_DEF_BASE(fs);\
 	extern __compactcall void	__CONCAT(fs,_ls)(struct open_file *, const char *)
+#  endif /* defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP */
 #else
 #define FS_DEF(fs) FS_DEF_BASE(fs)
 #endif
@@ -117,6 +125,10 @@ struct fs_ops {
 	__compactcall int	(*stat)(struct open_file *, struct stat *);
 #if defined(LIBSA_ENABLE_LS_OP)
 	__compactcall void	(*ls)(struct open_file *, const char *);
+# if defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP
+	__compactcall void	(*load_mods)(struct open_file *, const char *,
+		void (*)(char *), char *);
+# endif /* defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP */
 #endif
 };
 
@@ -124,6 +136,17 @@ extern struct fs_ops file_system[];
 extern int nfsys;
 
 #if defined(LIBSA_ENABLE_LS_OP)
+# if defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP
+#define FS_OPS(fs) { \
+	__CONCAT(fs,_open), \
+	__CONCAT(fs,_close), \
+	__CONCAT(fs,_read), \
+	__CONCAT(fs,_write), \
+	__CONCAT(fs,_seek), \
+	__CONCAT(fs,_stat), \
+	__CONCAT(fs,_ls), \
+	__CONCAT(fs,_load_mods) }
+# else
 #define FS_OPS(fs) { \
 	__CONCAT(fs,_open), \
 	__CONCAT(fs,_close), \
@@ -132,6 +155,7 @@ extern int nfsys;
 	__CONCAT(fs,_seek), \
 	__CONCAT(fs,_stat), \
 	__CONCAT(fs,_ls) }
+# endif /* defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP */
 #else
 #define FS_OPS(fs) { \
 	__CONCAT(fs,_open), \
@@ -150,6 +174,9 @@ extern int nfsys;
 #define	FS_STAT(fs)		((fs)->stat)
 #if defined(LIBSA_ENABLE_LS_OP)
 #define	FS_LS(fs)		((fs)->ls)
+#if  defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP)
+#define	FS_LOAD_MODS(fs)	((fs)->load_mods)
+#endif /* defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP) */
 #endif
 
 #else
@@ -162,6 +189,9 @@ extern int nfsys;
 #define	FS_STAT(fs)		___CONCAT(LIBSA_SINGLE_FILESYSTEM,_stat)
 #if defined(LIBSA_ENABLE_LS_OP)
 #define	FS_LS(fs)		___CONCAT(LIBSA_SINGLE_FILESYSTEM,_ls)
+#if  defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP)
+#define	FS_LOAD_MODS(fs)	___CONCAT(LIBSA_SINGLE_FILESYSTEM,_load_mods)
+#endif /* defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP) */
 #endif
 
 FS_DEF(LIBSA_SINGLE_FILESYSTEM);
@@ -276,6 +306,9 @@ int	stat(const char *, struct stat *);
 int	fstat(int, struct stat *);
 #if defined(LIBSA_ENABLE_LS_OP)
 void	ls(const char *);
+#if defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP
+void	load_mods(const char *, void (*)(char *));
+#endif /* defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP */
 #endif
 
 typedef int cmp_t(const void *, const void *);

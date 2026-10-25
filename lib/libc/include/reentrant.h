@@ -122,8 +122,16 @@
 
 #define	thrattr_t		pthread_attr_t
 
-#define	once_t			pthread_once_t
+#ifndef __minix
 #define	ONCE_INITIALIZER	PTHREAD_ONCE_INIT
+#else /* __minix */
+
+typedef struct {
+	int pto_done;
+} once_t;
+#define ONCE_INITIALIZER	{ .pto_done = 0 }
+
+#endif /* __minix */
 
 #ifdef _REENTRANT
 

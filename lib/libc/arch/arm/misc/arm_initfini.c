@@ -66,6 +66,9 @@ _libc_aapcs_init(void)
 	if (_libc_aapcs_initialized)
 		return;
 
+#if defined(__minix)
+	_libc_aapcs_initialized = true;
+#else
 	struct sysctlnode query, md[64];
 	int mib[2];
 	size_t len, mlen = sizeof(_libc_arm_fpu_present), nentries = 0;
@@ -98,4 +101,5 @@ _libc_aapcs_init(void)
 		if (nentries >= NENTRIES)
 			return;
 	}
+#endif /* defined(__minix) */
 }

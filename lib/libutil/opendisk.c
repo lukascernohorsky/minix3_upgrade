@@ -70,7 +70,19 @@ static int
 __opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked,
 	int (*ofn)(const char *, int, ...))
 {
+#if !defined(__minix)
 	int f, part;
+#else
+	int f;
+#endif /* !defined(__minix) */
+
+#if defined(__minix)
+	/*
+	 * MINIX does not have the cooked/raw distinction.  Do not prepend 'r'
+	 * to the device name when generating a full path.
+	 */
+	iscooked = 1;
+#endif /* defined(__minix) */
 
 	if (buf == NULL) {
 		errno = EFAULT;
@@ -82,10 +94,12 @@ __opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked,
 		return -1;
 	}
 
+#if !defined(__minix)
 	part = getrawpartition();
 	if (part < 0)
 		return -1;	/* sysctl(3) in getrawpartition sets errno */
 	part += 'a';
+#endif /* !defined(__minix) */
 
 	/*
 	 * If we are passed a plain name, first try /dev to avoid accidents
@@ -99,16 +113,22 @@ __opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked,
 		if (f != -1 || errno != ENOENT)
 			return f;
 
+#if !defined(__minix)
 		f = opd(buf, buflen, ofn, flags, "%s%s%s%c", d, r, path, part);
 		if (f != -1 || errno != ENOENT)
 			return f;
+#endif /* !defined(__minix) */
 	}
 
 	f = opd(buf, buflen, ofn, flags, "%s", path);
 	if (f != -1 || errno != ENOENT)
 		return f;
 
+#if !defined(__minix)
 	return opd(buf, buflen, ofn, flags, "%s%c", path, part);
+#else
+	return f;
+#endif /* !defined(__minix) */
 }
 
 int

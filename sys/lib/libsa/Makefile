@@ -45,7 +45,9 @@ SRCS+=	bootcfg.c
 .if ${MACHINE_ARCH} != "i386" && ${MACHINE_ARCH} != "x86_64"
 SRCS+=	memcmp.c memcpy.c memmove.c memset.c strchr.c
 .endif
+.if !defined(__MINIX)
 SRCS+=	bcopy.c bzero.c	# Remove me eventually.
+.endif # !defined(__MINIX)
 
 # io routines
 SRCS+=	closeall.c dev.c disklabel.c ioctl.c nullfs.c stat.c fstat.c
@@ -59,11 +61,15 @@ SRCS+= ls.c
 .endif
 
 .if (${SA_USE_LOADFILE} == "yes")
+.if !defined(__MINIX)
 SRCS+=	loadfile.c loadfile_ecoff.c loadfile_elf32.c lookup_elf32.c \
 	loadfile_elf64.c lookup_elf64.c
 .if (${MACHINE_CPU} != "mips")
 SRCS+=	loadfile_aout.c
 .endif
+.else
+SRCS+=	loadfile.c loadfile_elf32.c loadfile_elf64.c
+.endif # !defined(__MINIX)
 .endif
 
 .if (${SA_INCLUDE_NET} == "yes")
@@ -93,6 +99,15 @@ SRCS+=	fnmatch.c
 # for historic compatibility ufs == ffsv1
 SRCS+=	ufs.c
 
+.if defined(__MINIX)
+# NetBSD has it in libkern, MINIX lacks it
+SRCS+=	xlat_mbr_fstype.c
+.PATH.c: ${NETBSDSRCDIR}/sys/lib/libkern
+
+# NetBSD has it in libkern, MINIX has it in libc but not libminc...
+SRCS+=	md5c.c
+.PATH.c: ${NETBSDSRCDIR}/common/lib/libc/md
+.endif # defined(__MINIX)
 .include <bsd.lib.mk>
 
 lib${LIB}.o:: ${OBJS:O} __buildstdlib

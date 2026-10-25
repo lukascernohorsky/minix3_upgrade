@@ -554,6 +554,12 @@ convert_prot(int elfflags)
 #endif
 	if (elfflags & PF_X)
 		prot |= PROT_EXEC;
+#if defined(__minix)
+	/* Minix has to map it writable so we can do relocations
+	 * as we don't have mprotect() yet.
+	 */
+	prot |= PROT_WRITE;
+#endif /* defined(__minix) */
 	return prot;
 }
 

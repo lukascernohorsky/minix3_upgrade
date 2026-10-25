@@ -121,7 +121,9 @@ static void    *auxinfo;
 char           *__progname;
 char          **environ;
 
+#if !defined(__minix)
 static volatile bool _rtld_mutex_may_recurse;
+#endif /* !defined(__minix) */
 
 #if defined(RTLD_DEBUG)
 #ifndef __sh__
@@ -2312,6 +2314,13 @@ _rtld_objlist_remove(Objlist *list, Obj_Entry *obj)
 	}
 }
 
+#if defined(__minix)
+void _rtld_shared_enter(void) {}
+void _rtld_shared_exit(void) {}
+void _rtld_exclusive_enter(sigset_t *mask) {}
+void _rtld_exclusive_exit(sigset_t *mask) {}
+#else
+
 #define	RTLD_EXCLUSIVE_MASK	0x80000000U
 static volatile unsigned int _rtld_mutex;
 static volatile unsigned int _rtld_waiter_exclusive;
@@ -2435,6 +2444,7 @@ _rtld_exclusive_exit(sigset_t *mask)
 
 	sigprocmask(SIG_SETMASK, mask, NULL);
 }
+#endif /* !defined(__minix) */
 
 int
 _rtld_relro(const Obj_Entry *obj, bool wantmain)

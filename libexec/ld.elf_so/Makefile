@@ -2,6 +2,8 @@
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
+#MINIX:
+USE_BITCODE=no
 NOLIBCSANITIZER=# defined
 NOSANITIZER=	# defined
 WARNS?=4

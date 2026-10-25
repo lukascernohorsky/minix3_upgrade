@@ -749,6 +749,11 @@ label:
 				}
 #endif
 				continue;
+#if defined(__minix)
+			case '+':
+				pt = _fmt(sp, _TIME_LOCALE(loc)->c_fmt, t, pt, ptlim, warnp, loc);
+				continue;
+#endif /* defined(__minix) */
 			case '+':
 #ifdef notyet
 				/* XXX: no date_fmt in _TimeLocale */

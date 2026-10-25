@@ -37,6 +37,10 @@ SRCS+=	malloc.c
 .   endif
 .endif
 
+.if defined(__MINIX)
+.include "${NETBSDSRCDIR}/minix/lib/libc/Makefile.inc"
+.endif # defined(__MINIX)
+
 CPPFLAGS.strtol.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.strtoq.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.strtouq.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
