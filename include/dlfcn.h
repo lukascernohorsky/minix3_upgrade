@@ -34,6 +34,12 @@
 
 #include <sys/featuretest.h>
 #include <sys/cdefs.h>
+#include <machine/ansi.h>
+
+#ifdef	_BSD_SSIZE_T_
+typedef	_BSD_SSIZE_T_	ssize_t;
+#undef	_BSD_SSIZE_T_
+#endif
 
 #if defined(_NETBSD_SOURCE)
 typedef struct _dl_info {
@@ -53,12 +59,15 @@ void *_dlauxinfo(void) __pure;
 void	*dlopen(const char *, int);
 int	dlclose(void *);
 void	*dlsym(void * __restrict, const char * __restrict);
-#if defined(_NETBSD_SOURCE)
+#if (_POSIX_C_SOURCE - 0 >= 202405L) || defined(_NETBSD_SOURCE)
 int	dladdr(const void * __restrict, Dl_info * __restrict);
+#endif
+#if defined(_NETBSD_SOURCE)
 int	dlctl(void *, int, void *);
 int	dlinfo(void *, int, void *);
 void	*dlvsym(void * __restrict, const char * __restrict,
 	    const char * __restrict);
+void	__dl_cxa_refcount(void *, ssize_t);
 #endif
 __aconst char *dlerror(void);
 __END_DECLS

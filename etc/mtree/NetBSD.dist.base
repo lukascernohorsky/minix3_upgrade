@@ -115,6 +115,7 @@
 ./usr/include/prop
 ./usr/include/protocols
 ./usr/include/readline
+./usr/include/refuse
 ./usr/include/rpcsvc
 ./usr/include/ssp
 ./usr/include/sys

@@ -13,6 +13,13 @@
 #
 # POZOR: pokud MINIX nektere z techto volani uz implementuje, prislusny
 # radek smaz, jinak verify ohlasi falesny FAIL.
+#
+# Triage 2026-10-25 (upgrade-data.log + kontrola minix/libc proti stromu):
+#   odstraneno setpgid, getsid, issetugid, setpgrp (libc stuby; issetugid ma
+#   PM_ISSETUGID, getsid PM_GETSID), setrlimit (no-op stub v libc),
+#   lchown/lchmod (tools/compat emulace v libc), futimens (libc wrapper),
+#   getrusage (PM_GETRUSAGE), pipe2 (minix/lib/libc/sys/pipe.c),
+#   posix_spawn (minix fork-based impl v minix/lib/libc/sys).
 
 # ---- proces, identita, audit -------------------------------------------------
 # acct 51, ktrace 45, __setlogin 50, sysarch 165
@@ -21,13 +28,10 @@ ktrace
 __setlogin
 sysarch
 # setpgid 82, setreuid 126, setregid 127, getpgid 207, getsid 286
-setpgid
 setreuid
 setregid
 getpgid
-getsid
 # issetugid 305, utrace 306, semconfig 223, rasctl 343, clone 287 (__clone)
-issetugid
 utrace
 semconfig
 rasctl
@@ -35,7 +39,6 @@ clone
 # nfssvc 155 (drive psano nfs_svc, spravny nazev je nfssvc)
 nfssvc
 # setpgrp: libc alias, dela se pres setpgid
-setpgrp
 
 # ---- pamet --------------------------------------------------------------------
 # mprotect 74, madvise 75, mincore 78, msync 277 (__msync13), vadvise 72
@@ -58,15 +61,12 @@ posix_madvise
 # ---- souborovy system ---------------------------------------------------------
 # undelete 205, lchmod 274, lchown 275, fsync_range 354
 undelete
-lchmod
-lchown
 fsync_range
 # swapctl 271; swapon dnes jen pres swapctl (85 je pouze compat_12)
 swapctl
 swapon
 # quotactl 473 (__quotactl), setrlimit 195
 quotactl
-setrlimit
 # LFS: 184 lfs_bmapv, 185 lfs_markv, 186 lfs_segclean, 422 __lfs_segwait50
 #lfs_*
 # extattr 361-372 (set/get/delete/list x file/fd/link) + extattrctl 360,
@@ -79,14 +79,11 @@ fhopen
 fhstat
 fhstatvfs
 # uuidgen 355, modctl 246, futimens 472, lpathconf 499
-uuidgen
 modctl
-futimens
 lpathconf
 # preadv 289, pwritev 290, getrusage 445
 preadv
 pwritev
-getrusage
 
 # ---- sockety ------------------------------------------------------------------
 # getsockopt2 193, paccept 456, recvmmsg 475, sendmmsg 476
@@ -146,7 +143,6 @@ kqueue1
 eventfd
 epoll_*
 # pipe2 453 (NOVE), dup3 505 (__dup3100, NOVE)
-pipe2
 dup3
 
 # ---- moderni doplnky NetBSD 10/11 -----------------------------------------------
@@ -157,7 +153,6 @@ __futex*
 # timerfd_create 177, timerfd_settime 178, timerfd_gettime 179 (NOVE)
 timerfd_*
 # posix_spawn 474 (NOVE)
-posix_spawn
 # posix_fadvise 416 (__posix_fadvise50)
 posix_fadvise
 # posix_fallocate 479 (NOVE), fdiscard 480 (NOVE)

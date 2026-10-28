@@ -978,8 +978,8 @@ free_pages(void *ptr, size_t idx, struct pginfo *info)
 
 #if !defined(__minix)
     if (malloc_hint)
-#endif /* !defined(__minix) */
 	madvise(ptr, l, MADV_FREE);
+#endif /* !defined(__minix) */
 
     tail = (char *)ptr+l;
 

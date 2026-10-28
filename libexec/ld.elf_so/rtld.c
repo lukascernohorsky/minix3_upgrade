@@ -2319,6 +2319,31 @@ void _rtld_shared_enter(void) {}
 void _rtld_shared_exit(void) {}
 void _rtld_exclusive_enter(sigset_t *mask) {}
 void _rtld_exclusive_exit(sigset_t *mask) {}
+
+/*
+ * MINIX nema _lwp_* syscally. Lock-elision kod vyse a tls.c odkazuji
+ * na tyto symboly; na single-threaded MINIXu nejsou park/unpark cesty
+ * nikdy vykonany. Deklarace v <lwp.h> (include vyse) zaridi pres
+ * __RENAME(___lwp_park60) vzdusnou konzistenci volani i definice.
+ */
+lwpid_t
+_lwp_self(void)
+{
+	return 1;
+}
+
+int
+_lwp_park(clockid_t, int, struct timespec *, lwpid_t,
+	    const void *, const void *)
+{
+	return -1;
+}
+
+int
+_lwp_unpark(lwpid_t, const void *)
+{
+	return 0;
+}
 #else
 
 #define	RTLD_EXCLUSIVE_MASK	0x80000000U
@@ -2449,7 +2474,7 @@ _rtld_exclusive_exit(sigset_t *mask)
 int
 _rtld_relro(const Obj_Entry *obj, bool wantmain)
 {
-#ifdef GNU_RELRO
+#if defined(GNU_RELRO) && !defined(__minix)
 	/*
 	 * If our VM page size is larger than the page size used by the
 	 * linker when laying out the object, we could end up making data

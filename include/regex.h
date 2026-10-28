@@ -75,6 +75,7 @@
 #define	_REGEX_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <sys/types.h>
 
 /* types */
@@ -101,6 +102,7 @@ typedef struct {
 #define	REG_NOSPEC	0020
 #define	REG_PEND	0040
 #define	REG_DUMP	0200
+#define	REG_GNU		0400
 
 /* regerror() flags */
 #define	REG_NOMATCH	 1
@@ -120,6 +122,7 @@ typedef struct {
 #define	REG_ASSERT	15
 #define	REG_INVARG	16
 #define	REG_ENOSYS	17
+#define	REG_ILLSEQ      17
 #define	REG_ATOI	255	/* convert name to number (!) */
 #define	REG_ITOA	0400	/* convert number to name (!) */
 
@@ -137,6 +140,10 @@ size_t	regerror(int, const regex_t * __restrict, char * __restrict, size_t);
 int	regexec(const regex_t * __restrict,
 	    const char * __restrict, size_t, regmatch_t [], int);
 void	regfree(regex_t *);
+#ifdef _NETBSD_SOURCE
+ssize_t regnsub(char *, size_t, const char *, const regmatch_t *, const char *);
+ssize_t regasub(char **buf, const char *, const regmatch_t *, const char *);
+#endif
 __END_DECLS
 
 #endif /* !_REGEX_H_ */

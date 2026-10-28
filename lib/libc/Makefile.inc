@@ -47,4 +47,16 @@ CPPFLAGS+=	-D_LIBC_INTERNAL
 .else
 CPPFLAGS+=	-D_LIBC
 .endif # !defined(__minix)
+.include "libcincludes.mk"
 
+ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
+AFLAGS+=	-I${ARCHDIR}
+
+CLEANFILES+=	tags
+
+# Don't try to lint the C library against itself when creating llib-lc.ln
+LLIBS=
+
+INCSDIR=	/usr/include
+# needed for csu-common.h (netbsd-11 Makefile.inc v1.22.4.2)
+CPPFLAGS+= -I${NETBSDSRCDIR}/lib/csu/common

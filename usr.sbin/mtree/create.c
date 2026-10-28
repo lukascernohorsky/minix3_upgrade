@@ -84,11 +84,7 @@ static uid_t uid;
 static mode_t mode;
 static u_long flags;
 
-#ifdef __FreeBSD__
-#define	FTS_CONST const
-#else
-#define	FTS_CONST
-#endif
+#define FTS_CONST
 
 static int	dcmp(const FTSENT *FTS_CONST *, const FTSENT *FTS_CONST *);
 static void	output(FILE *, int, int *, const char *, ...)

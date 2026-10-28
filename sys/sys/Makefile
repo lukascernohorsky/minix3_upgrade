@@ -3,6 +3,7 @@
 .include <bsd.own.mk>
 
 INCSDIR= /usr/include/sys
+INCS+= acl.h container_of.h efiio.h eventfd.h fault.h futex.h hook.h idtype.h ipmi.h kcov.h localcount.h pmf.h psref.h radixtree.h random.h semaphore.h sha3.h stdalign.h stddef.h timerfd.h vnode_impl.h wchan.h
 
 INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	bitops.h bootblock.h bswap.h buf.h \

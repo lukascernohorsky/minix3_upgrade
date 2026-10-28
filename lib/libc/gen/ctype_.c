@@ -268,12 +268,14 @@ _C_ctype_tab_guard_init(void)
 
 	if (constructor_allow_ctype_abuse())
 		return;
+#if !defined(__minix)
 #ifdef __BUILD_LEGACY
 	(void)mprotect(__UNCONST(_C_compat_bsdctype_guarded),
 	    _CTYPE_GUARD_SIZE, PROT_NONE);
 #endif	/* __BUILD_LEGACY */
 	(void)mprotect(__UNCONST(_C_ctype_tab_guarded_),
 	    _CTYPE_GUARD_SIZE, PROT_NONE);
+#endif /* !defined(__minix) */
 }
 
 #else

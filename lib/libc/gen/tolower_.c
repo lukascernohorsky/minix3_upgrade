@@ -79,7 +79,9 @@ _C_tolower_tab_guard_init(void)
 
 	if (constructor_allow_ctype_abuse())
 		return;
+#if !defined(__minix)
 	(void)mprotect(__UNCONST(_C_tolower_tab_guarded_), _CTYPE_GUARD_SIZE,
 	    PROT_NONE);
+#endif /* !defined(__minix) */
 }
 #endif	/* _CTYPE_GUARD_PAGE */

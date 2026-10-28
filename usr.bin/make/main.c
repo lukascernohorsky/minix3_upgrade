@@ -152,6 +152,7 @@ Lst			create;		/* Targets to be made */
 time_t			now;		/* Time at start of make */
 GNode			*DEFAULT;	/* .DEFAULT node */
 Boolean			allPrecious;	/* .PRECIOUS given on line by itself */
+FILE			*debug_file;	/* Output written here - default stdout */
 
 static Boolean		noBuiltins;	/* -r flag */
 static Lst		makefiles;	/* ordered list of makefiles to read */

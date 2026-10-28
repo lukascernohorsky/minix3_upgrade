@@ -379,14 +379,17 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 			/* Clear any BSS in the last page of the segment. */
 			clear_vaddr = segs[i]->p_vaddr + segs[i]->p_filesz;
 			clear_addr = mapbase + (clear_vaddr - base_vaddr);
+#if !defined(__minix)
 			clear_page = mapbase + (round_down(clear_vaddr)
 			    - base_vaddr);
+#endif /* !defined(__minix) */
 
 			if ((nclear = data_vlimit - clear_vaddr) > 0) {
 				/*
 				 * Make sure the end of the segment is
 				 * writable.
 				 */
+#if !defined(__minix)
 				if ((data_prot & PROT_WRITE) == 0 && -1 ==
 				     mprotect(clear_page, _rtld_pagesz,
 				     data_prot|PROT_WRITE)) {
@@ -394,13 +397,16 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 					    path, xstrerror(errno));
 					goto error;
 				}
+#endif /* !defined(__minix) */
 
 				memset(clear_addr, 0, nclear);
 
+#if !defined(__minix)
 				/* Reset the data protection back */
 				if ((data_prot & PROT_WRITE) == 0)
 					mprotect(clear_page, _rtld_pagesz,
 					    data_prot);
+#endif /* !defined(__minix) */
 			}
 #endif
 

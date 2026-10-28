@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.149 2015/07/30 15:28:18 maxv Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.177 2025/05/27 14:03:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,12 +44,8 @@
 #include <sys/types.h>
 #else
 #include <inttypes.h>
+#include <stddef.h>
 #endif /* _KERNEL || _STANDALONE */
-
-#ifdef   _BSD_SIZE_T_
-typedef  _BSD_SIZE_T_    size_t;
-#undef   _BSD_SIZE_T_
-#endif
 
 #if HAVE_NBTOOL_CONFIG_H
 #include <nbinclude/machine/elf_machdep.h>
@@ -173,11 +169,11 @@ typedef struct {
 #define ELFOSABI_SYSV		0	/* UNIX System V ABI */
 #define ELFOSABI_HPUX		1	/* HP-UX operating system */
 #define ELFOSABI_NETBSD		2	/* NetBSD */
-#define ELFOSABI_LINUX		3	/* GNU/Linux */
-#define ELFOSABI_HURD		4	/* GNU/Hurd */
-#define ELFOSABI_86OPEN		5	/* 86Open */
+#define ELFOSABI_GNU		3	/* GNU/Linux */
+#define ELFOSABI_HURD		4	/* GNU/Hurd - historical */
+#define ELFOSABI_86OPEN		5	/* 86Open - historical */
 #define ELFOSABI_SOLARIS	6	/* Solaris */
-#define ELFOSABI_MONTEREY	7	/* Monterey */
+#define ELFOSABI_AIX		7	/* AIX */
 #define ELFOSABI_IRIX		8	/* IRIX */
 #define ELFOSABI_FREEBSD	9	/* FreeBSD */
 #define ELFOSABI_TRU64		10	/* TRU64 UNIX */
@@ -186,12 +182,18 @@ typedef struct {
 #define ELFOSABI_OPENVMS	13	/* OpenVMS */
 #define ELFOSABI_NSK		14	/* HP Non-Stop Kernel */
 #define ELFOSABI_AROS		15	/* Amiga Research OS */
+#define ELFOSABI_FENIXOS	16	/* The FenixOS highly scalable multi-core OS */
+#define ELFOSABI_CLOUDABI	17	/* Nuxi CloudABI */
+#define ELFOSABI_OPENVOS	18	/* Stratus Technologies OpenVOS */
 /* Unofficial OSABIs follow */
 #define ELFOSABI_ARM		97	/* ARM */
 #define ELFOSABI_STANDALONE	255	/* Standalone (embedded) application */
 
 #define ELFOSABI_NONE		ELFOSABI_SYSV
-#define ELFOSABI_AIX		ELFOSABI_MONTEREY
+
+/* Historical aliases. */
+#define ELFOSABI_LINUX		ELFOSABI_GNU
+#define ELFOSABI_MONTEREY	ELFOSABI_AIX
 
 /* e_type */
 #define ET_NONE		0	/* No file type */
@@ -213,7 +215,8 @@ typedef struct {
 #define EM_386		3	/* Intel 80386 */
 #define EM_68K		4	/* Motorola 68000 */
 #define EM_88K		5	/* Motorola 88000 */
-#define EM_486		6	/* Intel 80486 */
+#define EM_486		6	/* Intel 80486 [old] */
+#define EM_IAMCU	EM_486	/* Intel MCU. */
 #define EM_860		7	/* Intel 80860 */
 #define EM_MIPS		8	/* MIPS I Architecture */
 #define EM_S370		9	/* Amdahl UTS on System/370 */
@@ -227,14 +230,15 @@ typedef struct {
 #define EM_960		19	/* Intel 80960 */
 #define EM_PPC		20	/* PowerPC */
 #define EM_PPC64	21	/* 64-bit PowerPC */
-			/* 22-35 - Reserved */
-#define EM_S390		22	/* System/390 XXX reserved */
+#define EM_S390		22	/* IBM System/390 Processor */
+#define EM_SPU		23	/* IBM SPU/SPC */
+			/* 24-35 - Reserved */
 #define EM_V800		36	/* NEC V800 */
 #define EM_FR20		37	/* Fujitsu FR20 */
 #define EM_RH32		38	/* TRW RH-32 */
 #define EM_RCE		39	/* Motorola RCE */
 #define EM_ARM		40	/* Advanced RISC Machines ARM */
-#define EM_ALPHA	41	/* DIGITAL Alpha */
+#define EM_OLD_ALPHA	41	/* DIGITAL Alpha (obsolete) */
 #define EM_SH		42	/* Hitachi Super-H */
 #define EM_SPARCV9	43	/* SPARC Version 9 */
 #define EM_TRICORE	44	/* Siemens Tricore */
@@ -288,6 +292,7 @@ typedef struct {
 #define EM_OR1K		92	/* OpenRISC 32-bit embedded processor */
 #define EM_OPENRISC	EM_OR1K
 #define EM_ARC_A5	93	/* ARC Cores Tangent-A5 */
+#define EM_ARC_COMPACT	EM_ARC_A5 /* ARC International ARCompact processor (old spelling/synonym: EM_ARC_A5) */
 #define EM_XTENSA	94	/* Tensilica Xtensa Architecture */
 #define EM_VIDEOCORE	95	/* Alphamosaic VideoCore processor */
 #define EM_TMM_GPP	96	/* Thompson Multimedia General Purpose Processor */
@@ -297,7 +302,7 @@ typedef struct {
 #define EM_ST200	100	/* STMicroelectronics ST200 microcontroller */
 #define EM_IP2K		101	/* Ubicom IP2xxx microcontroller family */
 #define EM_MAX		102	/* MAX processor */
-#define EM_CR		103	/* National Semiconductor CompactRISC micorprocessor */
+#define EM_CR		103	/* National Semiconductor CompactRISC microprocessor */
 #define EM_F2MC16	104	/* Fujitsu F2MC16 */
 #define EM_MSP430	105	/* Texas Instruments MSP430 */
 #define EM_BLACKFIN	106	/* Analog Devices Blackfin DSP */
@@ -305,18 +310,103 @@ typedef struct {
 #define EM_SEP		108	/* Sharp embedded microprocessor */
 #define EM_ARCA		109	/* Arca RISC microprocessor */
 #define EM_UNICORE	110	/* UNICORE from PKU-Unity Ltd. and MPRC Peking University */
+#define EM_EXCESS	111	/* eXcess: 16/32/64-bit configurable embedded CPU */
+#define EM_DXP		112	/* Icera Semiconductor Inc. Deep Execution Processor */
 #define EM_ALTERA_NIOS2	113	/* Altera Nios II soft-core processor */
+#define EM_CRX		114	/* National Semiconductor CompactRISC CRX microprocessor */
+#define EM_XGATE	115	/* Motorola XGATE embedded processor */
+#define EM_C166		116	/* Infineon C16x/XC16x processor */
+#define EM_M16C		117	/* Renesas M16C series microprocessors */
+#define EM_DSPIC30F	118	/* Microchip Technology dsPIC30F Digital Signal Controller */
+#define EM_CE		119	/* Freescale Communication Engine RISC core */
+#define EM_M32C		120	/* Renesas M32C series microprocessors */
+			/* 121-130 - Reserved */
+#define EM_TSK3000	131	/* Altium TSK3000 core */
+#define EM_RS08		132	/* Freescale RS08 embedded processor */
+#define EM_SHARC	133	/* Analog Devices SHARC family of 32-bit DSP processors */
+#define EM_ECOG2	134	/* Cyan Technology eCOG2 microprocessor */
+#define EM_SCORE7	135	/* Sunplus S+core7 RISC processor */
+#define EM_DSP24	136	/* New Japan Radio (NJR) 24-bit DSP Processor */
+#define EM_VIDEOCORE3	137	/* Broadcom VideoCore III processor */
+#define EM_LATTICEMICO32	138	/* RISC processor for Lattice FPGA architecture */
+#define EM_SE_C17	139	/* Seiko Epson C17 family */
+#define EM_TI_C6000	140	/* The Texas Instruments TMS320C6000 DSP family */
+#define EM_TI_C2000	141	/* The Texas Instruments TMS320C2000 DSP family */
+#define EM_TI_C5500	142	/* The Texas Instruments TMS320C55x DSP family */
+#define EM_TI_ARP32	143	/* Texas Instruments Application Specific RISC Processor, 32bit fetch */
+#define EM_TI_PRU	144	/* Texas Instruments Programmable Realtime Unit */
+			/* 145-159 - Reserved */
+#define EM_MMDSP_PLUS	160	/* STMicroelectronics 64bit VLIW Data Signal Processor */
+#define EM_CYPRESS_M8C	161	/* Cypress M8C microprocessor */
+#define EM_R32C		162	/* Renesas R32C series microprocessors */
+#define EM_TRIMEDIA	163	/* NXP Semiconductors TriMedia architecture family */
+#define EM_QDSP6	164	/* QUALCOMM DSP6 Processor */
+#define EM_8051		165	/* Intel 8051 and variants */
+#define EM_STXP7X	166	/* STMicroelectronics STxP7x family of configurable and extensible RISC processors */
+#define EM_NDS32	167	/* Andes Technology compact code size embedded RISC processor family */
+#define EM_ECOG1	168	/* Cyan Technology eCOG1X family */
+#define EM_ECOG1X	168	/* Cyan Technology eCOG1X family */
+#define EM_MAXQ30	169	/* Dallas Semiconductor MAXQ30 Core Micro-controllers */
+#define EM_XIMO16	170	/* New Japan Radio (NJR) 16-bit DSP Processor */
+#define EM_MANIK	171	/* M2000 Reconfigurable RISC Microprocessor */
+#define EM_CRAYNV2	172	/* Cray Inc. NV2 vector architecture */
+#define EM_RX		173	/* Renesas RX family */
+#define EM_METAG	174	/* Imagination Technologies META processor architecture */
+#define EM_MCST_ELBRUS	175	/* MCST Elbrus general purpose hardware architecture */
+#define EM_ECOG16	176	/* Cyan Technology eCOG16 family */
+#define EM_CR16		177	/* National Semiconductor CompactRISC CR16 16-bit microprocessor */
+#define EM_ETPU		178	/* Freescale Extended Time Processing Unit */
+#define EM_SLE9X	179	/* Infineon Technologies SLE9X core */
+#define EM_L10M		180	/* Intel L10M */
+#define EM_K10M		181	/* Intel K10M */
+			/* 182 - Reserved */
 #define EM_AARCH64	183	/* AArch64 64-bit ARM microprocessor */
+			/* 184 - Reserved */
 #define EM_AVR32	185	/* Atmel Corporation 32-bit microprocessor family*/
+#define EM_STM8		186	/* STMicroelectronics STM8 8-bit microcontroller */
 #define EM_TILE64	187	/* Tilera TILE64 multicore architecture family */
 #define EM_TILEPRO	188	/* Tilera TILEPro multicore architecture family */
 #define EM_MICROBLAZE	189	/* Xilinx MicroBlaze 32-bit RISC soft processor core */
-#define EM_TILEGX	192	/* Tilera TILE-GX multicore architecture family */
+#define EM_CUDA		190	/* NVIDIA CUDA architecture */
+#define EM_TILEGX	191	/* Tilera TILE-GX multicore architecture family */
+#define EM_CLOUDSHIELD	192	/* CloudShield architecture family */
+#define EM_COREA_1ST	193	/* KIPO-KAIST Core-A 1st generation processor family */
+#define EM_COREA_2ND	194	/* KIPO-KAIST Core-A 2nd generation processor family */
+#define EM_ARC_COMPACT2	195	/* Synopsys ARCompact V2 */
+#define EM_OPEN8	196	/* Open8 8-bit RISC soft processor core */
+#define EM_RL78		197	/* Renesas RL78 family */
+#define EM_VIDEOCORE5	198	/* Broadcom VideoCore V processor */
+#define EM_78KOR	199	/* Renesas 78KOR family */
+#define EM_56800EX	200	/* Freescale 56800EX Digital Signal Controller (DSC) */
+#define EM_BA1		201	/* Beyond BA1 CPU architecture */
+#define EM_BA2		202	/* Beyond BA2 CPU architecture */
+#define EM_XCORE	203	/* XMOS xCORE processor family */
+#define EM_MCHP_PIC	204	/* Microchip 8-bit PIC(r) family */
+#define EM_INTEL205	205	/* Reserved by Intel */
+#define EM_INTEL206	206	/* Reserved by Intel */
+#define EM_INTEL207	207	/* Reserved by Intel */
+#define EM_INTEL208	208	/* Reserved by Intel */
+#define EM_INTEL209	209	/* Reserved by Intel */
+#define EM_KM32		210	/* KM211 KM32 32-bit processor */
+#define EM_KMX32	211	/* KM211 KMX32 32-bit processor */
+#define EM_KMX16	212	/* KM211 KMX16 16-bit processor */
+#define EM_KMX8		213	/* KM211 KMX8 8-bit processor */
+#define EM_KVARC	214	/* KM211 KVARC processor */
+#define EM_CDP		215	/* Paneve CDP architecture family */
+#define EM_COGE		216	/* Cognitive Smart Memory Processor */
+#define EM_COOL		217	/* Bluechip Systems CoolEngine */
+#define EM_NORC		218	/* Nanoradio Optimized RISC */
+#define EM_CSR_KALIMBA 	219	/* CSR Kalimba architecture family */
 #define EM_Z80		220	/* Zilog Z80 */
+#define EM_VISIUM 	221	/* Controls and Data Services VISIUMcore processor */
+#define EM_FT32 	222	/* FTDI Chip FT32 high performance 32-bit RISC architecture */
+#define EM_MOXIE	223	/* Moxie processor family */
+#define EM_AMDGPU	224	/* AMD GPU architecture */
+			/* 225-242 - Reserved */
 #define EM_RISCV	243	/* RISC-V */
 
 /* Unofficial machine types follow */
-#define EM_ALPHA_EXP	36902	/* used by NetBSD/alpha; obsolete */
+#define EM_ALPHA	36902	/* DIGITAL Alpha */
 #define EM_NUM		36903
 
 /*
@@ -367,6 +457,7 @@ typedef struct {
 #define PT_HIPROC	0x7fffffff
 
 #define PT_MIPS_REGINFO 0x70000000
+#define PT_MIPS_ABIFLAGS 0x70000003
 
 /* p_flags */
 #define PF_R		0x4		/* Segment is readable */
@@ -426,7 +517,8 @@ typedef struct {
 #define SHT_PREINIT_ARRAY    16		/* Pre-initialization function ptrs */
 #define SHT_GROUP	     17		/* Section group */
 #define SHT_SYMTAB_SHNDX     18		/* Section indexes (see SHN_XINDEX) */
-#define SHT_NUM		     19
+#define SHT_RELR	     19		/* Relative relocation information */
+#define SHT_NUM		     20
 
 #define SHT_LOOS	     0x60000000 /* Operating system specific range */
 #define SHT_GNU_INCREMENTAL_INPUTS 0x6fff4700   /* GNU incremental build data */
@@ -451,15 +543,16 @@ typedef struct {
 #define SHT_LOPROC	     0x70000000 /* Processor-specific range */
 #define SHT_AMD64_UNWIND     0x70000001 /* unwind information */
 #define SHT_ARM_EXIDX	     0x70000001	/* exception index table */
-#define SHT_ARM_PREEMPTMAP   0x70000002 /* BPABI DLL dynamic linking 
+#define SHT_ARM_PREEMPTMAP   0x70000002 /* BPABI DLL dynamic linking
 					 * pre-emption map */
-#define SHT_ARM_ATTRIBUTES   0x70000003 /* Object file compatibility 
+#define SHT_ARM_ATTRIBUTES   0x70000003 /* Object file compatibility
 					 * attributes */
 #define SHT_ARM_DEBUGOVERLAY 0x70000004 /* See DBGOVL for details */
 #define SHT_ARM_OVERLAYSECTION 0x70000005
 #define	SHT_MIPS_REGINFO     0x70000006
 #define	SHT_MIPS_OPTIONS     0x7000000d
 #define	SHT_MIPS_DWARF	     0x7000001e	/* MIPS gcc uses MIPS_DWARF */
+#define	SHT_MIPS_XHASH	     0x7000002b	/* MIPS version of GNU_HASH */
 #define SHT_HIPROC	     0x7fffffff
 #define SHT_LOUSER	     0x80000000 /* Application-specific range */
 #define SHT_HIUSER	     0xffffffff
@@ -485,7 +578,7 @@ typedef struct {
  */
 typedef struct {
 	Elf32_Word	st_name;	/* Symbol name (.strtab index) */
-	Elf32_Word	st_value;	/* value of symbol */
+	Elf32_Addr	st_value;	/* value of symbol */
 	Elf32_Word	st_size;	/* size of symbol */
 	Elf_Byte	st_info;	/* type / binding attrs */
 	Elf_Byte	st_other;	/* unused */
@@ -589,6 +682,9 @@ typedef struct {
 #define ELF32_R_TYPE(info)	((info) & 0xff)
 #define ELF32_R_INFO(sym, type) (((sym) << 8) + (unsigned char)(type))
 
+/* Relative relocations (DT_RELR, SHT_RELR, .relr.dyn) */
+typedef Elf32_Word	Elf32_Relr;
+
 typedef struct {
 	Elf64_Addr	r_offset;	/* where to do it */
 	Elf64_Xword	r_info;		/* index & type of relocation */
@@ -604,6 +700,9 @@ typedef struct {
 #define ELF64_R_SYM(info)	((info) >> 32)
 #define ELF64_R_TYPE(info)	((info) & 0xffffffff)
 #define ELF64_R_INFO(sym,type)	(((sym) << 32) + (type))
+
+/* Relative relocations (DT_RELR, SHT_RELR, .relr.dyn) */
+typedef Elf64_Xword	Elf64_Relr;
 
 /*
  * Move entries
@@ -702,12 +801,17 @@ typedef struct {
 #define DT_FINI_ARRAYSZ 28	/* Size, in bytes, of DT_FINI_ARRAY array*/
 #define DT_RUNPATH	29	/* overrides DT_RPATH */
 #define DT_FLAGS	30	/* Encodes ORIGIN, SYMBOLIC, TEXTREL, BIND_NOW, STATIC_TLS */
-#define DT_ENCODING	31	/* ??? */
+#define DT_ENCODING	32	/* In [32, DT_LOOS), only evens use d_ptr */
 #define DT_PREINIT_ARRAY 32	/* Address of pre-init function array */
 #define DT_PREINIT_ARRAYSZ 33	/* Size, in bytes, of DT_PREINIT_ARRAY array */
-#define DT_NUM		34
+#define DT_SYMTAB_SHNDX 34	/* Addr. of SHT_SYMTAB_SHNDX § of DT_SYMTAB */
+#define DT_RELRSZ	35	/* Size, in bytes, of DT_RELR table */
+#define DT_RELR		36	/* Address of Relr relocation table */
+#define DT_RELRENT	37	/* Size, in bytes, of one DT_RELR entry */
+#define DT_NUM		38
 
 #define DT_LOOS		0x60000000	/* Operating system specific range */
+#define DT_GNU_HASH	0x6ffffef5	/* GNU-style hash table */
 #define DT_VERSYM	0x6ffffff0	/* Symbol versions */
 #define DT_FLAGS_1	0x6ffffffb	/* ELF dynamic flags */
 #define DT_VERDEF	0x6ffffffc	/* Versions defined by file */
@@ -716,6 +820,7 @@ typedef struct {
 #define DT_VERNEEDNUM	0x6fffffff	/* Number of versions needed by file */
 #define DT_HIOS		0x6fffffff
 #define DT_LOPROC	0x70000000	/* Processor-specific range */
+#define DT_MIPS_XHASH	0x70000036	/* MIPS version of GNU_HASH */
 #define DT_HIPROC	0x7fffffff
 
 /* Flag values for DT_FLAGS */
@@ -725,11 +830,34 @@ typedef struct {
 #define DF_BIND_NOW	0x00000008	/* */
 #define DF_STATIC_TLS	0x00000010	/* */
 
-/* Flag values for DT_FLAGS_1 (incomplete) */
-#define DF_1_BIND_NOW	0x00000001	/* Same as DF_BIND_NOW */
-#define DF_1_NODELETE	0x00000008	/* Set the RTLD_NODELETE for object */
-#define DF_1_INITFIRST	0x00000020	/* Object's init/fini take priority */
-#define DF_1_NOOPEN	0x00000040	/* Do not allow loading on dlopen() */
+/* Flag values for DT_FLAGS_1 */
+#define	DF_1_NOW	0x00000001	/* Same as DF_BIND_NOW */
+#define	DF_1_GLOBAL	0x00000002	/* Unused */
+#define	DF_1_GROUP	0x00000004	/* Is member of group */
+#define	DF_1_NODELETE	0x00000008	/* Cannot be deleted from process */
+#define	DF_1_LOADFLTR	0x00000010	/* Immediate loading of filters */
+#define	DF_1_INITFIRST	0x00000020	/* init/fini takes priority */
+#define	DF_1_NOOPEN	0x00000040	/* Do not allow loading on dlopen() */
+#define	DF_1_ORIGIN	0x00000080 	/* Require $ORIGIN processing */
+#define	DF_1_DIRECT	0x00000100	/* Enable direct bindings */
+#define	DF_1_INTERPOSE 	0x00000400	/* Is an interposer */
+#define	DF_1_NODEFLIB	0x00000800 	/* Ignore default library search path */
+#define	DF_1_NODUMP	0x00001000 	/* Cannot be dumped with dldump(3C) */
+#define	DF_1_CONFALT	0x00002000 	/* Configuration alternative */
+#define	DF_1_ENDFILTEE	0x00004000	/* Filtee ends filter's search */
+#define	DF_1_DISPRELDNE	0x00008000	/* Did displacement relocation */
+#define	DF_1_DISPRELPND 0x00010000	/* Pending displacement relocation */
+#define	DF_1_NODIRECT	0x00020000 	/* Has non-direct bindings */
+#define	DF_1_IGNMULDEF	0x00040000	/* Used internally */
+#define	DF_1_NOKSYMS	0x00080000	/* Used internally */
+#define	DF_1_NOHDR	0x00100000	/* Used internally */
+#define	DF_1_EDITED	0x00200000	/* Has been modified since build */
+#define	DF_1_NORELOC	0x00400000 	/* Used internally */
+#define	DF_1_SYMINTPOSE 0x00800000 	/* Has individual symbol interposers */
+#define	DF_1_GLOBAUDIT	0x01000000	/* Require global auditing */
+#define	DF_1_SINGLETON	0x02000000	/* Has singleton symbols */
+#define	DF_1_STUB	0x04000000	/* Stub */
+#define	DF_1_PIE	0x08000000	/* Position Independent Executable */
 
 /*
  * Auxiliary Vectors
@@ -836,6 +964,11 @@ typedef struct {
 #define ELF_NOTE_ABI_OS_KFREEBSD	3
 #define ELF_NOTE_ABI_OS_KNETBSD		4
 
+/* Old gcc style, under the ABI tag */
+#define ELF_NOTE_OGCC_NAMESZ		8
+#define ELF_NOTE_OGCC_NAME		"01.01\0\0\0\0"
+#define ELF_NOTE_OGCC_DESCSZ		0
+
 /*
  * GNU-specific note type: Hardware capabilities
  * name: GNU\0
@@ -852,7 +985,7 @@ typedef struct {
  * GNU-specific note type: Build ID generated by ld
  * name: GNU\0
  * desc:
- *	word[0..4] SHA1 [default] 
+ *	word[0..4] SHA1 [default]
  * or
  *	word[0..3] md5 or uuid
  * descsz: 16 or 20
@@ -879,7 +1012,7 @@ typedef struct {
 /* SuSE-specific note type: version
  * name: SuSE\0\0\0\0
  * namesz: 8
- * desc: 
+ * desc:
  *	word[0] = VVTTMMmm
  *
  *	V = version of following data
@@ -895,10 +1028,35 @@ typedef struct {
 /* SuSE-specific note name */
 #define ELF_NOTE_SUSE_VERSION_NAME		"SuSE\0\0\0\0"
 
-/* NetBSD-specific note type: Emulation name.
+/* Go-specific note type: buildid
+ * name: Go\0\0
+ * namesz: 4
+ * desc:
+ *	words[10]
+ * descsz: 40
+ */
+#define ELF_NOTE_TYPE_GO_BUILDID_TAG	4
+#define ELF_NOTE_GO_BUILDID_NAMESZ	4
+#define ELF_NOTE_GO_BUILDID_DESCSZ	40
+#define ELF_NOTE_GO_BUILDID_NAME	"Go\0\0"
+
+/*
+ * FDO-specific note type: packaging metadata
+ * name: FDO\0
+ * namesz: 4
+ * desc:
+ *	a single JSON object encoded as a zero-terminated UTF-8 string
+ *	(see https://systemd.io/COREDUMP_PACKAGE_METADATA/)
+ * descsz: variable
+ */
+#define	ELF_NOTE_TYPE_FDO_PACKAGING_METADATA	0xcafe1a7e
+#define	ELF_NOTE_FDO_PACKAGING_METADATA_NAMESZ	4
+#define	ELF_NOTE_FDO_PACKAGING_METADATA_NAME	"FDO\0"
+
+/* NetBSD-specific note type: NetBSD ABI version.
  * name: NetBSD\0\0
  * namesz: 8
- * desc: 
+ * desc:
  *	word[0]: MMmmrrpp00
  *
  *	M = major version
@@ -921,19 +1079,19 @@ typedef struct {
 #define ELF_NOTE_NETBSD_NAME		"Minix\0\0\0"
 #endif /* defined(__minix) */
 
-/* NetBSD-specific note type: Checksum. 
- * There should be 1 NOTE per PT_LOAD section.
- * name: ???
- * namesz: ???
+/* NetBSD-specific note type: Emulation (obsolete; last used early 2000)
+ * name: NetBSD\0\0
+ * namesz: 8
  * desc:
- *	a tuple of <phnum>(16),<chk-type>(16),<chk-value>.
- * descsz: ???
+ *	"netbsd\0"
+ *
+ * descsz: 8
  */
-#define ELF_NOTE_TYPE_CHECKSUM_TAG	2
-#define ELF_NOTE_CHECKSUM_CRC32		1
-#define ELF_NOTE_CHECKSUM_MD5		2
-#define ELF_NOTE_CHECKSUM_SHA1		3
-#define ELF_NOTE_CHECKSUM_SHA256	4
+#define ELF_NOTE_TYPE_NETBSD_EMUL_TAG	2
+#define ELF_NOTE_NETBSD_EMUL_NAMESZ	7
+#define ELF_NOTE_NETBSD_EMUL_DESCSZ	7
+/* NetBSD-specific note name */
+#define ELF_NOTE_NETBSD_EMUL_NAME	"NetBSD\0\0"
 
 /*
  * NetBSD-specific note type: PaX.
@@ -968,6 +1126,8 @@ typedef struct {
  *
  *	ELF_NOTE_NETBSD_CORE_PROCINFO
  *		Note is a "netbsd_elfcore_procinfo" structure.
+ *	ELF_NOTE_NETBSD_CORE_AUXV
+ *		Note is an array of AuxInfo structures.
  *
  * We also use ptrace(2) request numbers (the ones that exist in
  * machine-dependent space) to identify register info notes.  The
@@ -981,6 +1141,7 @@ typedef struct {
 #define ELF_NOTE_NETBSD_CORE_NAME	"NetBSD-CORE"
 
 #define ELF_NOTE_NETBSD_CORE_PROCINFO	1
+#define ELF_NOTE_NETBSD_CORE_AUXV	2
 
 #define NETBSD_ELFCORE_PROCINFO_VERSION 1
 
@@ -1038,9 +1199,12 @@ struct netbsd_elfcore_procinfo {
 /* NetBSD-specific note name */
 #define ELF_NOTE_MCMODEL_NAME		ELF_NOTE_NETBSD_NAME
 
-
-#if !defined(ELFSIZE) && defined(ARCH_ELFSIZE)
-#define ELFSIZE ARCH_ELFSIZE
+#if !defined(ELFSIZE)
+# if defined(_RUMPKERNEL) || !defined(_KERNEL)
+#  define ELFSIZE ARCH_ELFSIZE
+# else
+#  define ELFSIZE KERN_ELFSIZE
+# endif
 #endif
 
 #if defined(ELFSIZE)
@@ -1049,6 +1213,7 @@ struct netbsd_elfcore_procinfo {
 #define ELFNAME2(x,y)	CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
 #define ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
 #define ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
+#define	ElfW(x)		CONCAT(Elf,CONCAT(ELFSIZE,CONCAT(_,x)))
 #endif
 
 #if defined(ELFSIZE) && (ELFSIZE == 32)
@@ -1058,6 +1223,7 @@ struct netbsd_elfcore_procinfo {
 #define Elf_Sym		Elf32_Sym
 #define Elf_Rel		Elf32_Rel
 #define Elf_Rela	Elf32_Rela
+#define Elf_Relr	Elf32_Relr
 #define Elf_Dyn		Elf32_Dyn
 #define Elf_Word	Elf32_Word
 #define Elf_Sword	Elf32_Sword
@@ -1084,6 +1250,7 @@ struct netbsd_elfcore_procinfo {
 #define Elf_Sym		Elf64_Sym
 #define Elf_Rel		Elf64_Rel
 #define Elf_Rela	Elf64_Rela
+#define Elf_Relr	Elf64_Relr
 #define Elf_Dyn		Elf64_Dyn
 #define Elf_Word	Elf64_Word
 #define Elf_Sword	Elf64_Sword
@@ -1153,7 +1320,7 @@ typedef struct {
 #define SYMINFO_NUM		2
 
 /*
- * These constants are used for Elf32_Verdef struct's version number.  
+ * These constants are used for Elf32_Verdef struct's version number.
  */
 #define VER_DEF_NONE		0
 #define VER_DEF_CURRENT		1
@@ -1164,7 +1331,7 @@ typedef struct {
 #define VER_DEF_IDX(x)		VER_NDX(x)
 
 /*
- * These constants are used for Elf32_Verdef struct's vd_flags.	 
+ * These constants are used for Elf32_Verdef struct's vd_flags.
  */
 #define VER_FLG_BASE		0x1
 #define VER_FLG_WEAK		0x2
@@ -1177,7 +1344,7 @@ typedef struct {
 #define VER_NDX_GIVEN		2
 
 /*
- * These constants are used for Elf32_Verneed struct's version number.	
+ * These constants are used for Elf32_Verneed struct's version number.
  */
 #define VER_NEED_NONE		0
 #define VER_NEED_CURRENT	1
@@ -1193,7 +1360,7 @@ typedef struct {
 #define VER_NDX(x)		((x) & ~VER_NDX_HIDDEN)
 
 /*
- * GNU Extension hidding symbol
+ * GNU Extension hiding symbol
  */
 #define VERSYM_HIDDEN		0x8000
 #define VERSYM_VERSION		0x7fff
@@ -1302,27 +1469,31 @@ struct exec_package;
 
 #ifdef EXEC_ELF32
 int	exec_elf32_makecmds(struct lwp *, struct exec_package *);
+int	elf32_populate_auxv(struct lwp *, struct exec_package *, char **);
 int	elf32_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
-
-int	coredump_elf32(struct lwp *, struct coredump_iostate *);
-void	coredump_savenote_elf32(struct note_state *, unsigned int,
-	    const char *, void *, size_t);
 
 int	elf32_check_header(Elf32_Ehdr *);
 #endif
 
+int	real_coredump_elf32(struct lwp *, struct coredump_iostate *);
+int	coredump_elf32(struct lwp *, struct coredump_iostate *);
+void	coredump_savenote_elf32(struct note_state *, unsigned int,
+	    const char *, void *, size_t);
+
 #ifdef EXEC_ELF64
 int	exec_elf64_makecmds(struct lwp *, struct exec_package *);
+int	elf64_populate_auxv(struct lwp *, struct exec_package *, char **);
 int	elf64_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
 
+int	elf64_check_header(Elf64_Ehdr *);
+#endif
+
+int	real_coredump_elf64(struct lwp *, struct coredump_iostate *);
 int	coredump_elf64(struct lwp *, struct coredump_iostate *);
 void	coredump_savenote_elf64(struct note_state *, unsigned int,
 	    const char *, void *, size_t);
-
-int	elf64_check_header(Elf64_Ehdr *);
-#endif
 
 #endif /* _KERNEL */
 

@@ -86,6 +86,17 @@ struct tm {
 	__aconst char *tm_zone;	/* timezone abbreviation */
 };
 
+/*
+ * This represents the minimum value for how long a timezone abbreviation
+ * name is allowed to be, it is also (if >= 254) the default for the max length
+ * we currently allow (that can be changed by compiling libc(localtime.c)
+ * with  -DTZNAME_MAXIMUM=N specifying a value at least this long, no less).
+ *
+ * This one should probably be made less, and localtime then use a longer value
+ * (it will use 254 at least), so this would never need to change in the future.
+ */
+#define	_TZNAME_MAXIMUM	254
+
 __BEGIN_DECLS
 char *asctime(const struct tm *);
 clock_t clock(void);
@@ -136,6 +147,9 @@ char *strptime(const char * __restrict, const char * __restrict,
 struct tm *getdate(const char *);
 extern int getdate_err;
 #endif
+
+/* ISO/IEC 9899:2011 7.27.1/3 Components of time */
+#include <sys/timespec.h>
 
 #if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
@@ -223,6 +237,24 @@ char *strptime_l(const char * __restrict, const char * __restrict,
     struct tm * __restrict, locale_t);
 
 #endif /* _NETBSD_SOURCE */
+
+/* ISO/IEC 9899:2011 7.27.2.5 The timespec_get function */
+#if defined(_ISOC11_SOURCE) || (__STDC_VERSION__ - 0) >= 201101L || \
+    defined(_NETBSD_SOURCE) || (__cplusplus - 0) >= 201103L || \
+    (_POSIX_C_SOURCE - 0) >= 202405L
+
+#define TIME_UTC	1	/* time elapsed since epoch */
+#if (__STDC_VERSION__ - 0 >= 202311L) || defined(_ISOC23_SOURCE) || \
+    defined(_NETBSD_SOURCE)
+#define TIME_MONOTONIC	2
+#endif
+
+int timespec_get(struct timespec *ts, int base);
+#if (__STDC_VERSION__ - 0 >= 202311L) || defined(_ISOC23_SOURCE) || \
+    defined(_NETBSD_SOURCE)
+int timespec_getres(struct timespec *ts, int base);
+#endif
+#endif
 
 __END_DECLS
 

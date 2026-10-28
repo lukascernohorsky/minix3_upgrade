@@ -133,6 +133,14 @@ extern const union __float_u __nanf;
 #define	FP_ILOGB0	INT_MIN
 #define	FP_ILOGBNAN	INT_MAX
 
+/* 7.12#9 error handling (__math_errhandling from machine/math.h) */
+#define	MATH_ERRNO		1
+#define	MATH_ERREXCEPT		2
+#ifdef __vax__			/* XXX !__HAVE_FENV */
+#define	math_errhandling	MATH_ERRNO
+#else
+#define	math_errhandling	MATH_ERREXCEPT
+#endif
 #endif /* !_ANSI_SOURCE && ... */
 
 /*

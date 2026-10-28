@@ -51,6 +51,7 @@
 #define	VIS_NL		0x0010	/* also encode newline */
 #define	VIS_WHITE	(VIS_SP | VIS_TAB | VIS_NL)
 #define	VIS_SAFE	0x0020	/* only encode "unsafe" characters */
+#define	VIS_DQ		0x8000	/* also encode double quotes */
 
 /*
  * other

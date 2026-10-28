@@ -22,8 +22,6 @@
 
 /* seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm */
 
-ARM_EABI_FNALIAS(l2d, floatdidf)
-
 #ifndef __SOFT_FP__
 /* Support for systems that have hardware floating-point; we'll set the inexact flag
  * as a side-effect of this computation.
@@ -32,8 +30,8 @@ ARM_EABI_FNALIAS(l2d, floatdidf)
 COMPILER_RT_ABI double
 __floatdidf(di_int a)
 {
-	static const double twop52 = 0x1.0p52;
-	static const double twop32 = 0x1.0p32;
+	static const double twop52 = 4503599627370496.0; // 0x1.0p52
+	static const double twop32 = 4294967296.0; // 0x1.0p32
 	
 	union { int64_t x; double d; } low = { .d = twop52 };
 	
@@ -98,10 +96,20 @@ __floatdidf(di_int a)
         /* a is now rounded to DBL_MANT_DIG bits */
     }
     double_bits fb;
-    fb.u.high = ((su_int)s & 0x80000000) |        /* sign */
+    fb.u.s.high = ((su_int)s & 0x80000000) |        /* sign */
                 ((e + 1023) << 20)      |        /* exponent */
                 ((su_int)(a >> 32) & 0x000FFFFF); /* mantissa-high */
-    fb.u.low = (su_int)a;                         /* mantissa-low */
+    fb.u.s.low = (su_int)a;                         /* mantissa-low */
     return fb.f;
 }
+#endif
+
+#if defined(__ARM_EABI__)
+#if defined(COMPILER_RT_ARMHF_TARGET)
+AEABI_RTABI double __aeabi_l2d(di_int a) {
+  return __floatdidf(a);
+}
+#else
+AEABI_RTABI double __aeabi_l2d(di_int a) COMPILER_RT_ALIAS(__floatdidf);
+#endif
 #endif

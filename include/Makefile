@@ -41,6 +41,7 @@ INCS+=	ieeefp.h
 
 
 INCSDIR=	/usr/include
+INCS+= endian.h stdalign.h stdnoreturn.h uchar.h
 
 .if defined(__MINIX)
 # RPC is not compiled in the libc. This include also needs

@@ -67,6 +67,7 @@
 #define	_PATH_DEVCDB	"/var/run/dev.cdb"
 #define	_PATH_DEVDB	"/var/run/dev.db"
 #define	_PATH_DEVNULL	"/dev/null"
+#define	_PATH_DEVZERO	"/dev/zero"
 #define	_PATH_DRUM	"/dev/drum"
 #define	_PATH_ESDB	"/usr/share/i18n/esdb"
 #define	_PATH_FTPUSERS	"/etc/ftpusers"

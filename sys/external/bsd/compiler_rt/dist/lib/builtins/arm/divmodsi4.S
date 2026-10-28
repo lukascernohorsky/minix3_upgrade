@@ -16,10 +16,9 @@
 #include "../assembly.h"
 
 #define ESTABLISH_FRAME    \
-    push   {r4-r7, lr}   ;\
-    add     r7,     sp, #12
+    push   {r4-r6, lr}
 #define CLEAR_FRAME_AND_RETURN \
-    pop    {r4-r7, pc}
+    pop    {r4-r6, pc}
 
 	.syntax unified
 	.text
@@ -32,7 +31,11 @@
 @   value is the quotient, the remainder is placed in the variable.
 
 	.p2align 3
+#if __ARM_ARCH_ISA_THUMB == 2
+DEFINE_COMPILERRT_THUMB_FUNCTION(__divmodsi4)
+#else
 DEFINE_COMPILERRT_FUNCTION(__divmodsi4)
+#endif
 #if __ARM_ARCH_EXT_IDIV__
 	tst     r1, r1
 	beq     LOCAL_LABEL(divzero)

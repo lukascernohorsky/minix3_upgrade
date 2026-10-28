@@ -40,7 +40,7 @@ ALL_TARGET+=	all-gprof
 INSTALL_TARGET+=install-gprof
 .endif
 
-.if defined(__MINIX) && ${HAVE_GOLD:Uyes} != "no"
+.if defined(__MINIX) && ${HAVE_GOLD:Uno} != "no"
 ALL_TARGET+=	all-gold
 INSTALL_TARGET+=install-gold
 

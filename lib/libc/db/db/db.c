@@ -63,10 +63,12 @@ dbopen(const char *fname, int flags, mode_t mode, DBTYPE type,
 #define	DB_FLAGS	(DB_LOCK | DB_SHMEM | DB_TXN)
 #if defined(__minix)
 #define	USE_OPEN_FLAGS							\
-	(O_CREAT | O_EXCL | O_EXLOCK | O_NONBLOCK | O_RDONLY |		\
-#else
-	(O_CREAT | O_EXCL | O_NONBLOCK | O_RDONLY |		\
+	(O_CREAT | O_EXCL | O_NONBLOCK | O_RDONLY |			\
 	 O_RDWR | O_TRUNC | O_CLOEXEC)
+#else
+#define	USE_OPEN_FLAGS							\
+	(O_CREAT | O_EXCL | O_EXLOCK | O_NONBLOCK | O_RDONLY |		\
+	 O_RDWR | O_SHLOCK | O_TRUNC | O_CLOEXEC)
 #endif  /* defined(__minix) */
 
 	if ((flags & ~(USE_OPEN_FLAGS | DB_FLAGS)) == 0)

@@ -71,6 +71,8 @@ __RCSID("$NetBSD: options.c,v 1.116 2015/04/11 15:41:33 christos Exp $");
 #include "extern.h"
 #ifndef SMALL
 #include "mtree.h"
+
+char *chdname;
 #endif	/* SMALL */
 
 /*

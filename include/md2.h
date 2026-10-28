@@ -8,6 +8,7 @@
 
 #define	MD2_DIGEST_LENGTH		16
 #define	MD2_DIGEST_STRING_LENGTH	33
+#define	MD2_BLOCK_LENGTH		16
 
 /* MD2 context. */
 typedef struct MD2Context {
@@ -24,6 +25,9 @@ char	*MD2End(MD2_CTX *, char *);
 char	*MD2File(const char *, char *);
 char	*MD2FileChunk(const char *, char *, off_t, off_t);
 char	*MD2Data(const unsigned char *, size_t, char *);
+#ifdef _LIBC_INTERNAL
+void	MD2Transform(MD2_CTX *);
+#endif
 __END_DECLS
 
 #endif /* _MD2_H_ */

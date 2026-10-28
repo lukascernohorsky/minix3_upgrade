@@ -590,12 +590,16 @@ arc4random_prng_create(void)
 	    0);
 	if (prng == MAP_FAILED)
 		goto fail0;
+#if !defined(__minix)
 	if (minherit(prng, size, MAP_INHERIT_ZERO) == -1)
 		goto fail1;
+#endif /* !defined(__minix) */
 
 	return prng;
 
+#if !defined(__minix)
 fail1:	(void)munmap(prng, size);
+#endif /* !defined(__minix) */
 fail0:	return NULL;
 }
 #endif

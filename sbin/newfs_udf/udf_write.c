@@ -53,6 +53,9 @@ __RCSID("$NetBSD: udf_write.c,v 1.9 2015/01/02 21:01:12 reinoud Exp $");
 #include "udf_write.h"
 #include "newfs_udf.h"
 
+struct udf_create_context context;
+struct udf_disclayout     layout;
+
 
 union dscrptr *terminator_dscr;
 
